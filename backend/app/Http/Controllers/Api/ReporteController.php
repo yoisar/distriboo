@@ -130,4 +130,26 @@ class ReporteController extends Controller
 
         return response()->json($data);
     }
+
+    public function pedidosPorMes(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = Pedido::query();
+
+        if ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
+        }
+
+        $data = $query->select(
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as mes"),
+                DB::raw('COUNT(*) as total_pedidos'),
+                DB::raw('SUM(total) as monto_total')
+            )
+            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get();
+
+        return response()->json($data);
+    }
 }
