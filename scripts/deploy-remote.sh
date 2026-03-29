@@ -22,7 +22,8 @@ fi
 
 # Configuración VPS
 VPS_USER="${VPS_USER:-root}"
-VPS_HOST="${VPS_HOST:-216.158.229.103}"
+VPS_HOST="${VPS_HOST:-92.112.178.62}"
+VPS_PORT="${VPS_PORT:-2223}"
 REMOTE_DIR="/www/wwwroot/distriboo.yoisar.com"
 
 # Determinar rama según entorno
@@ -32,9 +33,9 @@ else
     BRANCH="main"
 fi
 
-log_info "Desplegando $ENVIRONMENT (rama: $BRANCH) en $VPS_HOST..."
+log_info "Desplegando $ENVIRONMENT (rama: $BRANCH) en $VPS_HOST:$VPS_PORT..."
 
-ssh "$VPS_USER@$VPS_HOST" << ENDSSH
+ssh -p $VPS_PORT -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" << ENDSSH
     cd $REMOTE_DIR
     git fetch origin
     git checkout $BRANCH
