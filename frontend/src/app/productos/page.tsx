@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import AppHeader from "@/app/components/AppHeader";
+import { useAuth } from "@/lib/useAuth";
+import AppLayout from "@/app/components/AppLayout";
+import Loading from "@/app/components/Loading";
 import Pagination from "@/app/components/Pagination";
 import type { Producto } from "@/types";
 
 export default function ProductosPage() {
+  const { user, loading: authLoading, logout } = useAuth();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -32,11 +35,11 @@ export default function ProductosPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader title="Catálogo de Productos" />
+  if (authLoading) return <Loading />;
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+  return (
+    <AppLayout user={user} title="Catálogo de Productos" onLogout={logout}>
+      <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <input
             type="text"
@@ -46,23 +49,23 @@ export default function ProductosPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full max-w-md px-4 py-2 border border-gray-600 rounded-lg bg-gray-800 text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
         {loading ? (
-          <p className="text-gray-500">Cargando...</p>
+          <p className="text-gray-400">Cargando...</p>
         ) : productos.length === 0 ? (
-          <p className="text-gray-500">No se encontraron productos.</p>
+          <p className="text-gray-400">No se encontraron productos.</p>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {productos.map((p) => (
                 <div
                   key={p.id}
-                  className="bg-white rounded-xl shadow-sm border p-6"
+                  className="bg-gray-800 rounded-xl border border-gray-700 p-6"
                 >
-                  <h3 className="font-semibold text-gray-800 text-lg mb-1">
+                  <h3 className="font-semibold text-gray-100 text-lg mb-1">
                     {p.nombre}
                   </h3>
                   {p.marca && (
@@ -99,7 +102,7 @@ export default function ProductosPage() {
             <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

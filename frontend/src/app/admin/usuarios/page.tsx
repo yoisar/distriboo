@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import AppHeader from "@/app/components/AppHeader";
+import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import Modal from "@/app/components/Modal";
 import Pagination from "@/app/components/Pagination";
@@ -119,12 +119,10 @@ export default function AdminUsuariosPage() {
   if (authLoading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader user={currentUser} title="Admin / Usuarios" onLogout={logout} />
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
+    <AppLayout user={currentUser} title="Usuarios" onLogout={logout}>
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Usuarios</h2>
+          <h2 className="text-2xl font-bold text-gray-100">Usuarios</h2>
           <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
             + Nuevo Usuario
           </button>
@@ -133,15 +131,15 @@ export default function AdminUsuariosPage() {
         <Modal open={showForm} onClose={() => setShowForm(false)} title={`${editing ? "Editar" : "Nuevo"} Usuario`}>
           {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
           <div className="space-y-3">
-            <input placeholder="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
-            <input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
-            <input placeholder={editing ? "Contraseña (dejar vacío para no cambiar)" : "Contraseña"} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
-            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+            <input placeholder="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 placeholder:text-gray-500" />
+            <input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 placeholder:text-gray-500" />
+            <input placeholder={editing ? "Contraseña (dejar vacío para no cambiar)" : "Contraseña"} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 placeholder:text-gray-500" />
+            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 placeholder:text-gray-500">
               <option value="cliente">Cliente</option>
               <option value="admin">Admin</option>
             </select>
             {form.role === "cliente" && (
-              <select value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+              <select value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value })} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 placeholder:text-gray-500">
                 <option value="">Sin cliente asociado</option>
                 {clientes.map((c) => (
                   <option key={c.id} value={c.id}>{c.razon_social}</option>
@@ -150,7 +148,7 @@ export default function AdminUsuariosPage() {
             )}
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={() => setShowForm(false)} className="flex-1 py-2 border rounded-lg">Cancelar</button>
+            <button onClick={() => setShowForm(false)} className="flex-1 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700">Cancelar</button>
             <button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-600 text-white py-2 rounded-lg disabled:opacity-50">
               {saving ? "Guardando..." : "Guardar"}
             </button>
@@ -158,30 +156,30 @@ export default function AdminUsuariosPage() {
         </Modal>
 
         {loading ? (
-          <p className="text-gray-500">Cargando...</p>
+          <p className="text-gray-400">Cargando...</p>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-700/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Nombre</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Rol</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-gray-700">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium">{u.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{u.email}</td>
+                  <tr key={u.id} className="hover:bg-gray-700/50">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-200">{u.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-400">{u.email}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-1 rounded ${u.role === "admin" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
                         {u.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{u.cliente?.razon_social || "-"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-400">{u.cliente?.razon_social || "-"}</td>
                     <td className="px-4 py-3 text-sm space-x-2">
                       <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline">Editar</button>
                       {u.id !== currentUser?.id && (
@@ -196,7 +194,7 @@ export default function AdminUsuariosPage() {
         )}
 
         <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

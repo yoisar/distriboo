@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import AppHeader from "@/app/components/AppHeader";
+import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import Pagination from "@/app/components/Pagination";
 import EstadoBadge from "@/app/components/EstadoBadge";
@@ -59,11 +59,9 @@ export default function AdminPedidosPage() {
   if (authLoading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader user={user} title="Admin / Pedidos" onLogout={logout} />
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestión de Pedidos</h2>
+    <AppLayout user={user} title="Gestión de Pedidos" onLogout={logout}>
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-2xl font-bold text-gray-100 mb-6">Gestión de Pedidos</h2>
 
         <div className="flex gap-2 mb-6 flex-wrap">
           {["", "pendiente", "confirmado", "en_proceso", "enviado", "entregado", "cancelado"].map((e) => (
@@ -71,7 +69,7 @@ export default function AdminPedidosPage() {
               key={e}
               onClick={() => { setFiltroEstado(e); setPage(1); }}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                filtroEstado === e ? "bg-blue-600 text-white" : "bg-white border text-gray-600 hover:bg-gray-50"
+                filtroEstado === e ? "bg-blue-600 text-white" : "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
               }`}
             >
               {e ? e.replace("_", " ") : "Todos"}
@@ -80,33 +78,33 @@ export default function AdminPedidosPage() {
         </div>
 
         {loading ? (
-          <p className="text-gray-500">Cargando...</p>
+          <p className="text-gray-400">Cargando...</p>
         ) : pedidos.length === 0 ? (
-          <p className="text-gray-500">No hay pedidos.</p>
+          <p className="text-gray-400">No hay pedidos.</p>
         ) : (
           <>
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cambiar Estado</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Fecha</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Total</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Cambiar Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-gray-700">
                   {pedidos.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium">{p.id}</td>
-                      <td className="px-4 py-3 text-sm">{p.cliente?.razon_social || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                    <tr key={p.id} className="hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-200">{p.id}</td>
+                      <td className="px-4 py-3 text-sm text-gray-300">{p.cliente?.razon_social || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-400">
                         {new Date(p.created_at).toLocaleDateString("es-AR")}
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium">${p.total.toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-100">${p.total.toLocaleString("es-AR")}</td>
                       <td className="px-4 py-3">
                         <EstadoBadge estado={p.estado} />
                       </td>
@@ -150,7 +148,7 @@ export default function AdminPedidosPage() {
             <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import AppHeader from "@/app/components/AppHeader";
+import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import EstadoBadge from "@/app/components/EstadoBadge";
 import Link from "next/link";
@@ -37,20 +37,18 @@ export default function PedidoDetallePage() {
   if (authLoading || loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader user={user} title={`Pedido #${id}`} onLogout={logout} />
-
-      <main className="max-w-4xl mx-auto px-4 py-8">
+    <AppLayout user={user} title={`Pedido #${id}`} onLogout={logout}>
+      <div className="max-w-4xl mx-auto">
         {error ? (
           <p className="text-red-500">{error}</p>
         ) : pedido ? (
           <>
             {/* Cabecera */}
-            <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">Pedido #{pedido.id}</h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h2 className="text-2xl font-bold text-gray-100">Pedido #{pedido.id}</h2>
+                  <p className="text-sm text-gray-400 mt-1">
                     {new Date(pedido.created_at).toLocaleDateString("es-AR", {
                       year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
                     })}
@@ -61,46 +59,46 @@ export default function PedidoDetallePage() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Cliente</span>
-                  <p className="font-medium">{pedido.cliente?.razon_social || "-"}</p>
+                  <span className="text-gray-400">Cliente</span>
+                  <p className="font-medium text-gray-200">{pedido.cliente?.razon_social || "-"}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Provincia</span>
-                  <p className="font-medium">{pedido.cliente?.provincia?.nombre || "-"}</p>
+                  <span className="text-gray-400">Provincia</span>
+                  <p className="font-medium text-gray-200">{pedido.cliente?.provincia?.nombre || "-"}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Entrega estimada</span>
-                  <p className="font-medium">
+                  <span className="text-gray-400">Entrega estimada</span>
+                  <p className="font-medium text-gray-200">
                     {pedido.fecha_estimada_entrega
                       ? new Date(pedido.fecha_estimada_entrega).toLocaleDateString("es-AR")
                       : "-"}
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Observaciones</span>
-                  <p className="font-medium">{pedido.observaciones || "-"}</p>
+                  <span className="text-gray-400">Observaciones</span>
+                  <p className="font-medium text-gray-200">{pedido.observaciones || "-"}</p>
                 </div>
               </div>
             </div>
 
             {/* Detalle de ítems */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden mb-6">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-6">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Precio Unit.</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Producto</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Precio Unit.</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Cantidad</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-gray-700">
                   {pedido.detalles?.map((d) => (
-                    <tr key={d.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium">{d.producto?.nombre || `Producto #${d.producto_id}`}</td>
-                      <td className="px-4 py-3 text-sm text-right">${Number(d.precio_unitario).toLocaleString("es-AR")}</td>
-                      <td className="px-4 py-3 text-sm text-right">{d.cantidad}</td>
-                      <td className="px-4 py-3 text-sm text-right font-medium">${Number(d.subtotal).toLocaleString("es-AR")}</td>
+                    <tr key={d.id} className="hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-200">{d.producto?.nombre || `Producto #${d.producto_id}`}</td>
+                      <td className="px-4 py-3 text-sm text-right text-gray-300">${Number(d.precio_unitario).toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-right text-gray-300">{d.cantidad}</td>
+                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-100">${Number(d.subtotal).toLocaleString("es-AR")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -108,19 +106,19 @@ export default function PedidoDetallePage() {
             </div>
 
             {/* Totales */}
-            <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Subtotal</span>
-                  <span>${Number(pedido.subtotal).toLocaleString("es-AR")}</span>
+                  <span className="text-gray-400">Subtotal</span>
+                  <span className="text-gray-200">${Number(pedido.subtotal).toLocaleString("es-AR")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Costo logístico</span>
-                  <span>${Number(pedido.costo_logistico).toLocaleString("es-AR")}</span>
+                  <span className="text-gray-400">Costo logístico</span>
+                  <span className="text-gray-200">${Number(pedido.costo_logistico).toLocaleString("es-AR")}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total</span>
-                  <span>${Number(pedido.total).toLocaleString("es-AR")}</span>
+                <div className="flex justify-between text-lg font-bold border-t border-gray-700 pt-2">
+                  <span className="text-gray-100">Total</span>
+                  <span className="text-gray-100">${Number(pedido.total).toLocaleString("es-AR")}</span>
                 </div>
               </div>
             </div>
@@ -170,7 +168,7 @@ export default function PedidoDetallePage() {
             </div>
           </>
         ) : null}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

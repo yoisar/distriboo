@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import AppHeader from "@/app/components/AppHeader";
+import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import Pagination from "@/app/components/Pagination";
 import EstadoBadge from "@/app/components/EstadoBadge";
@@ -37,15 +37,13 @@ export default function PedidosPage() {
   if (authLoading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader user={user} title="Mis Pedidos" onLogout={logout} />
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
+    <AppLayout user={user} title="Mis Pedidos" onLogout={logout}>
+      <div className="max-w-7xl mx-auto">
         {loading ? (
-          <p className="text-gray-500">Cargando...</p>
+          <p className="text-gray-400">Cargando...</p>
         ) : pedidos.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No tenés pedidos aún.</p>
+            <p className="text-gray-400 mb-4">No tenés pedidos aún.</p>
             <a
               href="/pedidos/nuevo"
               className="bg-blue-600 text-white px-6 py-2 rounded-lg"
@@ -55,57 +53,57 @@ export default function PedidosPage() {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-700/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       #
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       Fecha
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       Subtotal
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       Logística
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       Total
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                       Entrega Est.
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-gray-700">
                   {pedidos.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium">
+                    <tr key={p.id} className="hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-100">
                         {p.id}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-400">
                         {new Date(p.created_at).toLocaleDateString("es-AR")}
                       </td>
                       <td className="px-6 py-4">
                         <EstadoBadge estado={p.estado} />
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm text-gray-300">
                         ${p.subtotal.toLocaleString("es-AR")}
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm text-gray-300">
                         ${p.costo_logistico.toLocaleString("es-AR")}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-100">
                         ${p.total.toLocaleString("es-AR")}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-400">
                         {p.fecha_estimada_entrega
                           ? new Date(
                               p.fecha_estimada_entrega
@@ -124,7 +122,7 @@ export default function PedidosPage() {
             <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

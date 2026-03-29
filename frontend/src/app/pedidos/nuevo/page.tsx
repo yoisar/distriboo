@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import AppHeader from "@/app/components/AppHeader";
+import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import type { Producto, CartItem, ZonaLogistica } from "@/types";
 
@@ -118,14 +118,12 @@ export default function NuevoPedidoPage() {
     return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader user={user} title="Nuevo Pedido" onLogout={logout} />
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
+    <AppLayout user={user} title="Nuevo Pedido" onLogout={logout}>
+      <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Catálogo */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
+            <h2 className="text-xl font-bold text-gray-100 mb-4">
               Seleccioná productos
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,11 +132,11 @@ export default function NuevoPedidoPage() {
                 return (
                   <div
                     key={p.id}
-                    className={`bg-white rounded-lg border p-4 ${inCart ? "border-blue-500 ring-1 ring-blue-200" : ""}`}
+                    className={`bg-gray-800 rounded-lg border p-4 ${inCart ? "border-blue-500 ring-1 ring-blue-500/30" : "border-gray-700"}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium text-gray-800">
+                        <h3 className="font-medium text-gray-100">
                           {p.nombre}
                         </h3>
                         {p.formato && (
@@ -150,7 +148,7 @@ export default function NuevoPedidoPage() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         Stock: {p.stock}
                       </span>
                       {inCart ? (
@@ -159,18 +157,18 @@ export default function NuevoPedidoPage() {
                             onClick={() =>
                               updateQuantity(p.id, inCart.cantidad - 1)
                             }
-                            className="w-8 h-8 border rounded text-lg"
+                            className="w-8 h-8 border border-gray-600 rounded text-lg text-gray-300 hover:bg-gray-700"
                           >
                             -
                           </button>
-                          <span className="font-medium w-8 text-center">
+                          <span className="font-medium w-8 text-center text-gray-200">
                             {inCart.cantidad}
                           </span>
                           <button
                             onClick={() =>
                               updateQuantity(p.id, inCart.cantidad + 1)
                             }
-                            className="w-8 h-8 border rounded text-lg"
+                            className="w-8 h-8 border border-gray-600 rounded text-lg text-gray-300 hover:bg-gray-700"
                           >
                             +
                           </button>
@@ -198,13 +196,13 @@ export default function NuevoPedidoPage() {
 
           {/* Resumen del pedido */}
           <div>
-            <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 sticky top-20">
+              <h2 className="text-xl font-bold text-gray-100 mb-4">
                 Resumen del Pedido
               </h2>
 
               {cart.length === 0 ? (
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-500 text-sm">
                   Agregá productos al pedido
                 </p>
               ) : (
@@ -215,10 +213,10 @@ export default function NuevoPedidoPage() {
                         key={item.producto.id}
                         className="flex justify-between text-sm"
                       >
-                        <span className="text-gray-600">
+                        <span className="text-gray-300">
                           {item.producto.nombre} x{item.cantidad}
                         </span>
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-200">
                           $
                           {(
                             item.producto.precio * item.cantidad
@@ -228,25 +226,25 @@ export default function NuevoPedidoPage() {
                     ))}
                   </div>
 
-                  <div className="border-t pt-3 space-y-2">
+                  <div className="border-t border-gray-700 pt-3 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Subtotal</span>
-                      <span>${subtotal.toLocaleString("es-AR")}</span>
+                      <span className="text-gray-400">Subtotal</span>
+                      <span className="text-gray-200">${subtotal.toLocaleString("es-AR")}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">
+                      <span className="text-gray-400">
                         Costo logístico ({totalBultos} bultos)
                       </span>
-                      <span>${costoLogistico.toLocaleString("es-AR")}</span>
+                      <span className="text-gray-200">${costoLogistico.toLocaleString("es-AR")}</span>
                     </div>
                     {zona && (
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-gray-500">
                         Entrega estimada: {zona.tiempo_entrega_dias} días
                       </div>
                     )}
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>Total</span>
-                      <span>${total.toLocaleString("es-AR")}</span>
+                    <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-2">
+                      <span className="text-gray-100">Total</span>
+                      <span className="text-gray-100">${total.toLocaleString("es-AR")}</span>
                     </div>
                   </div>
 
@@ -261,7 +259,7 @@ export default function NuevoPedidoPage() {
                       placeholder="Observaciones (opcional)"
                       value={observaciones}
                       onChange={(e) => setObservaciones(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-700 text-gray-100 placeholder:text-gray-500"
                       rows={2}
                     />
                   </div>
@@ -285,7 +283,7 @@ export default function NuevoPedidoPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

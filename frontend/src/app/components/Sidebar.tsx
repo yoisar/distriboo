@@ -1,0 +1,120 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { User } from "@/types";
+
+interface SidebarProps {
+  user: User;
+  open: boolean;
+  onClose: () => void;
+}
+
+const clienteLinks = [
+  { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  { href: "/productos", label: "Catálogo", icon: "📦" },
+  { href: "/pedidos/nuevo", label: "Nuevo Pedido", icon: "🛒" },
+  { href: "/pedidos", label: "Mis Pedidos", icon: "📋" },
+];
+
+const adminLinks = [
+  { href: "/admin/productos", label: "Productos", icon: "📦" },
+  { href: "/admin/clientes", label: "Clientes", icon: "👥" },
+  { href: "/admin/zonas", label: "Zonas Logísticas", icon: "🚚" },
+  { href: "/admin/pedidos", label: "Gestión Pedidos", icon: "📑" },
+  { href: "/admin/usuarios", label: "Usuarios", icon: "🔑" },
+  { href: "/admin/reportes", label: "Reportes", icon: "📈" },
+];
+
+export default function Sidebar({ user, open, onClose }: SidebarProps) {
+  const pathname = usePathname();
+  const isAdmin = user.role === "admin";
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/pedidos") return pathname === "/pedidos";
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <>
+      {/* Overlay mobile */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-gray-900 text-gray-100 transform transition-transform duration-200 lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Logo */}
+        <div className="h-16 flex items-center px-6 border-b border-gray-800">
+          <Link href="/dashboard" className="text-2xl font-bold text-white tracking-wide">
+            distriboo
+          </Link>
+        </div>
+
+        {/* Nav */}
+        <nav className="mt-4 px-3 space-y-1">
+          {clienteLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive(link.href)
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
+              }`}
+            >
+              <span>{link.icon}</span>
+              {link.label}
+            </Link>
+          ))}
+
+          {isAdmin && (
+            <>
+              <div className="pt-4 pb-2 px-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Administración
+                </p>
+              </div>
+              {adminLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(link.href)
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  }`}
+                >
+                  <span>{link.icon}</span>
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          )}
+        </nav>
+
+        {/* User info at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-200 truncate">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.role}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/useAuth";
 import { api } from "@/lib/api";
-import AppHeader from "@/app/components/AppHeader";
+import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 
 export default function DashboardPage() {
@@ -22,13 +22,8 @@ export default function DashboardPage() {
   const isAdmin = user.role === "admin";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader user={user} onLogout={logout} />
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          {isAdmin ? "Panel de Administración" : "Panel de Cliente"}
-        </h2>
+    <AppLayout user={user} title={isAdmin ? "Panel de Administración" : "Panel de Cliente"} onLogout={logout}>
+      <div className="max-w-7xl mx-auto">
 
         {/* Stats Cards */}
         {stats && (
@@ -54,7 +49,7 @@ export default function DashboardPage() {
         )}
 
         {/* Quick Actions */}
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Accesos Rápidos</h3>
+        <h3 className="text-lg font-semibold text-gray-300 mb-4">Accesos Rápidos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <QuickLink href="/productos" title="Catálogo de Productos" desc="Ver productos disponibles con stock y precios" />
           <QuickLink href="/pedidos/nuevo" title="Nuevo Pedido" desc="Armar un nuevo pedido con cálculo logístico" />
@@ -71,18 +66,18 @@ export default function DashboardPage() {
             </>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 
 function StatCard({ label, value, color }: { label: string; value: number | string | null; color: string }) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-50 border-blue-200 text-blue-700",
-    green: "bg-green-50 border-green-200 text-green-700",
-    yellow: "bg-yellow-50 border-yellow-200 text-yellow-700",
-    red: "bg-red-50 border-red-200 text-red-700",
-    purple: "bg-purple-50 border-purple-200 text-purple-700",
+    blue: "bg-blue-900/40 border-blue-700 text-blue-300",
+    green: "bg-green-900/40 border-green-700 text-green-300",
+    yellow: "bg-yellow-900/40 border-yellow-700 text-yellow-300",
+    red: "bg-red-900/40 border-red-700 text-red-300",
+    purple: "bg-purple-900/40 border-purple-700 text-purple-300",
   };
   return (
     <div className={`rounded-xl border p-4 ${colors[color] || colors.blue}`}>
@@ -93,11 +88,12 @@ function StatCard({ label, value, color }: { label: string; value: number | stri
 }
 
 function QuickLink({ href, title, desc, accent }: { href: string; title: string; desc: string; accent?: string }) {
-  const border = accent ? `border-l-4 border-l-${accent}-500` : "";
+  const borders: Record<string, string> = { blue: "border-l-4 border-l-blue-500", green: "border-l-4 border-l-green-500", purple: "border-l-4 border-l-purple-500" };
+  const border = accent ? borders[accent] || "" : "";
   return (
-    <a href={href} className={`bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow ${border}`}>
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-500 text-sm">{desc}</p>
+    <a href={href} className={`bg-gray-800 p-6 rounded-xl border border-gray-700 hover:bg-gray-700/70 transition-colors ${border}`}>
+      <h3 className="text-lg font-semibold text-gray-100 mb-2">{title}</h3>
+      <p className="text-gray-400 text-sm">{desc}</p>
     </a>
   );
 }
