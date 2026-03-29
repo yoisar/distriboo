@@ -256,6 +256,45 @@ class TestDataSeeder extends Seeder
             ]);
         }
 
+        // ── Distribuidor de prueba extra (Testing) ──
+        $dist3 = Distribuidor::create([
+            'nombre_comercial' => 'T.G Helados Proteicos',
+            'razon_social' => 'T.G Helados Proteicos SRL',
+            'email_contacto' => 'tg@h.test.distriboo.yoisar.com',
+            'telefono' => '221-555-0300',
+            'direccion' => 'Calle Falsa 123, La Plata',
+            'activo' => true,
+        ]);
+
+        User::create([
+            'name' => 'T.G Helados Proteicos',
+            'email' => 'tg@h.test.distriboo.yoisar.com',
+            'password' => 'testing1234',
+            'role' => 'distribuidor',
+            'distribuidor_id' => $dist3->id,
+        ]);
+
+        $clienteGen = Cliente::create([
+            'distribuidor_id' => $dist3->id,
+            'razon_social' => 'Cliente genérico',
+            'email' => 'cliente.gen.test@test.distriboo.yoisar.com',
+            'telefono' => '221-555-9999',
+            'provincia_id' => $bsAs->id ?? $cordoba->id,
+            'direccion' => 'Av. Testing 1000, La Plata',
+            'activo' => true,
+        ]);
+
+        User::create([
+            'name' => 'Cliente genérico',
+            'email' => 'cliente.gen.test@test.distriboo.yoisar.com',
+            'password' => 'testing1234',
+            'role' => 'cliente',
+            'distribuidor_id' => $dist3->id,
+            'cliente_id' => $clienteGen->id,
+        ]);
+
+        echo "  → Distribuidor de testing + cliente genérico creados\n";
+
         // ── Pedidos de ejemplo ──
         echo "  → Creando pedidos de ejemplo...\n";
 
@@ -315,9 +354,11 @@ class TestDataSeeder extends Seeder
         echo "Super Admin:    sioy23@gmail.com / 12345678\n";
         echo "Distribuidor 1: admin@heladosdelsur.com / distriboo2026\n";
         echo "Distribuidor 2: admin@congeladosexpress.com / distriboo2026\n";
+        echo "Distribuidor TEST: tg@h.test.distriboo.yoisar.com / testing1234\n";
         echo "Cliente 1:      norte@demo.com / cliente2026\n";
         echo "Cliente 2:      litoral@demo.com / cliente2026\n";
         echo "Cliente 3:      patagonia@demo.com / cliente2026\n";
         echo "Cliente 4:      kiosco@demo.com / cliente2026\n";
+        echo "Cliente TEST:   cliente.gen.test@test.distriboo.yoisar.com / testing1234\n";
     }
 }
