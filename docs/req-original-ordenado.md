@@ -3722,21 +3722,21 @@ git push origin feature/nueva-funcionalidad
 ## 🧪 Usuario de prueba para Testing
 - Crear usuario distribuidor de prueba en el entorno de testing:
   - Nombre: `T.G Helados Proteicos` (o el nombre que indique el cliente).
-  - Email: `tg@h.test.distriboo.yoisar.com` (o `tg@demo.test.distriboo.yoisar.com`).
+  - Email: `benlive@distriboo.com` (o `benlive@distriboo.com`).
   - Password: `testing1234` (generar y guardar en el seed/DB testing).
   - Rol: `distribuidor`.
   - Empresa/Marca: `BENLIVE`.
 
 - Crear cliente genérico asociado al distribuidor de prueba:
   - Nombre: `Cliente genérico`.
-  - Email: `cliente.gen.test@test.distriboo.yoisar.com`.
+  - Email: `cliente.benlive@distriboo.com`.
   - Password: `testing1234`.
   - Rol: `cliente`.
   - Asociado a distribuidor: `T.G Helados Proteicos`.
 
 - Verificar en el UI de testing:
-  - Login con distribuidor: `tg@h.test.distriboo.yoisar.com` / `testing1234`.
-  - Login con cliente: `cliente.gen.test@test.distriboo.yoisar.com` / `testing1234`.
+  - Login con distribuidor: `benlive@distriboo.com` / `testing1234`.
+  - Login con cliente: `cliente.benlive@distriboo.com` / `testing1234`.
   - El cliente ve catálogo (sin stock/precio) y puede crear pedidos.
   - El distribuidor ve sus productos, clientes y pedidos.
 
@@ -3755,11 +3755,11 @@ https://test.distriboo.yoisar.com/login
 ---
 
 🔐 Tu acceso como DISTRIBUIDOR:
-📧 Usuario: tg@h.test.distriboo.yoisar.com
+📧 Usuario: benlive@distriboo.com
 🔑 Contraseña: testing1234
 
 👤 Acceso de CLIENTE de prueba (para ver cómo lo ve tu cliente):
-📧 Usuario: cliente.gen.test@test.distriboo.yoisar.com
+📧 Usuario: cliente.benlive@distriboo.com
 🔑 Contraseña: testing1234
 
 ---
@@ -3787,3 +3787,39 @@ https://distriboo.yoisar.com/ desactualizado la version mas actualiada es https:
 - productos
 - clientes
 - zonas logísticas
+
+
+-- 
+# agregar paginados en todos los listados para mejorar la experiencia de usuario y rendimiento, especialmente en:
+- catalogo
+- Mis Pedidos
+- productos
+- clientes
+- zonas logísticas
+- gestion de pedidos
+- usuarios
+aplicar paginaod en todos las listas para mejorar la experiencia de usuario y rendimiento.
+
+# errores en /admin/reportes:
+- corregir errores que aparecen en consola al acceder a la sección de reportes en el dashboard de administración, para asegurar que los gráficos y datos se muestren correctamente sin afectar la experiencia del usuario.
+
+# validar y testear funcionalidades:
+
+Caso:
+Existen funcionaidades y botones que no ejecutan la accion : ejeplo crear pedido: 
+
+- validar funcionalidad de crear pedidos
+- validar funcionalidad de editar pedidos
+- validar funcionalidad de eliminar pedidos
+- validar funcionalidad de ver detalles de pedidos
+- validar funcionalidad de crear productos
+- validar funcionalidad de editar productos
+
+# generacion de pedidos de parte de un cliente /pedidos/nuevo:
+ - no se puede agregar nada de parte de un cleinte
+ - no exieten accion para crear pedidos, agregar productos al pedido, eliminar productos del pedido, editar cantidades, etc. 
+ - validar y corregir la funcionalidad de creación de pedidos por parte de un cliente, asegurando que el cliente pueda agregar productos al pedido, editar cantidades, eliminar productos, y finalmente enviar el pedido para su procesamiento por parte del distribuidor.
+
+# mejorar usabiliad y generacion de pedidos /pedidos/nuevo:
+- debe ser mas agil y practica la seleccond de prducto dspara el pediodactualmente es incomodo e ineficiente la selecion de productos para armar un pedido, mejorar la interfaz y experiencia de usuario en la sección de creación de pedidos para que sea más ágil, práctica e intuitiva, permitiendo al cliente seleccionar productos, editar cantidades y gestionar su pedido de manera eficiente.
+- modificar o mejorar la interfaz de creación de pedidos para que el cliente pueda buscar productos por nombre, filtrar por categoría o marca, y agregar productos al pedido con un solo clic, además de permitir editar cantidades y eliminar productos del pedido de manera sencilla.
