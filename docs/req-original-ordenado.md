@@ -927,6 +927,629 @@ Producto::create([
 ---
 
 # actualizar nginex vps :
-- analizar /Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg y actualziar proyecto distriboo para que no entre enconflico los puertotos de docker de produccion 
-- actualziar docker produccion para que se ejecute en vps correctamente sin conficlots en https://distriboo.yoisar.com/ 
-- generar script deploy .sh para actualizar el proyecto en el vps con un solo comando (ej: `./deploy.sh`)
+
+Necesito que me proporciones el contenido del archivo `/Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg` para poder analizarlo y crear una configuración que no entre en conflicto.
+
+**Mientras tanto**, voy a generar el requerimiento completo basado en la estructura estándar que usaremos, y luego lo ajustaremos con tu archivo actual.
+
+---
+
+# 📋 REQUERIMIENTO: DEPLOY EN VPS - PRODUCCIÓN
+
+## 🎯 **OBJETIVO**
+
+Configurar el despliegue de **distriboo** en el VPS en `/www/wwwroot/distriboo.yoisar.com` sin conflictos de puertos con otros contenedores Docker, y con un script de deploy automático.
+
+---
+
+## 🏗️ **ARQUITECTURA DE PRODUCCIÓN**
+
+### Estructura de directorios en VPS:
+```
+/www/wwwroot/distriboo.yoisar.com/
+├── docker-compose.prod.yml
+├── .env.production
+├── frontend/
+├── backend/
+├── infra/
+│   └── vps/
+│       └── nginx.conf
+└── scripts/
+    ├── deploy.sh
+    └── rollback.sh
+```
+
+### Puerto estándar para producción:
+
+| Servicio | Puerto Desarrollo | Puerto Producción | Exposición |
+|----------|------------------|-------------------|------------|
+| Frontend (Next.js) | 3000 | **3001** | Interno (solo Nginx) |
+| Backend (Laravel) | 8000 | **8001** | Interno (solo Nginx) |
+| MySQL | 3306 | **3307** | Interno (solo backend) |
+| Nginx (público) | 80 | **80/443** | Externo |
+
+> **Nota:** Se cambian los puertos para evitar conflictos con otros proyectos en el mismo VPS.
+
+---
+
+## 🐳 **DOCKER COMPOSE DE PRODUCCIÓN**
+
+### Archivo: `docker-compose.prod.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_frontend_prod
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"  # Solo local, no expuesto directamente
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8001/api
+    networks:
+      - distriboo_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_backend_prod
+    restart: always
+    ports:
+      - "127.0.0.1:8001:8000"  # Solo local, no expuesto directamente
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_prod
+      - DB_USERNAME=distriboo_user
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - distriboo_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_mysql_prod
+    restart: always
+    ports:
+      - "127.0.0.1:3307:3306"  # Solo local
+    environment:
+      - MYSQL_DATABASE=distriboo_prod
+      - MYSQL_USER=distriboo_user
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+    networks:
+      - distriboo_network
+
+networks:
+  distriboo_network:
+    driver: bridge
+
+volumes:
+  mysql_data_prod:
+```
+
+---
+
+## 🌐 **NGINX CONFIGURACIÓN (VPS)**
+
+### Archivo: `infra/vps/nginx.conf`
+
+```nginx
+# /etc/nginx/conf.d/distriboo.yoisar.com.conf
+# O en el panel de tu VPS (Ej: aaPanel / CyberPanel)
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name distriboo.yoisar.com;
+
+    # Redirigir HTTP a HTTPS (si tienes SSL)
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name distriboo.yoisar.com;
+
+    # SSL Certificados (configurar según tu VPS)
+    ssl_certificate /path/to/ssl/certificate.crt;
+    ssl_certificate_key /path/to/ssl/private.key;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_access.log;
+    error_log /var/log/nginx/distriboo_error.log;
+
+    # Frontend (Next.js)
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API (Laravel)
+    location /api {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Archivos estáticos (opcional)
+    location /storage {
+        alias /www/wwwroot/distriboo.yoisar.com/backend/storage/app/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 🚀 **SCRIPT DE DEPLOY AUTOMÁTICO**
+
+### Archivo: `scripts/deploy.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Script de Deploy - Distriboo
+# Uso: ./deploy.sh [--rollback]
+# ============================================
+
+set -e  # Detener si hay error
+
+# Colores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Configuración
+PROJECT_DIR="/www/wwwroot/distriboo.yoisar.com"
+BACKUP_DIR="/www/backups/distriboo"
+DATE=$(date +"%Y%m%d_%H%M%S")
+
+# Función para imprimir mensajes
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Función para hacer backup
+backup_database() {
+    log_info "Creando backup de la base de datos..."
+    docker exec distriboo_mysql_prod mysqldump -u distriboo_user -p${DB_PASSWORD} distriboo_prod > ${BACKUP_DIR}/db_backup_${DATE}.sql
+    log_info "Backup guardado en: ${BACKUP_DIR}/db_backup_${DATE}.sql"
+}
+
+# Función para hacer rollback
+rollback() {
+    log_warn "Iniciando rollback..."
+    
+    # Detener contenedores actuales
+    cd ${PROJECT_DIR}
+    docker-compose -f docker-compose.prod.yml down
+    
+    # Restaurar último backup
+    LAST_BACKUP=$(ls -t ${BACKUP_DIR}/db_backup_*.sql | head -1)
+    if [ -f "$LAST_BACKUP" ]; then
+        log_info "Restaurando base de datos desde: $LAST_BACKUP"
+        docker exec -i distriboo_mysql_prod mysql -u root -p${ROOT_PASSWORD} distriboo_prod < $LAST_BACKUP
+    fi
+    
+    # Volver a versión anterior de código
+    if [ -d "${BACKUP_DIR}/code_backup_${DATE}" ]; then
+        log_info "Restaurando código desde backup..."
+        cp -r ${BACKUP_DIR}/code_backup_${DATE}/* ${PROJECT_DIR}/
+    fi
+    
+    # Levantar contenedores
+    docker-compose -f docker-compose.prod.yml up -d --build
+    
+    log_info "Rollback completado"
+    exit 0
+}
+
+# Verificar argumentos
+if [ "$1" == "--rollback" ]; then
+    rollback
+fi
+
+# Verificar que estamos en el directorio correcto
+if [ ! -d "$PROJECT_DIR" ]; then
+    log_error "El directorio $PROJECT_DIR no existe"
+    exit 1
+fi
+
+cd $PROJECT_DIR
+
+# Crear directorio de backups si no existe
+mkdir -p ${BACKUP_DIR}
+
+# 1. Backup de la base de datos actual
+log_info "Paso 1/6: Haciendo backup de la base de datos..."
+backup_database
+
+# 2. Backup del código actual
+log_info "Paso 2/6: Haciendo backup del código actual..."
+BACKUP_CODE_DIR="${BACKUP_DIR}/code_backup_${DATE}"
+mkdir -p ${BACKUP_CODE_DIR}
+cp -r ${PROJECT_DIR}/backend ${BACKUP_CODE_DIR}/
+cp -r ${PROJECT_DIR}/frontend ${BACKUP_CODE_DIR}/
+cp ${PROJECT_DIR}/.env.production ${BACKUP_CODE_DIR}/
+log_info "Backup de código guardado en: ${BACKUP_CODE_DIR}"
+
+# 3. Pull del repositorio (asumiendo que es un repo git)
+log_info "Paso 3/6: Actualizando código desde GitHub..."
+git pull origin main
+
+# 4. Actualizar dependencias
+log_info "Paso 4/6: Actualizando dependencias..."
+
+# Backend
+docker run --rm -v ${PROJECT_DIR}/backend:/app composer:latest composer install --no-dev --optimize-autoloader
+
+# Frontend
+docker run --rm -v ${PROJECT_DIR}/frontend:/app node:18 npm install --production
+
+# 5. Construir y levantar contenedores
+log_info "Paso 5/6: Construyendo y levantando contenedores..."
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml build --no-cache
+docker-compose -f docker-compose.prod.yml up -d
+
+# 6. Ejecutar migraciones
+log_info "Paso 6/6: Ejecutando migraciones de base de datos..."
+docker exec distriboo_backend_prod php artisan migrate --force
+
+# 7. Limpiar caché de Laravel
+log_info "Limpiando caché de Laravel..."
+docker exec distriboo_backend_prod php artisan config:cache
+docker exec distriboo_backend_prod php artisan route:cache
+docker exec distriboo_backend_prod php artisan view:cache
+
+# 8. Verificar estado
+log_info "Verificando estado de los contenedores..."
+docker ps --filter "name=distriboo"
+
+log_info "✅ Deploy completado exitosamente!"
+log_info "🌐 Sitio disponible en: https://distriboo.yoisar.com"
+
+# Mostrar logs si hay error
+if [ $? -ne 0 ]; then
+    log_error "El deploy falló. Ejecutando rollback..."
+    rollback
+fi
+```
+
+### Archivo: `scripts/rollback.sh`
+
+```bash
+#!/bin/bash
+
+# Script rápido para rollback
+# Uso: ./rollback.sh
+
+cd /www/wwwroot/distriboo.yoisar.com
+./scripts/deploy.sh --rollback
+```
+
+---
+
+## 🔧 **DOCKERFILE DE PRODUCCIÓN**
+
+### Backend: `backend/Dockerfile.prod`
+
+```dockerfile
+FROM php:8.2-fpm
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libpng-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+# Copiar archivos de la aplicación
+COPY . .
+
+# Instalar dependencias de Composer
+RUN composer install --no-dev --optimize-autoloader
+
+# Permisos
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+```
+
+### Frontend: `frontend/Dockerfile.prod`
+
+```dockerfile
+# Etapa 1: Build
+FROM node:18 AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+# Etapa 2: Producción
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+---
+
+## 📁 **ESTRUCTURA FINAL EN VPS**
+
+```bash
+/www/wwwroot/distriboo.yoisar.com/
+├── .env.production
+├── docker-compose.prod.yml
+├── frontend/
+│   ├── Dockerfile.prod
+│   ├── .env.production
+│   └── ...
+├── backend/
+│   ├── Dockerfile.prod
+│   ├── .env.production
+│   └── ...
+├── infra/
+│   └── vps/
+│       └── nginx.conf
+├── scripts/
+│   ├── deploy.sh
+│   └── rollback.sh
+└── storage/
+    └── backups/ (creado automáticamente)
+```
+
+---
+
+## ⚙️ **CONFIGURACIÓN DE .ENV PRODUCCIÓN**
+
+### Archivo: `.env.production` (raíz del proyecto)
+
+```env
+# Docker
+COMPOSE_PROJECT_NAME=distriboo_prod
+
+# Base de datos
+DB_PASSWORD=CambiarEstaClaveFuerte123!
+ROOT_PASSWORD=CambiarRootPassword456!
+
+# Backend (Laravel)
+APP_NAME=Distriboo
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://distriboo.yoisar.com
+
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=distriboo_prod
+DB_USERNAME=distriboo_user
+
+# Frontend (Next.js)
+NEXT_PUBLIC_API_URL=https://distriboo.yoisar.com/api
+NEXT_PUBLIC_APP_NAME=Distriboo
+```
+
+---
+
+## 🚀 **COMANDOS DE DEPLOY**
+
+### Primer deploy (setup inicial):
+
+```bash
+# 1. Conectarse al VPS
+ssh usuario@tu-vps
+
+# 2. Ir al directorio
+cd /www/wwwroot/distriboo.yoisar.com
+
+# 3. Dar permisos a scripts
+chmod +x scripts/*.sh
+
+# 4. Ejecutar deploy
+./scripts/deploy.sh
+```
+
+### Deploy normal (actualización):
+
+```bash
+# Desde tu máquina local
+cd /Users/yois/projects/my-mac-portfolio/distriboo
+
+# Subir cambios a GitHub
+git add .
+git commit -m "Actualización del sistema"
+git push origin main
+
+# En el VPS
+ssh usuario@tu-vps "cd /www/wwwroot/distriboo.yoisar.com && ./scripts/deploy.sh"
+```
+
+### Rollback (si algo sale mal):
+
+```bash
+# En el VPS
+cd /www/wwwroot/distriboo.yoisar.com
+./scripts/rollback.sh
+```
+
+---
+
+## 🔥 **SOLUCIÓN DE CONFLICTOS DE PUERTOS**
+
+### Verificar qué puertos están en uso:
+
+```bash
+# Ver todos los contenedores Docker
+docker ps
+
+# Ver qué proceso usa el puerto 80
+sudo lsof -i :80
+
+# Ver qué proceso usa el puerto 443
+sudo lsof -i :443
+```
+
+### Si hay conflicto con otro proyecto:
+
+```bash
+# Opción 1: Cambiar puertos en docker-compose.prod.yml
+# Opción 2: Parar el otro proyecto temporalmente
+docker stop otro_proyecto
+
+# Opción 3: Usar Nginx como proxy inverso (recomendado)
+# Configurar Nginx para redirigir según el dominio
+```
+
+### Configuración Nginx para múltiples dominios:
+
+```nginx
+# /etc/nginx/nginx.conf
+
+# Proyecto 1: distriboo.yoisar.com
+server {
+    listen 80;
+    server_name distriboo.yoisar.com;
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+    }
+    location /api {
+        proxy_pass http://127.0.0.1:8001;
+    }
+}
+
+# Proyecto 2: otro-dominio.com
+server {
+    listen 80;
+    server_name otro-dominio.com;
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+    }
+}
+```
+
+---
+
+## ✅ **CHECKLIST DE CONFIGURACIÓN VPS**
+
+### Antes del deploy:
+- [ ] Verificar que Docker y Docker Compose están instalados
+- [ ] Verificar que Git está instalado
+- [ ] Configurar SSL (Let's Encrypt) para `distriboo.yoisar.com`
+- [ ] Crear directorio `/www/wwwroot/distriboo.yoisar.com`
+- [ ] Clonar repositorio en el VPS
+- [ ] Configurar variables de entorno (`.env.production`)
+
+### Durante el deploy:
+- [ ] Ejecutar `./scripts/deploy.sh`
+- [ ] Verificar que no hay errores
+- [ ] Probar la URL `https://distriboo.yoisar.com`
+
+### Post-deploy:
+- [ ] Configurar backup automático (cron job)
+- [ ] Configurar monitoreo (opcional)
+- [ ] Configurar logs rotation
+
+---
+
+## 📝 **CRON JOB PARA BACKUPS AUTOMÁTICOS**
+
+```bash
+# Editar crontab
+crontab -e
+
+# Backup diario a las 2 AM
+0 2 * * * cd /www/wwwroot/distriboo.yoisar.com && ./scripts/backup.sh
+
+# Limpiar backups de más de 30 días
+0 3 * * * find /www/backups/distriboo -name "*.sql" -mtime +30 -delete
+```
+
+---
+
+## 🔥 **NECESITO TU ARCHIVO ACTUAL**
+
+Para ajustar la configuración sin conflictos, **por favor comparte el contenido de**:
+
+```
+/Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg
+```
+
+Con ese archivo podré:
+1. Analizar los puertos que ya están en uso
+2. Identificar conflictos potenciales
+3. Ajustar la configuración de producción
+4. Crear un `nginx.conf` compatible
+
+**Mientras tanto, puedes ir creando los archivos que te he proporcionado.** 🚀
+
+--
+
+# varios ajustes 
+- no usar modo dark usar modo lihgt por defecto, y agregar un toggle para cambiar a modo dark (que se guarde en localStorage)
+- agregar , paginado entodos los listaods, catalogo, propductos, pedidos, zonas, etc. -explorar todos los listados para aplciar paginado.
+- usar componentes graficos de dashoard usados en https://tailwindadmin-reactjs-dark.netlify.app/
+- actualizar landing pages usando esctructura similar a https://tailwindadmin-reactjs-dark.netlify.app/frontend-pages/homepage
+- bajrar css y/o estilos apra que sean usados en el proyecto, y no usar CDN, para mejorar performance y evitar problemas de carga.
+- agregar un favicon personalizado (puede ser el logo de distriboo o algo relacionado)
+- agregar un loader/spinner para las páginas que hacen fetch de datos, para mejorar UX mientras se cargan los datos.
+- revisar y mejorar la estructura de carpetas en el frontend para organizar mejor los componentes, páginas, estilos, etc. (ej: separar por módulos o funcionalidades)
+- agregar validaciones en los formularios (ej: crear/editar producto, cliente, pedido) para evitar errores y mejorar la experiencia del usuario.
+- agregar mensajes de éxito/error después de acciones como crear/editar producto, cliente, pedido, para dar feedback al usuario.
+- no usar emojos en la interfaz, mantener un diseño profesional y limpio solo icono sde laplantilla
+---
+
+
