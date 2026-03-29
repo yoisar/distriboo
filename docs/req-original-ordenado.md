@@ -926,11 +926,7 @@ Producto::create([
 
 ---
 
-## 🔥 **PRÓXIMO PASO**
-
-¿Quieres que genere:
-1. **Las migraciones completas de Laravel** (código listo para copiar)?
-2. **Los controladores con lógica de permisos**?
-3. **El frontend con sidebar dinámico y protección de rutas**?
-
-Selecciona una opción y te doy el código listo para implementar. 🚀
+# actualizar nginex vps :
+- analizar /Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg y actualziar proyecto distriboo para que no entre enconflico los puertotos de docker de produccion 
+- actualziar docker produccion para que se ejecute en vps correctamente sin conficlots en https://distriboo.yoisar.com/ 
+- generar script deploy .sh para actualizar el proyecto en el vps con un solo comando (ej: `./deploy.sh`)
