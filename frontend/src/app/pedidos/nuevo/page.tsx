@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
+import { useToast } from "@/components/providers/ToastProvider";
 import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import type { Producto, CartItem, ZonaLogistica } from "@/types";
@@ -11,6 +12,7 @@ import type { Producto, CartItem, ZonaLogistica } from "@/types";
 export default function NuevoPedidoPage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
+  const toast = useToast();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [zona, setZona] = useState<ZonaLogistica | null>(null);
@@ -18,19 +20,18 @@ export default function NuevoPedidoPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (authLoading || !user) return;
 
     Promise.all([
       api.getProductos({ per_page: "100" }),
-      api.getZonasLogisticas(),
+      api.getZonasLogisticas({ per_page: "100" }),
     ])
-      .then(([prodData, zonas]) => {
+      .then(([prodData, zonasRes]) => {
         setProductos(prodData.data.filter((p) => p.activo && p.stock > 0));
         if (user.cliente?.provincia_id) {
-          const z = zonas.find(
+          const z = zonasRes.data.find(
             (z) => z.provincia_id === user.cliente?.provincia_id
           );
           if (z) setZona(z);
@@ -104,7 +105,7 @@ export default function NuevoPedidoPage() {
         })),
         observaciones: observaciones || undefined,
       });
-      setSuccess("Pedido realizado con éxito");
+      toast("Pedido realizado con éxito", "success");
       setCart([]);
       setTimeout(() => router.push("/pedidos"), 2000);
     } catch (err) {
@@ -123,7 +124,7 @@ export default function NuevoPedidoPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Catálogo */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-gray-100 mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Seleccioná productos
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -132,15 +133,15 @@ export default function NuevoPedidoPage() {
                 return (
                   <div
                     key={p.id}
-                    className={`bg-gray-800 rounded-lg border p-4 ${inCart ? "border-blue-500 ring-1 ring-blue-500/30" : "border-gray-700"}`}
+                    className={`bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm ${inCart ? "border-blue-500 ring-1 ring-blue-500/30" : "border-gray-200 dark:border-gray-700"}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium text-gray-100">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
                           {p.nombre}
                         </h3>
                         {p.formato && (
-                          <p className="text-xs text-gray-400">{p.formato}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{p.formato}</p>
                         )}
                       </div>
                       <span className="text-lg font-bold text-blue-600">
@@ -157,18 +158,18 @@ export default function NuevoPedidoPage() {
                             onClick={() =>
                               updateQuantity(p.id, inCart.cantidad - 1)
                             }
-                            className="w-8 h-8 border border-gray-600 rounded text-lg text-gray-300 hover:bg-gray-700"
+                            className="w-8 h-8 border border-gray-300 dark:border-gray-600 rounded text-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             -
                           </button>
-                          <span className="font-medium w-8 text-center text-gray-200">
+                          <span className="font-medium w-8 text-center text-gray-800 dark:text-gray-200">
                             {inCart.cantidad}
                           </span>
                           <button
                             onClick={() =>
                               updateQuantity(p.id, inCart.cantidad + 1)
                             }
-                            className="w-8 h-8 border border-gray-600 rounded text-lg text-gray-300 hover:bg-gray-700"
+                            className="w-8 h-8 border border-gray-300 dark:border-gray-600 rounded text-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             +
                           </button>
@@ -176,7 +177,7 @@ export default function NuevoPedidoPage() {
                             onClick={() => removeFromCart(p.id)}
                             className="text-red-500 text-sm ml-2"
                           >
-                            ✕
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
                       ) : (
@@ -196,8 +197,8 @@ export default function NuevoPedidoPage() {
 
           {/* Resumen del pedido */}
           <div>
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 sticky top-20">
-              <h2 className="text-xl font-bold text-gray-100 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 sticky top-20 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                 Resumen del Pedido
               </h2>
 
@@ -213,10 +214,10 @@ export default function NuevoPedidoPage() {
                         key={item.producto.id}
                         className="flex justify-between text-sm"
                       >
-                        <span className="text-gray-300">
+                        <span className="text-gray-700 dark:text-gray-300">
                           {item.producto.nombre} x{item.cantidad}
                         </span>
-                        <span className="font-medium text-gray-200">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">
                           $
                           {(
                             item.producto.precio * item.cantidad
@@ -226,25 +227,25 @@ export default function NuevoPedidoPage() {
                     ))}
                   </div>
 
-                  <div className="border-t border-gray-700 pt-3 space-y-2">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Subtotal</span>
-                      <span className="text-gray-200">${subtotal.toLocaleString("es-AR")}</span>
+                      <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                      <span className="text-gray-800 dark:text-gray-200">${subtotal.toLocaleString("es-AR")}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">
+                      <span className="text-gray-500 dark:text-gray-400">
                         Costo logístico ({totalBultos} bultos)
                       </span>
-                      <span className="text-gray-200">${costoLogistico.toLocaleString("es-AR")}</span>
+                      <span className="text-gray-800 dark:text-gray-200">${costoLogistico.toLocaleString("es-AR")}</span>
                     </div>
                     {zona && (
                       <div className="text-xs text-gray-500">
                         Entrega estimada: {zona.tiempo_entrega_dias} días
                       </div>
                     )}
-                    <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-2">
-                      <span className="text-gray-100">Total</span>
-                      <span className="text-gray-100">${total.toLocaleString("es-AR")}</span>
+                    <div className="flex justify-between font-bold text-lg border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <span className="text-gray-900 dark:text-gray-100">Total</span>
+                      <span className="text-gray-900 dark:text-gray-100">${total.toLocaleString("es-AR")}</span>
                     </div>
                   </div>
 
@@ -259,16 +260,13 @@ export default function NuevoPedidoPage() {
                       placeholder="Observaciones (opcional)"
                       value={observaciones}
                       onChange={(e) => setObservaciones(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-lg text-sm bg-gray-700 text-gray-100 placeholder:text-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       rows={2}
                     />
                   </div>
 
                   {error && (
                     <p className="text-red-500 text-sm mt-2">{error}</p>
-                  )}
-                  {success && (
-                    <p className="text-green-600 text-sm mt-2">{success}</p>
                   )}
 
                   <button

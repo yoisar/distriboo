@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
+import { useToast } from "@/components/providers/ToastProvider";
 import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import type { Pedido, Producto, CartItem, ZonaLogistica } from "@/types";
@@ -12,6 +13,7 @@ export default function EditarPedidoPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
+  const toast = useToast();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -27,9 +29,9 @@ export default function EditarPedidoPage() {
     Promise.all([
       api.getPedido(Number(id)),
       api.getProductos({ per_page: "100" }),
-      api.getZonasLogisticas(),
+      api.getZonasLogisticas({ per_page: "100" }),
     ])
-      .then(([pedidoData, prodData, zonas]) => {
+      .then(([pedidoData, prodData, zonasRes]) => {
         if (pedidoData.estado !== "pendiente") {
           router.replace(`/pedidos/${id}`);
           return;
@@ -46,7 +48,7 @@ export default function EditarPedidoPage() {
         setCart(cartItems);
 
         if (user.cliente?.provincia_id) {
-          const z = zonas.find((z) => z.provincia_id === user.cliente?.provincia_id);
+          const z = zonasRes.data.find((z) => z.provincia_id === user.cliente?.provincia_id);
           if (z) setZona(z);
         }
       })
@@ -108,9 +110,10 @@ export default function EditarPedidoPage() {
         items: cart.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad })),
         observaciones: observaciones || undefined,
       });
+      toast("Pedido actualizado", "success");
       router.push(`/pedidos/${id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al actualizar el pedido");
+      toast(err instanceof Error ? err.message : "Error al actualizar el pedido", "error");
     } finally {
       setSubmitting(false);
     }
@@ -122,7 +125,7 @@ export default function EditarPedidoPage() {
     return (
       <AppLayout user={user} title="Editar Pedido" onLogout={logout}>
         <div className="max-w-6xl mx-auto">
-          <p className="text-red-400">{error || "Pedido no encontrado"}</p>
+          <p className="text-red-500 dark:text-red-400">{error || "Pedido no encontrado"}</p>
         </div>
       </AppLayout>
     );
@@ -139,14 +142,14 @@ export default function EditarPedidoPage() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Catálogo */}
           <div className="md:col-span-2">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Agregar productos</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Agregar productos</h3>
             <div className="grid sm:grid-cols-2 gap-3">
               {productosDisponibles.map((p) => (
-                <div key={p.id} className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex justify-between items-center">
+                <div key={p.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-center shadow-sm">
                   <div>
-                    <p className="font-medium text-sm text-gray-200">{p.nombre}</p>
+                    <p className="font-medium text-sm text-gray-800 dark:text-gray-200">{p.nombre}</p>
                     <p className="text-xs text-gray-500">{p.marca} {p.formato && `· ${p.formato}`}</p>
-                    <p className="text-sm font-semibold text-green-400">${Number(p.precio).toLocaleString("es-AR")}</p>
+                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">${Number(p.precio).toLocaleString("es-AR")}</p>
                     <p className="text-xs text-gray-500">Stock: {p.stock}</p>
                   </div>
                   <button onClick={() => addToCart(p)} className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded hover:bg-blue-700">
@@ -159,23 +162,23 @@ export default function EditarPedidoPage() {
 
           {/* Carrito */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Pedido actual</h3>
-            <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Pedido actual</h3>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4 shadow-sm">
               {cart.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">El carrito está vacío</p>
               ) : (
                 cart.map((item) => (
                   <div key={item.producto.id} className="flex items-center justify-between gap-2 text-sm">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-gray-200">{item.producto.nombre}</p>
+                      <p className="font-medium truncate text-gray-800 dark:text-gray-200">{item.producto.nombre}</p>
                       <p className="text-xs text-gray-500">${Number(item.producto.precio).toLocaleString("es-AR")} c/u</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => updateQuantity(item.producto.id, item.cantidad - 1)} className="w-7 h-7 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">-</button>
-                      <span className="w-8 text-center text-gray-200">{item.cantidad}</span>
-                      <button onClick={() => updateQuantity(item.producto.id, item.cantidad + 1)} className="w-7 h-7 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">+</button>
+                      <button onClick={() => updateQuantity(item.producto.id, item.cantidad - 1)} className="w-7 h-7 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">-</button>
+                      <span className="w-8 text-center text-gray-800 dark:text-gray-200">{item.cantidad}</span>
+                      <button onClick={() => updateQuantity(item.producto.id, item.cantidad + 1)} className="w-7 h-7 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">+</button>
                     </div>
-                    <button onClick={() => removeFromCart(item.producto.id)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                    <button onClick={() => removeFromCart(item.producto.id)} className="text-red-500 hover:text-red-600 text-xs"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
                   </div>
                 ))
               )}
@@ -184,14 +187,14 @@ export default function EditarPedidoPage() {
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
                 placeholder="Observaciones..."
-                className="w-full border border-gray-600 rounded-lg p-2 text-sm bg-gray-700 text-gray-100 placeholder:text-gray-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 rows={2}
               />
 
-              <div className="border-t border-gray-700 pt-3 space-y-1 text-sm">
-                <div className="flex justify-between"><span className="text-gray-400">Subtotal</span><span className="text-gray-200">${subtotal.toLocaleString("es-AR")}</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">Logística</span><span className="text-gray-200">${costoLogistico.toLocaleString("es-AR")}</span></div>
-                <div className="flex justify-between font-bold text-base border-t border-gray-700 pt-2"><span className="text-gray-100">Total</span><span className="text-gray-100">${total.toLocaleString("es-AR")}</span></div>
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Subtotal</span><span className="text-gray-800 dark:text-gray-200">${subtotal.toLocaleString("es-AR")}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Logística</span><span className="text-gray-800 dark:text-gray-200">${costoLogistico.toLocaleString("es-AR")}</span></div>
+                <div className="flex justify-between font-bold text-base border-t border-gray-200 dark:border-gray-700 pt-2"><span className="text-gray-900 dark:text-gray-100">Total</span><span className="text-gray-900 dark:text-gray-100">${total.toLocaleString("es-AR")}</span></div>
                 {!cumpleMinimo && pedidoMinimo > 0 && (
                   <p className="text-xs text-red-500">Mínimo: ${pedidoMinimo.toLocaleString("es-AR")}</p>
                 )}
@@ -207,7 +210,7 @@ export default function EditarPedidoPage() {
                 {submitting ? "Guardando..." : "Guardar Cambios"}
               </button>
 
-              <a href={`/pedidos/${id}`} className="block text-center text-sm text-gray-400 hover:text-gray-200">
+              <a href={`/pedidos/${id}`} className="block text-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
                 Cancelar
               </a>
             </div>

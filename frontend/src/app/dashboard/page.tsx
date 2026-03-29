@@ -5,6 +5,9 @@ import { useAuth } from "@/lib/useAuth";
 import { api } from "@/lib/api";
 import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
+import dynamic from "next/dynamic";
+
+const DashboardCharts = dynamic(() => import("./DashboardCharts"), { ssr: false });
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
@@ -25,7 +28,6 @@ export default function DashboardPage() {
     <AppLayout user={user} title={isAdmin ? "Panel de Administración" : "Panel de Cliente"} onLogout={logout}>
       <div className="max-w-7xl mx-auto">
 
-        {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
             {isAdmin ? (
@@ -48,8 +50,9 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <h3 className="text-lg font-semibold text-gray-300 mb-4">Accesos Rápidos</h3>
+        {isAdmin && <DashboardCharts />}
+
+        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Accesos Rápidos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {user.role !== "super_admin" && (
             <>
@@ -81,11 +84,11 @@ export default function DashboardPage() {
 
 function StatCard({ label, value, color }: { label: string; value: number | string | null; color: string }) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-900/40 border-blue-700 text-blue-300",
-    green: "bg-green-900/40 border-green-700 text-green-300",
-    yellow: "bg-yellow-900/40 border-yellow-700 text-yellow-300",
-    red: "bg-red-900/40 border-red-700 text-red-300",
-    purple: "bg-purple-900/40 border-purple-700 text-purple-300",
+    blue: "bg-blue-50 dark:bg-blue-900/40 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300",
+    green: "bg-green-50 dark:bg-green-900/40 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300",
+    yellow: "bg-yellow-50 dark:bg-yellow-900/40 border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300",
+    red: "bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300",
+    purple: "bg-purple-50 dark:bg-purple-900/40 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300",
   };
   return (
     <div className={`rounded-xl border p-4 ${colors[color] || colors.blue}`}>
@@ -99,9 +102,9 @@ function QuickLink({ href, title, desc, accent }: { href: string; title: string;
   const borders: Record<string, string> = { blue: "border-l-4 border-l-blue-500", green: "border-l-4 border-l-green-500", purple: "border-l-4 border-l-purple-500" };
   const border = accent ? borders[accent] || "" : "";
   return (
-    <a href={href} className={`bg-gray-800 p-6 rounded-xl border border-gray-700 hover:bg-gray-700/70 transition-colors ${border}`}>
-      <h3 className="text-lg font-semibold text-gray-100 mb-2">{title}</h3>
-      <p className="text-gray-400 text-sm">{desc}</p>
+    <a href={href} className={`bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition-colors shadow-sm ${border}`}>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h3>
+      <p className="text-gray-500 dark:text-gray-400 text-sm">{desc}</p>
     </a>
   );
 }
