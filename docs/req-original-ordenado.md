@@ -927,6 +927,2845 @@ Producto::create([
 ---
 
 # actualizar nginex vps :
-- analizar /Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg y actualziar proyecto distriboo para que no entre enconflico los puertotos de docker de produccion 
-- actualziar docker produccion para que se ejecute en vps correctamente sin conficlots en https://distriboo.yoisar.com/ 
-- generar script deploy .sh para actualizar el proyecto en el vps con un solo comando (ej: `./deploy.sh`)
+
+Necesito que me proporciones el contenido del archivo `/Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg` para poder analizarlo y crear una configuración que no entre en conflicto.
+
+**Mientras tanto**, voy a generar el requerimiento completo basado en la estructura estándar que usaremos, y luego lo ajustaremos con tu archivo actual.
+
+---
+
+# 📋 REQUERIMIENTO: DEPLOY EN VPS - PRODUCCIÓN
+
+## 🎯 **OBJETIVO**
+
+Configurar el despliegue de **distriboo** en el VPS en `/www/wwwroot/distriboo.yoisar.com` sin conflictos de puertos con otros contenedores Docker, y con un script de deploy automático.
+
+---
+
+## 🏗️ **ARQUITECTURA DE PRODUCCIÓN**
+
+### Estructura de directorios en VPS:
+```
+/www/wwwroot/distriboo.yoisar.com/
+├── docker-compose.prod.yml
+├── .env.production
+├── frontend/
+├── backend/
+├── infra/
+│   └── vps/
+│       └── nginx.conf
+└── scripts/
+    ├── deploy.sh
+    └── rollback.sh
+```
+
+### Puerto estándar para producción:
+
+| Servicio | Puerto Desarrollo | Puerto Producción | Exposición |
+|----------|------------------|-------------------|------------|
+| Frontend (Next.js) | 3000 | **3001** | Interno (solo Nginx) |
+| Backend (Laravel) | 8000 | **8001** | Interno (solo Nginx) |
+| MySQL | 3306 | **3307** | Interno (solo backend) |
+| Nginx (público) | 80 | **80/443** | Externo |
+
+> **Nota:** Se cambian los puertos para evitar conflictos con otros proyectos en el mismo VPS.
+
+---
+
+## 🐳 **DOCKER COMPOSE DE PRODUCCIÓN**
+
+### Archivo: `docker-compose.prod.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_frontend_prod
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"  # Solo local, no expuesto directamente
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8001/api
+    networks:
+      - distriboo_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_backend_prod
+    restart: always
+    ports:
+      - "127.0.0.1:8001:8000"  # Solo local, no expuesto directamente
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_prod
+      - DB_USERNAME=distriboo_user
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - distriboo_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_mysql_prod
+    restart: always
+    ports:
+      - "127.0.0.1:3307:3306"  # Solo local
+    environment:
+      - MYSQL_DATABASE=distriboo_prod
+      - MYSQL_USER=distriboo_user
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+    networks:
+      - distriboo_network
+
+networks:
+  distriboo_network:
+    driver: bridge
+
+volumes:
+  mysql_data_prod:
+```
+
+---
+
+## 🌐 **NGINX CONFIGURACIÓN (VPS)**
+
+### Archivo: `infra/vps/nginx.conf`
+
+```nginx
+# /etc/nginx/conf.d/distriboo.yoisar.com.conf
+# O en el panel de tu VPS (Ej: aaPanel / CyberPanel)
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name distriboo.yoisar.com;
+
+    # Redirigir HTTP a HTTPS (si tienes SSL)
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name distriboo.yoisar.com;
+
+    # SSL Certificados (configurar según tu VPS)
+    ssl_certificate /path/to/ssl/certificate.crt;
+    ssl_certificate_key /path/to/ssl/private.key;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_access.log;
+    error_log /var/log/nginx/distriboo_error.log;
+
+    # Frontend (Next.js)
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API (Laravel)
+    location /api {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Archivos estáticos (opcional)
+    location /storage {
+        alias /www/wwwroot/distriboo.yoisar.com/backend/storage/app/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 🚀 **SCRIPT DE DEPLOY AUTOMÁTICO**
+
+### Archivo: `scripts/deploy.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Script de Deploy - Distriboo
+# Uso: ./deploy.sh [--rollback]
+# ============================================
+
+set -e  # Detener si hay error
+
+# Colores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Configuración
+PROJECT_DIR="/www/wwwroot/distriboo.yoisar.com"
+BACKUP_DIR="/www/backups/distriboo"
+DATE=$(date +"%Y%m%d_%H%M%S")
+
+# Función para imprimir mensajes
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Función para hacer backup
+backup_database() {
+    log_info "Creando backup de la base de datos..."
+    docker exec distriboo_mysql_prod mysqldump -u distriboo_user -p${DB_PASSWORD} distriboo_prod > ${BACKUP_DIR}/db_backup_${DATE}.sql
+    log_info "Backup guardado en: ${BACKUP_DIR}/db_backup_${DATE}.sql"
+}
+
+# Función para hacer rollback
+rollback() {
+    log_warn "Iniciando rollback..."
+    
+    # Detener contenedores actuales
+    cd ${PROJECT_DIR}
+    docker-compose -f docker-compose.prod.yml down
+    
+    # Restaurar último backup
+    LAST_BACKUP=$(ls -t ${BACKUP_DIR}/db_backup_*.sql | head -1)
+    if [ -f "$LAST_BACKUP" ]; then
+        log_info "Restaurando base de datos desde: $LAST_BACKUP"
+        docker exec -i distriboo_mysql_prod mysql -u root -p${ROOT_PASSWORD} distriboo_prod < $LAST_BACKUP
+    fi
+    
+    # Volver a versión anterior de código
+    if [ -d "${BACKUP_DIR}/code_backup_${DATE}" ]; then
+        log_info "Restaurando código desde backup..."
+        cp -r ${BACKUP_DIR}/code_backup_${DATE}/* ${PROJECT_DIR}/
+    fi
+    
+    # Levantar contenedores
+    docker-compose -f docker-compose.prod.yml up -d --build
+    
+    log_info "Rollback completado"
+    exit 0
+}
+
+# Verificar argumentos
+if [ "$1" == "--rollback" ]; then
+    rollback
+fi
+
+# Verificar que estamos en el directorio correcto
+if [ ! -d "$PROJECT_DIR" ]; then
+    log_error "El directorio $PROJECT_DIR no existe"
+    exit 1
+fi
+
+cd $PROJECT_DIR
+
+# Crear directorio de backups si no existe
+mkdir -p ${BACKUP_DIR}
+
+# 1. Backup de la base de datos actual
+log_info "Paso 1/6: Haciendo backup de la base de datos..."
+backup_database
+
+# 2. Backup del código actual
+log_info "Paso 2/6: Haciendo backup del código actual..."
+BACKUP_CODE_DIR="${BACKUP_DIR}/code_backup_${DATE}"
+mkdir -p ${BACKUP_CODE_DIR}
+cp -r ${PROJECT_DIR}/backend ${BACKUP_CODE_DIR}/
+cp -r ${PROJECT_DIR}/frontend ${BACKUP_CODE_DIR}/
+cp ${PROJECT_DIR}/.env.production ${BACKUP_CODE_DIR}/
+log_info "Backup de código guardado en: ${BACKUP_CODE_DIR}"
+
+# 3. Pull del repositorio (asumiendo que es un repo git)
+log_info "Paso 3/6: Actualizando código desde GitHub..."
+git pull origin main
+
+# 4. Actualizar dependencias
+log_info "Paso 4/6: Actualizando dependencias..."
+
+# Backend
+docker run --rm -v ${PROJECT_DIR}/backend:/app composer:latest composer install --no-dev --optimize-autoloader
+
+# Frontend
+docker run --rm -v ${PROJECT_DIR}/frontend:/app node:18 npm install --production
+
+# 5. Construir y levantar contenedores
+log_info "Paso 5/6: Construyendo y levantando contenedores..."
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml build --no-cache
+docker-compose -f docker-compose.prod.yml up -d
+
+# 6. Ejecutar migraciones
+log_info "Paso 6/6: Ejecutando migraciones de base de datos..."
+docker exec distriboo_backend_prod php artisan migrate --force
+
+# 7. Limpiar caché de Laravel
+log_info "Limpiando caché de Laravel..."
+docker exec distriboo_backend_prod php artisan config:cache
+docker exec distriboo_backend_prod php artisan route:cache
+docker exec distriboo_backend_prod php artisan view:cache
+
+# 8. Verificar estado
+log_info "Verificando estado de los contenedores..."
+docker ps --filter "name=distriboo"
+
+log_info "✅ Deploy completado exitosamente!"
+log_info "🌐 Sitio disponible en: https://distriboo.yoisar.com"
+
+# Mostrar logs si hay error
+if [ $? -ne 0 ]; then
+    log_error "El deploy falló. Ejecutando rollback..."
+    rollback
+fi
+```
+
+### Archivo: `scripts/rollback.sh`
+
+```bash
+#!/bin/bash
+
+# Script rápido para rollback
+# Uso: ./rollback.sh
+
+cd /www/wwwroot/distriboo.yoisar.com
+./scripts/deploy.sh --rollback
+```
+
+---
+
+## 🔧 **DOCKERFILE DE PRODUCCIÓN**
+
+### Backend: `backend/Dockerfile.prod`
+
+```dockerfile
+FROM php:8.2-fpm
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libpng-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+# Copiar archivos de la aplicación
+COPY . .
+
+# Instalar dependencias de Composer
+RUN composer install --no-dev --optimize-autoloader
+
+# Permisos
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+```
+
+### Frontend: `frontend/Dockerfile.prod`
+
+```dockerfile
+# Etapa 1: Build
+FROM node:18 AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+# Etapa 2: Producción
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+---
+
+## 📁 **ESTRUCTURA FINAL EN VPS**
+
+```bash
+/www/wwwroot/distriboo.yoisar.com/
+├── .env.production
+├── docker-compose.prod.yml
+├── frontend/
+│   ├── Dockerfile.prod
+│   ├── .env.production
+│   └── ...
+├── backend/
+│   ├── Dockerfile.prod
+│   ├── .env.production
+│   └── ...
+├── infra/
+│   └── vps/
+│       └── nginx.conf
+├── scripts/
+│   ├── deploy.sh
+│   └── rollback.sh
+└── storage/
+    └── backups/ (creado automáticamente)
+```
+
+---
+
+## ⚙️ **CONFIGURACIÓN DE .ENV PRODUCCIÓN**
+
+### Archivo: `.env.production` (raíz del proyecto)
+
+```env
+# Docker
+COMPOSE_PROJECT_NAME=distriboo_prod
+
+# Base de datos
+DB_PASSWORD=CambiarEstaClaveFuerte123!
+ROOT_PASSWORD=CambiarRootPassword456!
+
+# Backend (Laravel)
+APP_NAME=Distriboo
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://distriboo.yoisar.com
+
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=distriboo_prod
+DB_USERNAME=distriboo_user
+
+# Frontend (Next.js)
+NEXT_PUBLIC_API_URL=https://distriboo.yoisar.com/api
+NEXT_PUBLIC_APP_NAME=Distriboo
+```
+
+---
+
+## 🚀 **COMANDOS DE DEPLOY**
+
+### Primer deploy (setup inicial):
+
+```bash
+# 1. Conectarse al VPS
+ssh usuario@tu-vps
+
+# 2. Ir al directorio
+cd /www/wwwroot/distriboo.yoisar.com
+
+# 3. Dar permisos a scripts
+chmod +x scripts/*.sh
+
+# 4. Ejecutar deploy
+./scripts/deploy.sh
+```
+
+### Deploy normal (actualización):
+
+```bash
+# Desde tu máquina local
+cd /Users/yois/projects/my-mac-portfolio/distriboo
+
+# Subir cambios a GitHub
+git add .
+git commit -m "Actualización del sistema"
+git push origin main
+
+# En el VPS
+ssh usuario@tu-vps "cd /www/wwwroot/distriboo.yoisar.com && ./scripts/deploy.sh"
+```
+
+### Rollback (si algo sale mal):
+
+```bash
+# En el VPS
+cd /www/wwwroot/distriboo.yoisar.com
+./scripts/rollback.sh
+```
+
+---
+
+## 🔥 **SOLUCIÓN DE CONFLICTOS DE PUERTOS**
+
+### Verificar qué puertos están en uso:
+
+```bash
+# Ver todos los contenedores Docker
+docker ps
+
+# Ver qué proceso usa el puerto 80
+sudo lsof -i :80
+
+# Ver qué proceso usa el puerto 443
+sudo lsof -i :443
+```
+
+### Si hay conflicto con otro proyecto:
+
+```bash
+# Opción 1: Cambiar puertos en docker-compose.prod.yml
+# Opción 2: Parar el otro proyecto temporalmente
+docker stop otro_proyecto
+
+# Opción 3: Usar Nginx como proxy inverso (recomendado)
+# Configurar Nginx para redirigir según el dominio
+```
+
+### Configuración Nginx para múltiples dominios:
+
+```nginx
+# /etc/nginx/nginx.conf
+
+# Proyecto 1: distriboo.yoisar.com
+server {
+    listen 80;
+    server_name distriboo.yoisar.com;
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+    }
+    location /api {
+        proxy_pass http://127.0.0.1:8001;
+    }
+}
+
+# Proyecto 2: otro-dominio.com
+server {
+    listen 80;
+    server_name otro-dominio.com;
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+    }
+}
+```
+
+---
+
+## ✅ **CHECKLIST DE CONFIGURACIÓN VPS**
+
+### Antes del deploy:
+- [ ] Verificar que Docker y Docker Compose están instalados
+- [ ] Verificar que Git está instalado
+- [ ] Configurar SSL (Let's Encrypt) para `distriboo.yoisar.com`
+- [ ] Crear directorio `/www/wwwroot/distriboo.yoisar.com`
+- [ ] Clonar repositorio en el VPS
+- [ ] Configurar variables de entorno (`.env.production`)
+
+### Durante el deploy:
+- [ ] Ejecutar `./scripts/deploy.sh`
+- [ ] Verificar que no hay errores
+- [ ] Probar la URL `https://distriboo.yoisar.com`
+
+### Post-deploy:
+- [ ] Configurar backup automático (cron job)
+- [ ] Configurar monitoreo (opcional)
+- [ ] Configurar logs rotation
+
+---
+
+## 📝 **CRON JOB PARA BACKUPS AUTOMÁTICOS**
+
+```bash
+# Editar crontab
+crontab -e
+
+# Backup diario a las 2 AM
+0 2 * * * cd /www/wwwroot/distriboo.yoisar.com && ./scripts/backup.sh
+
+# Limpiar backups de más de 30 días
+0 3 * * * find /www/backups/distriboo -name "*.sql" -mtime +30 -delete
+```
+
+---
+
+## 🔥 **NECESITO TU ARCHIVO ACTUAL**
+
+Para ajustar la configuración sin conflictos, **por favor comparte el contenido de**:
+
+```
+/Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg
+```
+
+Con ese archivo podré:
+1. Analizar los puertos que ya están en uso
+2. Identificar conflictos potenciales
+3. Ajustar la configuración de producción
+4. Crear un `nginx.conf` compatible
+
+**Mientras tanto, puedes ir creando los archivos que te he proporcionado.** 🚀
+
+--
+
+# varios ajustes 
+- no usar modo dark usar modo lihgt por defecto, y agregar un toggle para cambiar a modo dark (que se guarde en localStorage)
+- agregar , paginado entodos los listaods, catalogo, propductos, pedidos, zonas, etc. -explorar todos los listados para aplciar paginado.
+- usar componentes graficos de dashoard usados en https://tailwindadmin-reactjs-dark.netlify.app/
+- actualizar landing pages usando esctructura similar a https://tailwindadmin-reactjs-dark.netlify.app/frontend-pages/homepage
+- bajrar css y/o estilos apra que sean usados en el proyecto, y no usar CDN, para mejorar performance y evitar problemas de carga.
+- agregar un favicon personalizado (puede ser el logo de distriboo o algo relacionado)
+- agregar un loader/spinner para las páginas que hacen fetch de datos, para mejorar UX mientras se cargan los datos.
+- revisar y mejorar la estructura de carpetas en el frontend para organizar mejor los componentes, páginas, estilos, etc. (ej: separar por módulos o funcionalidades)
+- agregar validaciones en los formularios (ej: crear/editar producto, cliente, pedido) para evitar errores y mejorar la experiencia del usuario.
+- agregar mensajes de éxito/error después de acciones como crear/editar producto, cliente, pedido, para dar feedback al usuario.
+- no usar emojos en la interfaz, mantener un diseño profesional y limpio solo icono sde laplantilla
+---
+
+---
+
+# 📋 REQUERIMIENTO: AJUSTES UX/UI Y OPTIMIZACIONES
+
+## 🎯 **OBJETIVO**
+
+Mejorar la experiencia de usuario, el rendimiento y la organización del código de **distriboo** con los siguientes ajustes.
+
+---
+
+## 🎨 **1. TEMA CLARO POR DEFECTO + TOGGLE DARK MODE**
+
+### Especificación:
+
+| Ítem | Valor |
+|------|-------|
+| **Tema por defecto** | Light mode (claro) |
+| **Toggle** | Switch en el navbar (luna/sol) |
+| **Persistencia** | Guardar preferencia en `localStorage` |
+| **Comportamiento** | Al cargar la app, leer `localStorage` y aplicar el tema guardado |
+
+### Implementación:
+
+```jsx
+// lib/ThemeContext.jsx
+import { createContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('distriboo-theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('distriboo-theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+```
+
+---
+
+## 📄 **2. PAGINADO EN TODOS LOS LISTADOS**
+
+### Listados que requieren paginado:
+
+| Sección | Elementos por página |
+|---------|---------------------|
+| Productos | 10, 25, 50 (selector) |
+| Clientes | 10, 25, 50 |
+| Pedidos | 10, 25, 50 |
+| Zonas logísticas | 10, 25, 50 |
+| Distribuidores | 10, 25, 50 |
+| Catálogo (cliente) | 12 (grid) |
+
+### Comportamiento:
+
+```jsx
+// Componente de paginado reutilizable
+const Pagination = ({ currentPage, totalPages, onPageChange, itemsPerPage, onItemsPerPageChange }) => {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+      {/* Selector de items por página */}
+      <div className="flex items-center">
+        <span className="mr-2 text-sm text-gray-700">Mostrar</span>
+        <select
+          value={itemsPerPage}
+          onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+          className="px-2 py-1 border border-gray-300 rounded-md"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+        </select>
+        <span className="ml-2 text-sm text-gray-700">entradas</span>
+      </div>
+
+      {/* Botones de navegación */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border rounded-md disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <span className="px-3 py-1 text-sm">
+          Página {currentPage} de {totalPages}
+        </span>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border rounded-md disabled:opacity-50"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  );
+};
+```
+
+### Backend (Laravel):
+
+```php
+// Controlador
+public function index(Request $request)
+{
+    $perPage = $request->get('per_page', 10);
+    $productos = Producto::ownedByUser()->paginate($perPage);
+    
+    return response()->json($productos);
+}
+```
+
+---
+
+## 📊 **3. COMPONENTES GRÁFICOS DEL DASHBOARD**
+
+### Componentes a implementar (de la plantilla):
+
+| Componente | Ubicación | Función |
+|------------|-----------|---------|
+| **StatsCard** | Dashboard | Tarjetas con métricas (pedidos, productos, clientes, stock bajo) |
+| **LineChart** | Dashboard | Evolución de pedidos por mes |
+| **BarChart** | Dashboard | Pedidos por provincia |
+| **RecentOrdersTable** | Dashboard | Últimos 5 pedidos |
+| **TopProducts** | Dashboard | Productos más vendidos |
+| **ActivityTimeline** | Dashboard | Actividad reciente |
+
+### Estructura de gráficos:
+
+```jsx
+// components/dashboard/StatsCard.jsx
+const StatsCard = ({ title, value, icon, trend, color }) => {
+  return (
+    <div className="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
+      <div className="flex items-center">
+        <div className={`p-3 rounded-full ${color} bg-opacity-10`}>
+          {icon}
+        </div>
+        <div className="ml-4">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {title}
+          </h3>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+            {value}
+          </p>
+          {trend && (
+            <p className="text-sm text-green-600">{trend}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 🏠 **4. LANDING PAGE ACTUALIZADA**
+
+### Estructura similar a la homepage de TailwindAdmin:
+
+```jsx
+// app/page.tsx (landing page pública)
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header con navegación */}
+      <Header />
+      
+      {/* Hero Section */}
+      <HeroSection />
+      
+      {/* Features Section */}
+      <FeaturesSection />
+      
+      {/* Stats Section */}
+      <StatsSection />
+      
+      {/* Testimonials (opcional) */}
+      <TestimonialsSection />
+      
+      {/* CTA Section */}
+      <CTASection />
+      
+      {/* Footer con crédito Yoisar */}
+      <Footer />
+    </div>
+  );
+}
+```
+
+### Componentes de la landing:
+
+```jsx
+// Hero Section
+const HeroSection = () => (
+  <section className="py-20 px-4 text-center">
+    <h1 className="text-5xl font-bold text-gray-900 mb-4">
+      Distriboo: Pedidos inteligentes para tu distribución
+    </h1>
+    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+      Centraliza tus pedidos, controla el stock en tiempo real 
+      y gestiona la logística por provincia.
+    </p>
+    <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      Iniciar Sesión
+    </button>
+  </section>
+);
+```
+
+---
+
+## 🎨 **5. CSS Y ESTILOS LOCALES**
+
+### No usar CDN → archivos locales:
+
+```bash
+frontend/
+├── styles/
+│   ├── globals.css      # Estilos globales
+│   ├── tailwind.css     # Tailwind imports
+│   └── components.css   # Estilos específicos de componentes
+```
+
+### Configuración de Tailwind (local):
+
+```js
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class',  // Usar clase 'dark' para modo oscuro
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
+    './src/app/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+```css
+/* styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos personalizados sin depender de CDN */
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+  body.dark {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
+```
+
+---
+
+## 🖼️ **6. FAVICON PERSONALIZADO**
+
+### Estructura:
+
+```bash
+frontend/public/
+├── favicon.ico
+├── favicon-16x16.png
+├── favicon-32x32.png
+├── apple-touch-icon.png
+└── site.webmanifest
+```
+
+### Implementación en `<head>`:
+
+```jsx
+// app/layout.tsx
+export const metadata = {
+  title: 'Distriboo - Plataforma de Distribución',
+  description: 'Sistema de pedidos, stock y logística para distribuidores',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: { url: '/apple-touch-icon.png', sizes: '180x180' },
+  },
+};
+```
+
+---
+
+## ⏳ **7. LOADER/SPINNER PARA FETCHES**
+
+### Componente Spinner:
+
+```jsx
+// components/ui/Spinner.jsx
+const Spinner = ({ size = 'md', color = 'blue' }) => {
+  const sizes = {
+    sm: 'w-5 h-5',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12',
+  };
+  
+  return (
+    <div className="flex justify-center items-center">
+      <div
+        className={`${sizes[size]} border-4 border-${color}-200 border-t-${color}-600 rounded-full animate-spin`}
+      />
+    </div>
+  );
+};
+```
+
+### Uso con React Query:
+
+```jsx
+// Hook personalizado con loading state
+const { data, isLoading, error } = useQuery('productos', fetchProductos);
+
+if (isLoading) return <Spinner />;
+if (error) return <ErrorMessage error={error} />;
+
+return <ProductList products={data} />;
+```
+
+### Spinner de página completa:
+
+```jsx
+// components/ui/PageLoader.jsx
+const PageLoader = () => (
+  <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+    <div className="text-center">
+      <Spinner size="lg" />
+      <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando...</p>
+    </div>
+  </div>
+);
+```
+
+---
+
+## 📁 **8. REESTRUCTURACIÓN DE CARPETAS**
+
+### Nueva estructura optimizada:
+
+```bash
+frontend/src/
+├── app/                          # App router (páginas)
+│   ├── (auth)/                   # Rutas autenticadas
+│   │   ├── admin/
+│   │   │   ├── dashboard/
+│   │   │   ├── productos/
+│   │   │   ├── clientes/
+│   │   │   ├── pedidos/
+│   │   │   └── zonas/
+│   │   └── cliente/
+│   │       ├── dashboard/
+│   │       ├── catalogo/
+│   │       ├── pedidos/
+│   │       └── nuevo-pedido/
+│   ├── (public)/                 # Rutas públicas
+│   │   ├── login/
+│   │   └── page.tsx              # Landing
+│   └── layout.tsx
+│
+├── components/                   # Componentes reutilizables
+│   ├── ui/                       # UI básicos
+│   │   ├── Button.jsx
+│   │   ├── Input.jsx
+│   │   ├── Modal.jsx
+│   │   ├── Spinner.jsx
+│   │   ├── Pagination.jsx
+│   │   └── Toast.jsx
+│   ├── layout/                   # Layout components
+│   │   ├── Header.jsx
+│   │   ├── Sidebar.jsx
+│   │   ├── Footer.jsx
+│   │   └── ThemeToggle.jsx
+│   ├── dashboard/                # Dashboard específico
+│   │   ├── StatsCard.jsx
+│   │   ├── LineChart.jsx
+│   │   ├── BarChart.jsx
+│   │   └── RecentOrders.jsx
+│   ├── productos/                # Módulo productos
+│   │   ├── ProductList.jsx
+│   │   ├── ProductCard.jsx
+│   │   ├── ProductForm.jsx
+│   │   └── ProductFilters.jsx
+│   ├── clientes/                 # Módulo clientes
+│   │   ├── ClientList.jsx
+│   │   ├── ClientForm.jsx
+│   │   └── ClientFilters.jsx
+│   ├── pedidos/                  # Módulo pedidos
+│   │   ├── OrderList.jsx
+│   │   ├── OrderDetail.jsx
+│   │   ├── OrderForm.jsx
+│   │   └── OrderStatusBadge.jsx
+│   └── zonas/                    # Módulo zonas logísticas
+│       ├── ZoneList.jsx
+│       └── ZoneForm.jsx
+│
+├── hooks/                        # Custom hooks
+│   ├── useAuth.js
+│   ├── useTheme.js
+│   ├── usePagination.js
+│   └── useFetch.js
+│
+├── services/                     # API calls
+│   ├── api.js                    # Configuración base
+│   ├── productos.js
+│   ├── clientes.js
+│   ├── pedidos.js
+│   └── zonas.js
+│
+├── lib/                          # Utilidades
+│   ├── ThemeContext.jsx
+│   ├── AuthContext.jsx
+│   └── validations.js            # Esquemas de validación
+│
+├── types/                        # TypeScript types
+│   ├── product.types.ts
+│   ├── client.types.ts
+│   ├── order.types.ts
+│   └── user.types.ts
+│
+├── styles/                       # Estilos
+│   ├── globals.css
+│   └── tailwind.css
+│
+└── middleware.ts                 # Protección de rutas
+```
+
+---
+
+## ✅ **9. VALIDACIONES EN FORMULARIOS**
+
+### Esquemas de validación (Zod):
+
+```jsx
+// lib/validations.js
+import { z } from 'zod';
+
+// Validación de producto
+export const productSchema = z.object({
+  nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  descripcion: z.string().optional(),
+  marca: z.string().min(2, 'La marca es requerida'),
+  formato: z.string().min(1, 'El formato es requerido'),
+  precio: z.number().positive('El precio debe ser mayor a 0'),
+  stock: z.number().int().min(0, 'El stock no puede ser negativo'),
+});
+
+// Validación de cliente
+export const clientSchema = z.object({
+  razon_social: z.string().min(3, 'La razón social es requerida'),
+  email: z.string().email('Email inválido'),
+  telefono: z.string().min(8, 'Teléfono inválido'),
+  provincia_id: z.number().positive('Seleccione una provincia'),
+  direccion: z.string().min(5, 'La dirección es requerida'),
+});
+
+// Validación de zona logística
+export const zoneSchema = z.object({
+  provincia_id: z.number().positive('Seleccione una provincia'),
+  costo_base: z.number().min(0, 'El costo base no puede ser negativo'),
+  costo_por_bulto: z.number().min(0, 'El costo por bulto no puede ser negativo'),
+  pedido_minimo: z.number().min(0, 'El pedido mínimo no puede ser negativo'),
+  tiempo_entrega_dias: z.number().int().min(1, 'El tiempo debe ser al menos 1 día'),
+});
+```
+
+### Formulario con validación:
+
+```jsx
+// components/productos/ProductForm.jsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { productSchema } from '@/lib/validations';
+
+const ProductForm = ({ onSubmit, initialData }) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(productSchema),
+    defaultValues: initialData,
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Nombre</label>
+        <input
+          {...register('nombre')}
+          className="w-full px-3 py-2 border rounded-lg"
+        />
+        {errors.nombre && (
+          <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>
+        )}
+      </div>
+      {/* Más campos... */}
+      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+        Guardar
+      </button>
+    </form>
+  );
+};
+```
+
+---
+
+## 🔔 **10. MENSAJES DE ÉXITO/ERROR**
+
+### Sistema de Toast/Notificaciones:
+
+```jsx
+// components/ui/Toast.jsx
+import { useEffect } from 'react';
+
+const Toast = ({ message, type = 'success', onClose }) => {
+  const colors = {
+    success: 'bg-green-500',
+    error: 'bg-red-500',
+    info: 'bg-blue-500',
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50`}>
+      {message}
+    </div>
+  );
+};
+```
+
+### Hook para notificaciones:
+
+```jsx
+// hooks/useToast.js
+import { useState, useCallback } from 'react';
+
+export const useToast = () => {
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
+  return { toast, showToast, hideToast };
+};
+```
+
+### Uso en acciones:
+
+```jsx
+// Ejemplo: crear producto
+const handleCreateProduct = async (data) => {
+  try {
+    await api.post('/productos', data);
+    showToast('Producto creado exitosamente', 'success');
+    router.refresh();
+  } catch (error) {
+    showToast(error.response?.data?.message || 'Error al crear producto', 'error');
+  }
+};
+```
+
+---
+
+## 🚫 **11. SIN EMOJIS**
+
+### Reemplazar emojis con íconos de la plantilla:
+
+```jsx
+// ❌ NO usar:
+<button>📦 Productos</button>
+
+// ✅ Usar íconos de la plantilla:
+import { PackageIcon } from '@/components/icons';
+
+<button>
+  <PackageIcon className="w-5 h-5 mr-2" />
+  Productos
+</button>
+```
+
+### Íconos a usar (de Heroicons o Lucide):
+
+```jsx
+// components/icons/index.jsx
+export const DashboardIcon = () => (...);
+export const PackageIcon = () => (...);
+export const UsersIcon = () => (...);
+export const ShoppingCartIcon = () => (...);
+export const MapIcon = () => (...);
+export const SettingsIcon = () => (...);
+```
+
+---
+
+## ✅ **CHECKLIST DE IMPLEMENTACIÓN**
+
+### Tema y estilos:
+- [ ] Configurar tema claro por defecto
+- [ ] Implementar toggle dark mode con localStorage
+- [ ] Descargar CSS localmente (sin CDN)
+- [ ] Agregar favicon personalizado
+
+### Componentes y UX:
+- [ ] Implementar paginado en todos los listados
+- [ ] Crear componentes gráficos del dashboard (StatsCard, gráficos)
+- [ ] Agregar loader/spinner para fetches
+- [ ] Implementar mensajes de éxito/error (toast)
+
+### Landing page:
+- [ ] Actualizar landing con estructura de TailwindAdmin
+- [ ] Mantener footer con crédito Yoisar
+
+### Código y organización:
+- [ ] Reestructurar carpetas del frontend
+- [ ] Agregar validaciones en formularios (Zod)
+- [ ] Reemplazar todos los emojis por íconos
+
+---
+
+## 📝 **RESUMEN EJECUTIVO**
+
+| Ítem | Acción |
+|------|--------|
+| **Tema** | Light por defecto + toggle dark mode |
+| **Paginado** | 10/25/50 items por página en todos los listados |
+| **Gráficos** | StatsCard, LineChart, BarChart del dashboard |
+| **Landing** | Similar a homepage de TailwindAdmin |
+| **CSS** | Local (no CDN) |
+| **Favicon** | Logo de distriboo |
+| **Loader** | Spinner durante fetch de datos |
+| **Estructura** | Modular por funcionalidades |
+| **Validaciones** | Zod en formularios |
+| **Feedback** | Toast de éxito/error |
+| **Íconos** | Solo SVG, sin emojis |
+
+---
+
+
+# ajustes ux/ui - mobile first + deploy + testing: 
+
+Perfecto. Aquí tienes el requerimiento completo y ordenado para las fases de **UX/UI Mobile First** y **Deploy + Testing**.
+
+---
+
+# 📋 REQUERIMIENTO: FASE 1 - UX/UI MOBILE FIRST
+
+## 🎯 **OBJETIVO**
+
+Garantizar que **todas** las pantallas de distriboo sean completamente funcionales y adaptadas a dispositivos móviles (smartphones y tablets).
+
+---
+
+## 📱 **1. PRINCIPIOS MOBILE FIRST APLICADOS**
+
+### Estrategia general:
+
+| Principio | Implementación |
+|-----------|----------------|
+| **Diseño fluido** | Usar `w-full`, `max-w-`, flexbox y grid responsivo |
+| **Breakpoints** | `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px) |
+| **Touch targets** | Botones mínimos de 44x44px para dedos |
+| **Fuentes legibles** | Tamaño base 16px en móvil |
+| **Espaciado** | Padding/ margins mayores en móvil (p-4 vs p-6 en desktop) |
+
+### Clases Tailwind a usar:
+
+```css
+/* Móvil primero */
+.contenedor {
+  @apply w-full px-4 py-3;  /* Base móvil */
+  @apply md:px-6 md:py-4;   /* Tablet */
+  @apply lg:px-8 lg:py-6;   /* Desktop */
+}
+
+/* Grid responsivo */
+.grid-lista {
+  @apply grid grid-cols-1 gap-4;      /* Móvil: 1 columna */
+  @apply sm:grid-cols-2;              /* Tablet pequeña: 2 */
+  @apply md:grid-cols-3;              /* Tablet grande: 3 */
+  @apply lg:grid-cols-4;              /* Desktop: 4 */
+}
+
+/* Tabla responsiva */
+.tabla-responsive {
+  @apply w-full overflow-x-auto;      /* Scroll horizontal en móvil */
+  -webkit-overflow-scrolling: touch;
+}
+```
+
+---
+
+## 📊 **2. LISTADOS RESPONSIVOS (TABLAS)**
+
+### Problema detectado:
+Las tablas se cortan en móviles y no se pueden desplazar.
+
+### Solución aplicada a:
+
+| Sección | Archivo | Solución |
+|---------|---------|----------|
+| **Productos** | `ProductList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Clientes** | `ClientList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Pedidos** | `OrderList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Zonas logísticas** | `ZoneList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Distribuidores** | `DistribuidorList.jsx` | Scroll horizontal + tarjetas en móvil |
+
+### Implementación estándar para tablas:
+
+```jsx
+// components/ui/ResponsiveTable.jsx
+const ResponsiveTable = ({ columns, data, onEdit, onDelete }) => {
+  return (
+    <div className="w-full">
+      {/* Desktop: Tabla normal */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  {col.label}
+                </th>
+              ))}
+              <th className="px-6 py-3 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data.map((item) => (
+              <tr key={item.id}>
+                {columns.map((col) => (
+                  <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item[col.key]}
+                  </td>
+                ))}
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button onClick={() => onEdit(item)} className="text-blue-600 hover:text-blue-900 mr-3">
+                    Editar
+                  </button>
+                  <button onClick={() => onDelete(item)} className="text-red-600 hover:text-red-900">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile: Tarjetas */}
+      <div className="md:hidden space-y-4">
+        {data.map((item) => (
+          <div key={item.id} className="bg-white rounded-lg shadow p-4 border border-gray-200">
+            {columns.map((col) => (
+              <div key={col.key} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                <span className="text-sm font-medium text-gray-500">{col.label}:</span>
+                <span className="text-sm text-gray-900">{item[col.key]}</span>
+              </div>
+            ))}
+            <div className="flex justify-end space-x-3 mt-3 pt-2">
+              <button onClick={() => onEdit(item)} className="text-blue-600 text-sm font-medium">
+                Editar
+              </button>
+              <button onClick={() => onDelete(item)} className="text-red-600 text-sm font-medium">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 📝 **3. FORMULARIOS RESPONSIVOS**
+
+### Problema detectado:
+Los formularios no se adaptan bien en móviles (inputs muy anchos, botones pequeños).
+
+### Solución:
+
+```jsx
+// components/ui/ResponsiveForm.jsx
+const ResponsiveForm = ({ children, onSubmit }) => {
+  return (
+    <form onSubmit={onSubmit} className="w-full max-w-2xl mx-auto">
+      <div className="space-y-4 md:space-y-6">
+        {children}
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t">
+        <button type="submit" className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg">
+          Guardar
+        </button>
+        <button type="button" className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-700 rounded-lg">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// Campo de formulario responsivo
+const FormField = ({ label, error, children }) => {
+  return (
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <div className="w-full">
+        {children}
+      </div>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+};
+```
+
+### Grid responsivo para formularios:
+
+```jsx
+// Formulario con 2 columnas en desktop, 1 en móvil
+<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+  <FormField label="Nombre">
+    <input className="w-full px-3 py-2 border rounded-lg" />
+  </FormField>
+  <FormField label="Email">
+    <input className="w-full px-3 py-2 border rounded-lg" />
+  </FormField>
+</div>
+```
+
+---
+
+## 📊 **4. DASHBOARD RESPONSIVO**
+
+### Componentes a adaptar:
+
+| Componente | Móvil | Tablet | Desktop |
+|------------|-------|--------|---------|
+| **StatsCard** | 1 columna, texto pequeño | 2 columnas | 4 columnas |
+| **Gráficos** | 100% ancho, altura reducida | 100% ancho | 50% ancho |
+| **Tablas recientes** | Scroll horizontal | Scroll horizontal | Normal |
+
+### Implementación:
+
+```jsx
+// Dashboard principal
+const Dashboard = () => {
+  return (
+    <div className="p-4 md:p-6">
+      {/* Stats Cards - Grid responsivo */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard title="Pedidos hoy" value="24" />
+        <StatsCard title="Productos" value="156" />
+        <StatsCard title="Clientes" value="89" />
+        <StatsCard title="Stock bajo" value="5" />
+      </div>
+
+      {/* Gráficos - Stack en móvil, grid en desktop */}
+      <div className="mt-6 flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-1/2">
+          <LineChart title="Pedidos por mes" />
+        </div>
+        <div className="w-full lg:w-1/2">
+          <BarChart title="Pedidos por provincia" />
+        </div>
+      </div>
+
+      {/* Tabla de pedidos recientes - Scroll horizontal en móvil */}
+      <div className="mt-6 overflow-x-auto">
+        <RecentOrdersTable />
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 🏠 **5. LANDING PAGE RESPONSIVA**
+
+### Estructura responsiva:
+
+```jsx
+// Landing page
+const LandingPage = () => {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header responsivo */}
+      <header className="px-4 py-3 md:px-8 md:py-4">
+        <div className="flex justify-between items-center">
+          <Logo className="h-8 md:h-10" />
+          <button className="px-4 py-2 text-sm md:px-6 md:py-2 md:text-base bg-blue-600 text-white rounded-lg">
+            Iniciar Sesión
+          </button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="px-4 py-12 text-center md:py-20">
+        <h1 className="text-3xl font-bold md:text-5xl">
+          Distriboo: Pedidos inteligentes
+        </h1>
+        <p className="mt-4 text-base text-gray-600 max-w-md mx-auto md:text-lg md:max-w-2xl">
+          Centraliza tus pedidos, controla el stock y gestiona la logística por provincia.
+        </p>
+      </section>
+
+      {/* Features - Grid responsivo */}
+      <section className="px-4 py-12 bg-gray-50">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+          <FeatureCard icon={PackageIcon} title="Stock en tiempo real" />
+          <FeatureCard icon={TruckIcon} title="Logística por provincia" />
+          <FeatureCard icon={ChartIcon} title="Reportes y estadísticas" />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-4 py-6 text-center text-sm text-gray-500 border-t">
+        Desarrollado por{' '}
+        <a href="https://yoisar.com" className="text-blue-600 hover:underline">
+          Yoisar
+        </a>
+      </footer>
+    </div>
+  );
+};
+```
+
+---
+
+# 🚀 REQUERIMIENTO: FASE 2 - DEPLOY + TESTING
+
+## 🎯 **OBJETIVO**
+
+Configurar entorno de testing (`test.distriboo.yoisar.com`) y producción (`distriboo.yoisar.com`) sin conflictos en el mismo VPS.
+
+---
+
+## 🐳 **1. ESTRUCTURA DE CONTENEDORES**
+
+### Puertos asignados:
+
+| Entorno | Frontend | Backend | MySQL |
+|---------|----------|---------|-------|
+| **Testing** | 3002 | 8002 | 3308 |
+| **Producción** | 3001 | 8001 | 3307 |
+
+### Nombres de contenedores:
+
+| Entorno | Frontend | Backend | MySQL |
+|---------|----------|---------|-------|
+| **Testing** | `distriboo_test_frontend` | `distriboo_test_backend` | `distriboo_test_mysql` |
+| **Producción** | `distriboo_prod_frontend` | `distriboo_prod_backend` | `distriboo_prod_mysql` |
+
+---
+
+## 📁 **2. ARCHIVOS DE CONFIGURACIÓN**
+
+### Docker Compose Testing: `docker-compose.test.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: distriboo_test_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3002:3000"
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://localhost:8002/api
+    networks:
+      - distriboo_test_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: distriboo_test_backend
+    restart: always
+    ports:
+      - "127.0.0.1:8002:8000"
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - DB_HOST=mysql_test
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_test
+      - DB_USERNAME=distriboo_test_user
+      - DB_PASSWORD=${TEST_DB_PASSWORD}
+    networks:
+      - distriboo_test_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_test_mysql
+    restart: always
+    ports:
+      - "127.0.0.1:3308:3306"
+    environment:
+      - MYSQL_DATABASE=distriboo_test
+      - MYSQL_USER=distriboo_test_user
+      - MYSQL_PASSWORD=${TEST_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${TEST_ROOT_PASSWORD}
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+    networks:
+      - distriboo_test_network
+
+networks:
+  distriboo_test_network:
+    driver: bridge
+
+volumes:
+  mysql_test_data:
+```
+
+### Docker Compose Producción: `docker-compose.prod.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_prod_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://distriboo.yoisar.com/api
+    networks:
+      - distriboo_prod_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_prod_backend
+    restart: always
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=mysql_prod
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_prod
+      - DB_USERNAME=distriboo_prod_user
+      - DB_PASSWORD=${PROD_DB_PASSWORD}
+    networks:
+      - distriboo_prod_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_prod_mysql
+    restart: always
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      - MYSQL_DATABASE=distriboo_prod
+      - MYSQL_USER=distriboo_prod_user
+      - MYSQL_PASSWORD=${PROD_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${PROD_ROOT_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    networks:
+      - distriboo_prod_network
+
+networks:
+  distriboo_prod_network:
+    driver: bridge
+
+volumes:
+  mysql_prod_data:
+```
+
+---
+
+## 🌐 **3. CONFIGURACIÓN NGINX ACTUALIZADA**
+
+### Archivo: `infra/vps/nginx.conf`
+
+```nginx
+# /etc/nginx/conf.d/distriboo.conf
+
+# === TESTING ENVIRONMENT ===
+server {
+    listen 80;
+    listen [::]:80;
+    server_name test.distriboo.yoisar.com;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_test_access.log;
+    error_log /var/log/nginx/distriboo_test_error.log;
+
+    # Frontend Testing
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API Testing
+    location /api {
+        proxy_pass http://127.0.0.1:8002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# === PRODUCTION ENVIRONMENT ===
+server {
+    listen 80;
+    listen [::]:80;
+    server_name distriboo.yoisar.com;
+
+    # Redirigir HTTP a HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name distriboo.yoisar.com;
+
+    # SSL Certificados (configurar según tu VPS)
+    ssl_certificate /path/to/ssl/certificate.crt;
+    ssl_certificate_key /path/to/ssl/private.key;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_prod_access.log;
+    error_log /var/log/nginx/distriboo_prod_error.log;
+
+    # Frontend Producción
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API Producción
+    location /api {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Archivos estáticos
+    location /storage {
+        alias /www/wwwroot/distriboo.yoisar.com/backend/storage/app/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 🚀 **4. SCRIPT DE DEPLOY LOCAL**
+
+### Archivo: `scripts/deploy-local.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Script de Deploy Local - Distriboo
+# Uso: ./deploy-local.sh [test|prod]
+# ============================================
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Verificar argumento
+ENVIRONMENT=$1
+if [[ ! "$ENVIRONMENT" =~ ^(test|prod)$ ]]; then
+    echo "Uso: $0 [test|prod]"
+    exit 1
+fi
+
+# Configurar archivos según entorno
+if [ "$ENVIRONMENT" == "test" ]; then
+    COMPOSE_FILE="docker-compose.test.yml"
+    ENV_FILE=".env.test"
+    DOMAIN="test.distriboo.yoisar.com"
+    CONTAINER_PREFIX="distriboo_test"
+else
+    COMPOSE_FILE="docker-compose.prod.yml"
+    ENV_FILE=".env.production"
+    DOMAIN="distriboo.yoisar.com"
+    CONTAINER_PREFIX="distriboo_prod"
+fi
+
+log_info "Desplegando entorno: $ENVIRONMENT"
+log_info "Dominio: $DOMAIN"
+
+# Verificar archivos
+if [ ! -f "$COMPOSE_FILE" ]; then
+    log_error "No se encuentra $COMPOSE_FILE"
+    exit 1
+fi
+
+if [ ! -f "$ENV_FILE" ]; then
+    log_error "No se encuentra $ENV_FILE"
+    exit 1
+fi
+
+# Cargar variables de entorno
+export $(cat $ENV_FILE | grep -v '^#' | xargs)
+
+# Detener contenedores existentes
+log_info "Deteniendo contenedores existentes..."
+docker-compose -f $COMPOSE_FILE down
+
+# Construir y levantar
+log_info "Construyendo imágenes..."
+docker-compose -f $COMPOSE_FILE build --no-cache
+
+log_info "Levantando contenedores..."
+docker-compose -f $COMPOSE_FILE up -d
+
+# Ejecutar migraciones
+log_info "Ejecutando migraciones..."
+if [ "$ENVIRONMENT" == "test" ]; then
+    docker exec ${CONTAINER_PREFIX}_backend php artisan migrate --force
+    docker exec ${CONTAINER_PREFIX}_backend php artisan db:seed --force
+else
+    docker exec ${CONTAINER_PREFIX}_backend php artisan migrate --force
+fi
+
+# Limpiar caché
+log_info "Limpiando caché..."
+docker exec ${CONTAINER_PREFIX}_backend php artisan config:cache
+docker exec ${CONTAINER_PREFIX}_backend php artisan route:cache
+docker exec ${CONTAINER_PREFIX}_backend php artisan view:cache
+
+# Verificar estado
+log_info "Verificando estado de contenedores..."
+docker ps --filter "name=$CONTAINER_PREFIX"
+
+log_info "✅ Deploy completado exitosamente!"
+log_info "🌐 Sitio disponible en: http://$DOMAIN"
+
+# Mostrar logs si hay error
+if [ $? -ne 0 ]; then
+    log_error "El deploy falló. Revisa los logs:"
+    docker-compose -f $COMPOSE_FILE logs --tail=50
+fi
+```
+
+### Script de deploy remoto VPS: `scripts/deploy-remote.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Script de Deploy Remoto - Distriboo
+# Uso: ./deploy-remote.sh [test|prod]
+# ============================================
+
+ENVIRONMENT=$1
+
+if [[ ! "$ENVIRONMENT" =~ ^(test|prod)$ ]]; then
+    echo "Uso: $0 [test|prod]"
+    exit 1
+fi
+
+# Configuración VPS
+VPS_USER="tu_usuario"
+VPS_HOST="tu_vps_ip"
+
+log_info() { echo -e "\033[0;32m[INFO]\033[0m $1"; }
+
+log_info "Conectando al VPS y desplegando $ENVIRONMENT..."
+
+ssh $VPS_USER@$VPS_HOST << EOF
+    cd /www/wwwroot/distriboo.yoisar.com
+    git pull origin main
+    ./scripts/deploy-local.sh $ENVIRONMENT
+EOF
+
+log_info "✅ Deploy remoto completado!"
+```
+
+---
+
+## 📝 **5. ARCHIVOS .ENV**
+
+### `.env.test` (Testing)
+
+```env
+# Testing Environment
+APP_NAME=Distriboo-Test
+APP_ENV=testing
+APP_DEBUG=true
+
+# Database Testing
+TEST_DB_PASSWORD=TestPass123!
+TEST_ROOT_PASSWORD=TestRoot456!
+
+# Docker
+COMPOSE_PROJECT_NAME=distriboo_test
+```
+
+### `.env.production` (Producción)
+
+```env
+# Production Environment
+APP_NAME=Distriboo
+APP_ENV=production
+APP_DEBUG=false
+
+# Database Production
+PROD_DB_PASSWORD=ProdPass123!
+PROD_ROOT_PASSWORD=ProdRoot456!
+
+# Docker
+COMPOSE_PROJECT_NAME=distriboo_prod
+```
+
+---
+
+## 🐛 **6. CORRECCIÓN DE ERRORES EN CONSOLE.LOG**
+
+### Puntos a revisar:
+
+| Archivo | Posible error | Solución |
+|---------|---------------|----------|
+| `frontend/src/lib/api.js` | `fetch` sin manejo de error | Agregar try/catch |
+| `frontend/src/hooks/useAuth.js` | Token expirado | Redirigir a login |
+| `frontend/src/components/ui/Modal.jsx` | `setState` después de unmount | Usar ref para evitar |
+| `backend/routes/api.php` | Rutas sin middleware auth | Agregar verificación |
+
+### Ejemplo de corrección:
+
+```jsx
+// lib/api.js - Corrección de errores
+const api = {
+  async get(endpoint) {
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  },
+};
+```
+
+---
+
+## ✅ **CHECKLIST DE VERIFICACIÓN**
+
+### Testing (`test.distriboo.yoisar.com`):
+- [ ] Docker compose testing levantado sin errores
+- [ ] Puerto 3002 (frontend) funcionando
+- [ ] Puerto 8002 (backend) funcionando
+- [ ] Base de datos testing accesible
+- [ ] Nginx redirige correctamente
+- [ ] Todos los listados responsivos
+- [ ] Todos los formularios responsivos
+- [ ] Dashboard responsivo
+- [ ] Landing page responsiva
+- [ ] Sin errores en consola
+
+### Producción (`distriboo.yoisar.com`):
+- [ ] Docker compose producción levantado
+- [ ] Puerto 3001 (frontend) funcionando
+- [ ] Puerto 8001 (backend) funcionando
+- [ ] Base de datos producción separada
+- [ ] SSL configurado correctamente
+- [ ] No hay conflictos con testing
+- [ ] Performance optimizada
+
+### Conflictos evitados:
+- [ ] Testing y producción usan puertos diferentes
+- [ ] Contenedores tienen nombres distintos
+- [ ] Redes Docker separadas
+- [ ] Volúmenes de BD separados
+- [ ] Nginx distingue por dominio
+
+---
+
+## 📝 **RESUMEN EJECUTIVO**
+
+| Entorno | URL | Frontend | Backend | MySQL |
+|---------|-----|----------|---------|-------|
+| **Testing** | test.distriboo.yoisar.com | 3002 | 8002 | 3308 |
+| **Producción** | distriboo.yoisar.com | 3001 | 8001 | 3307 |
+
+### Comandos útiles:
+
+```bash
+# Deploy local testing
+./scripts/deploy-local.sh test
+
+# Deploy local producción
+./scripts/deploy-local.sh prod
+
+# Deploy remoto testing
+./scripts/deploy-remote.sh test
+
+# Deploy remoto producción
+./scripts/deploy-remote.sh prod
+
+# Ver logs testing
+docker-compose -f docker-compose.test.yml logs -f
+
+# Ver logs producción
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Detener testing
+docker-compose -f docker-compose.test.yml down
+
+# Detener producción
+docker-compose -f docker-compose.prod.yml down
+```
+
+---
+
+# gestión de datos de testing/producción y el flujo de despliegue con GitHub.
+
+---
+
+# 📋 REQUERIMIENTO: GESTIÓN DE DATOS Y FLUJO DE DEPLOY
+
+## 🎯 **OBJETIVO**
+
+Establecer un flujo limpio y profesional donde:
+- **Producción** solo tenga datos reales (empezando con el Super Admin)
+- **Testing** tenga datos de prueba para desarrollo
+- **GitHub** maneje dos ramas separadas: `main` (producción) y `develop` (testing)
+
+---
+
+## 🗑️ **1. LIMPIEZA DE DATOS EN PRODUCCIÓN**
+
+### Base de datos a limpiar: `distriboo_prod`
+
+### Datos a eliminar (manteniendo estructura):
+
+| Tabla | Acción | Excepción |
+|-------|--------|-----------|
+| `pedido_detalles` | Eliminar todos | - |
+| `pedidos` | Eliminar todos | - |
+| `productos` | Eliminar todos | - |
+| `clientes` | Eliminar todos | - |
+| `zonas_logisticas` | Eliminar todos | - |
+| `distribuidores` | Eliminar todos | - |
+| `users` | Eliminar todos excepto Super Admin | `sioy23@gmail.com` |
+| `provincias` | **Mantener** (datos maestros) | Todas las provincias argentinas |
+
+### Script de limpieza: `scripts/clean-production-data.php`
+
+```php
+<?php
+// scripts/clean-production-data.php
+// Ejecutar: php scripts/clean-production-data.php
+
+use Illuminate\Database\Capsule\Manager as DB;
+
+require_once __DIR__ . '/../backend/bootstrap.php';
+
+echo "=== LIMPIEZA DE DATOS DE PRODUCCIÓN ===\n";
+
+try {
+    DB::beginTransaction();
+
+    // 1. Limpiar detalles de pedidos
+    echo "Eliminando pedido_detalles...\n";
+    DB::table('pedido_detalles')->truncate();
+
+    // 2. Limpiar pedidos
+    echo "Eliminando pedidos...\n";
+    DB::table('pedidos')->truncate();
+
+    // 3. Limpiar productos
+    echo "Eliminando productos...\n";
+    DB::table('productos')->truncate();
+
+    // 4. Limpiar clientes
+    echo "Eliminando clientes...\n";
+    DB::table('clientes')->truncate();
+
+    // 5. Limpiar zonas logísticas
+    echo "Eliminando zonas_logisticas...\n";
+    DB::table('zonas_logisticas')->truncate();
+
+    // 6. Limpiar distribuidores
+    echo "Eliminando distribuidores...\n";
+    DB::table('distribuidores')->truncate();
+
+    // 7. Limpiar usuarios excepto Super Admin
+    echo "Eliminando usuarios (excepto Super Admin)...\n";
+    DB::table('users')
+        ->where('email', '!=', 'sioy23@gmail.com')
+        ->delete();
+
+    // 8. Verificar que Super Admin existe
+    $superAdmin = DB::table('users')
+        ->where('email', 'sioy23@gmail.com')
+        ->first();
+
+    if (!$superAdmin) {
+        echo "Creando Super Admin...\n";
+        DB::table('users')->insert([
+            'name' => 'Yassel Omar Izquierdo Souchay',
+            'email' => 'sioy23@gmail.com',
+            'password' => bcrypt('12345678'),
+            'role' => 'super_admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    DB::commit();
+    echo "✅ Limpieza completada exitosamente!\n";
+    echo "✅ Solo queda el Super Admin: sioy23@gmail.com\n";
+
+} catch (Exception $e) {
+    DB::rollBack();
+    echo "❌ Error durante la limpieza: " . $e->getMessage() . "\n";
+    exit(1);
+}
+```
+
+### Script de limpieza remota: `scripts/clean-production.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Limpieza de datos en producción
+# Uso: ./scripts/clean-production.sh
+# ============================================
+
+set -e
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+echo ""
+log_warn "=== ADVERTENCIA ==="
+log_warn "Este script ELIMINARÁ TODOS LOS DATOS de producción"
+log_warn "excepto el Super Admin (sioy23@gmail.com)"
+echo ""
+read -p "¿Estás seguro de continuar? (escribe 'CONFIRMAR'): " confirm
+
+if [ "$confirm" != "CONFIRMAR" ]; then
+    log_info "Operación cancelada."
+    exit 0
+fi
+
+log_info "Conectando al VPS y limpiando datos de producción..."
+
+ssh user@your-vps-ip << 'EOF'
+    cd /www/wwwroot/distriboo.yoisar.com
+    
+    # Ejecutar limpieza dentro del contenedor backend
+    docker exec distriboo_prod_backend php scripts/clean-production-data.php
+    
+    echo "✅ Producción limpiada correctamente"
+EOF
+
+log_info "✅ Limpieza de producción completada!"
+```
+
+---
+
+## 🧪 **2. DATOS DE PRUEBA PARA TESTING**
+
+### Script de seed para testing: `database/seeders/TestDataSeeder.php`
+
+```php
+<?php
+// database/seeders/TestDataSeeder.php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
+class TestDataSeeder extends Seeder
+{
+    public function run()
+    {
+        echo "=== CARGANDO DATOS DE PRUEBA ===\n";
+
+        // 1. Limpiar datos existentes (excepto Super Admin)
+        DB::table('pedido_detalles')->truncate();
+        DB::table('pedidos')->truncate();
+        DB::table('productos')->truncate();
+        DB::table('clientes')->truncate();
+        DB::table('zonas_logisticas')->truncate();
+        DB::table('distribuidores')->truncate();
+        DB::table('users')->where('email', '!=', 'sioy23@gmail.com')->delete();
+
+        // 2. Crear distribuidores de prueba
+        $distribuidores = [
+            [
+                'nombre_comercial' => 'Helados del Sur',
+                'razon_social' => 'Helados del Sur SRL',
+                'email_contacto' => 'admin@heladosdelsur.com',
+                'telefono' => '011-4567-8901',
+                'direccion' => 'Av. Corrientes 1234, CABA',
+                'activo' => true,
+            ],
+            [
+                'nombre_comercial' => 'Distribuidora Norte',
+                'razon_social' => 'Norte Distribuciones SA',
+                'email_contacto' => 'admin@distribuidoranorte.com',
+                'telefono' => '0351-4567-8901',
+                'direccion' => 'Av. Colon 567, Córdoba',
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($distribuidores as $data) {
+            $id = DB::table('distribuidores')->insertGetId($data);
+            
+            // Crear usuario distribuidor
+            DB::table('users')->insert([
+                'name' => $data['nombre_comercial'],
+                'email' => $data['email_contacto'],
+                'password' => Hash::make('12345678'),
+                'role' => 'distribuidor',
+                'distribuidor_id' => $id,
+                'created_at' => now(),
+            ]);
+        }
+
+        // 3. Crear provincias (si no existen)
+        $provincias = [
+            'Buenos Aires', 'CABA', 'Catamarca', 'Chaco', 'Chubut', 'Córdoba',
+            'Corrientes', 'Entre Ríos', 'Formosa', 'Jujuy', 'La Pampa', 'La Rioja',
+            'Mendoza', 'Misiones', 'Neuquén', 'Río Negro', 'Salta', 'San Juan',
+            'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero',
+            'Tierra del Fuego', 'Tucumán'
+        ];
+
+        foreach ($provincias as $provincia) {
+            DB::table('provincias')->updateOrInsert(
+                ['nombre' => $provincia],
+                ['created_at' => now()]
+            );
+        }
+
+        // 4. Crear clientes de prueba
+        $clientes = [
+            [
+                'distribuidor_id' => 1,
+                'razon_social' => 'Kiosco El Centro',
+                'email' => 'cliente1@test.com',
+                'telefono' => '011-5555-1234',
+                'provincia_id' => 1, // Buenos Aires
+                'direccion' => 'Av. Rivadavia 123',
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 1,
+                'razon_social' => 'Supermercado La Familia',
+                'email' => 'cliente2@test.com',
+                'telefono' => '011-5555-5678',
+                'provincia_id' => 2, // CABA
+                'direccion' => 'Av. Santa Fe 456',
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 2,
+                'razon_social' => 'Heladería Patagonia',
+                'email' => 'cliente3@test.com',
+                'telefono' => '0291-5555-9012',
+                'provincia_id' => 5, // Chubut
+                'direccion' => 'Av. Rawson 789',
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($clientes as $data) {
+            $id = DB::table('clientes')->insertGetId($data);
+            
+            // Crear usuario cliente
+            DB::table('users')->insert([
+                'name' => $data['razon_social'],
+                'email' => $data['email'],
+                'password' => Hash::make('12345678'),
+                'role' => 'cliente',
+                'distribuidor_id' => $data['distribuidor_id'],
+                'cliente_id' => $id,
+                'created_at' => now(),
+            ]);
+        }
+
+        // 5. Crear productos de prueba
+        $productos = [
+            [
+                'distribuidor_id' => 1,
+                'nombre' => 'Helado Vainilla 1L',
+                'descripcion' => 'Helado cremoso sabor vainilla',
+                'marca' => 'Cremolatti',
+                'formato' => '1 Litro',
+                'precio' => 2500,
+                'stock_actual' => 100,
+                'stock_minimo' => 20,
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 1,
+                'nombre' => 'Helado Chocolate 1L',
+                'descripcion' => 'Helado intenso sabor chocolate',
+                'marca' => 'Cremolatti',
+                'formato' => '1 Litro',
+                'precio' => 2600,
+                'stock_actual' => 85,
+                'stock_minimo' => 20,
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 1,
+                'nombre' => 'Pote de Dulce de Leche 2L',
+                'descripcion' => 'Helado de dulce de leche granizado',
+                'marca' => 'Grido',
+                'formato' => '2 Litros',
+                'precio' => 4800,
+                'stock_actual' => 50,
+                'stock_minimo' => 15,
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 2,
+                'nombre' => 'Bombón Suizo 1L',
+                'descripcion' => 'Helado con trozos de bombón suizo',
+                'marca' => 'Freddo',
+                'formato' => '1 Litro',
+                'precio' => 3200,
+                'stock_actual' => 40,
+                'stock_minimo' => 10,
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($productos as $producto) {
+            DB::table('productos')->insert($producto);
+        }
+
+        // 6. Crear zonas logísticas
+        $zonas = [
+            ['distribuidor_id' => 1, 'provincia_id' => 1, 'costo_base' => 1500, 'costo_por_bulto' => 200, 'pedido_minimo' => 5000, 'tiempo_entrega_dias' => 2],
+            ['distribuidor_id' => 1, 'provincia_id' => 2, 'costo_base' => 1000, 'costo_por_bulto' => 150, 'pedido_minimo' => 4000, 'tiempo_entrega_dias' => 1],
+            ['distribuidor_id' => 1, 'provincia_id' => 23, 'costo_base' => 5000, 'costo_por_bulto' => 500, 'pedido_minimo' => 10000, 'tiempo_entrega_dias' => 7],
+            ['distribuidor_id' => 2, 'provincia_id' => 5, 'costo_base' => 3000, 'costo_por_bulto' => 300, 'pedido_minimo' => 8000, 'tiempo_entrega_dias' => 4],
+        ];
+
+        foreach ($zonas as $zona) {
+            DB::table('zonas_logisticas')->insert($zona);
+        }
+
+        echo "✅ Datos de prueba cargados exitosamente!\n";
+        echo "\n=== CREDENCIALES DE PRUEBA ===\n";
+        echo "Super Admin: sioy23@gmail.com / 12345678\n";
+        echo "Distribuidor 1: admin@heladosdelsur.com / 12345678\n";
+        echo "Distribuidor 2: admin@distribuidoranorte.com / 12345678\n";
+        echo "Cliente 1: cliente1@test.com / 12345678\n";
+        echo "Cliente 2: cliente2@test.com / 12345678\n";
+        echo "Cliente 3: cliente3@test.com / 12345678\n";
+    }
+}
+```
+
+---
+
+## 🌿 **3. ESTRATEGIA DE RAMAS GITHUB**
+
+### Estructura:
+
+```
+main (producción)
+  └── develop (testing)
+       ├── feature/nueva-funcionalidad
+       └── bugfix/correccion
+```
+
+### Reglas:
+
+| Rama | Entorno | Deploy automático | Quién puede mergear |
+|------|---------|-------------------|---------------------|
+| `main` | `distriboo.yoisar.com` | Manual | Solo después de testing |
+| `develop` | `test.distriboo.yoisar.com` | Automático | Desarrolladores |
+| `feature/*` | Local | No | Pull Request a develop |
+| `bugfix/*` | Local | No | Pull Request a develop |
+
+---
+
+## 🚀 **4. WORKFLOWS DE GITHUB ACTIONS**
+
+### Workflow Testing: `.github/workflows/deploy-test.yml`
+
+```yaml
+name: Deploy to Testing
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      
+      - name: Deploy to Testing Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /www/wwwroot/distriboo.yoisar.com
+            git checkout develop
+            git pull origin develop
+            
+            # Cargar datos de prueba
+            docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder
+            
+            # Reiniciar contenedores
+            docker-compose -f docker-compose.test.yml down
+            docker-compose -f docker-compose.test.yml up -d --build
+            
+            # Ejecutar migraciones
+            docker exec distriboo_test_backend php artisan migrate --force
+          'EOF'
+      
+      - name: Notify deployment
+        run: |
+          echo "✅ Testing deployed to https://test.distriboo.yoisar.com"
+```
+
+### Workflow Producción: `.github/workflows/deploy-prod.yml`
+
+```yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      
+      - name: Deploy to Production Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /www/wwwroot/distriboo.yoisar.com
+            git checkout main
+            git pull origin main
+            
+            # Limpiar datos de prueba antes de deploy
+            docker exec distriboo_prod_backend php scripts/clean-production-data.php
+            
+            # Reiniciar contenedores
+            docker-compose -f docker-compose.prod.yml down
+            docker-compose -f docker-compose.prod.yml up -d --build
+            
+            # Ejecutar migraciones
+            docker exec distriboo_prod_backend php artisan migrate --force
+          'EOF'
+      
+      - name: Notify deployment
+        run: |
+          echo "✅ Production deployed to https://distriboo.yoisar.com"
+```
+
+---
+
+## 🔧 **5. SCRIPTS DE UTILIDAD**
+
+### Reset testing con datos frescos: `scripts/reset-testing.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Resetear entorno de testing con datos nuevos
+# Uso: ./scripts/reset-testing.sh
+# ============================================
+
+set -e
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+
+log_warn "Esto ELIMINARÁ y RECREARÁ todos los datos de testing"
+read -p "¿Continuar? (s/n): " confirm
+
+if [ "$confirm" != "s" ]; then
+    log_info "Operación cancelada."
+    exit 0
+fi
+
+cd /www/wwwroot/distriboo.yoisar.com
+
+# Detener contenedores
+log_info "Deteniendo contenedores de testing..."
+docker-compose -f docker-compose.test.yml down
+
+# Eliminar volúmenes (datos limpios)
+log_info "Eliminando volúmenes de testing..."
+docker volume rm distriboo_test_mysql_data || true
+
+# Levantar contenedores
+log_info "Levantando contenedores..."
+docker-compose -f docker-compose.test.yml up -d --build
+
+# Esperar a que MySQL esté listo
+log_info "Esperando a MySQL..."
+sleep 10
+
+# Ejecutar migraciones
+log_info "Ejecutando migraciones..."
+docker exec distriboo_test_backend php artisan migrate --force
+
+# Cargar datos de prueba
+log_info "Cargando datos de prueba..."
+docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder
+
+log_info "✅ Testing reset completado!"
+log_info "🌐 https://test.distriboo.yoisar.com"
+```
+
+### Script de backup producción: `scripts/backup-production.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Backup de base de datos de producción
+# Uso: ./scripts/backup-production.sh
+# ============================================
+
+DATE=$(date +"%Y%m%d_%H%M%S")
+BACKUP_DIR="/www/backups/distriboo/production"
+
+mkdir -p $BACKUP_DIR
+
+cd /www/wwwroot/distriboo.yoisar.com
+
+# Backup de la base de datos
+docker exec distriboo_prod_mysql mysqldump \
+    -u distriboo_prod_user \
+    -p${PROD_DB_PASSWORD} \
+    distriboo_prod > ${BACKUP_DIR}/backup_${DATE}.sql
+
+# Comprimir
+gzip ${BACKUP_DIR}/backup_${DATE}.sql
+
+# Eliminar backups antiguos (más de 30 días)
+find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete
+
+echo "✅ Backup guardado en: ${BACKUP_DIR}/backup_${DATE}.sql.gz"
+```
+
+---
+
+## 📋 **6. CONFIGURACIÓN DE SECRETS EN GITHUB**
+
+### Secrets necesarios:
+
+| Secret | Valor | Dónde obtener |
+|--------|-------|---------------|
+| `VPS_HOST` | IP del VPS | Proveedor VPS |
+| `VPS_USER` | Usuario SSH | Configuración VPS |
+| `VPS_SSH_KEY` | Clave privada SSH | `~/.ssh/id_rsa` |
+
+### Configurar en GitHub:
+1. Ir a `Settings` → `Secrets and variables` → `Actions`
+2. Agregar los 3 secrets arriba
+
+---
+
+## ✅ **CHECKLIST DE CONFIGURACIÓN**
+
+### GitHub:
+- [ ] Crear rama `develop` desde `main`
+- [ ] Configurar protección de ramas (`main` requiere PR)
+- [ ] Agregar secrets en GitHub Actions
+- [ ] Subir workflows a `.github/workflows/`
+
+### VPS - Testing:
+- [ ] Configurar `docker-compose.test.yml`
+- [ ] Crear `.env.test` con credenciales
+- [ ] Ejecutar `./scripts/reset-testing.sh`
+- [ ] Verificar `https://test.distriboo.yoisar.com`
+
+### VPS - Producción:
+- [ ] Configurar `docker-compose.prod.yml`
+- [ ] Crear `.env.production` con credenciales
+- [ ] Ejecutar limpieza inicial
+- [ ] Verificar `https://distriboo.yoisar.com`
+
+### Datos:
+- [ ] Producción: solo Super Admin
+- [ ] Testing: datos de prueba cargados
+- [ ] Provincias: mantenidas en ambos
+
+---
+
+## 📝 **COMANDOS RÁPIDOS**
+
+```bash
+# Resetear testing (datos nuevos)
+./scripts/reset-testing.sh
+
+# Limpiar producción (solo Super Admin)
+./scripts/clean-production.sh
+
+# Backup producción
+./scripts/backup-production.sh
+
+# Deploy manual testing
+git checkout develop
+git push origin develop
+# (GitHub Actions ejecuta automáticamente)
+
+# Deploy manual producción
+git checkout main
+git merge develop
+git push origin main
+```
+
+---
+
+## 🔥 **FLUJO DE TRABAJO RECOMENDADO**
+
+```mermaid
+git checkout -b feature/nueva-funcionalidad
+# ... desarrollar ...
+git push origin feature/nueva-funcionalidad
+# Crear Pull Request a develop
+# GitHub Actions → deploy automático a testing
+# Probar en https://test.distriboo.yoisar.com
+# Crear Pull Request a main
+# GitHub Actions → deploy manual a producción
+```
+
+---
+
+# test https://test.distriboo.yoisar.com/:
+- validar revisar https://test.distriboo.yoisar.com/
+- corregir revisar condig /Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg - para qeu apunte bien a los puertos correspondientes a testing y producción.
+- corregir revisar contenedores y nginx para evitar conflictos entre testing y producción, asegurando que cada entorno tenga su propia configuración de puertos, redes y volúmenes.
+
+## 🧪 Usuario de prueba para Testing
+- Crear usuario distribuidor de prueba en el entorno de testing:
+  - Nombre: `T.G Helados Proteicos` (o el nombre que indique el cliente).
+  - Email: `tg@h.test.distriboo.yoisar.com` (o `tg@demo.test.distriboo.yoisar.com`).
+  - Password: `testing1234` (generar y guardar en el seed/DB testing).
+  - Rol: `distribuidor`.
+  - Empresa/Marca: `BENLIVE`.
+
+- Crear cliente genérico asociado al distribuidor de prueba:
+  - Nombre: `Cliente genérico`.
+  - Email: `cliente.gen.test@test.distriboo.yoisar.com`.
+  - Password: `testing1234`.
+  - Rol: `cliente`.
+  - Asociado a distribuidor: `T.G Helados Proteicos`.
+
+- Verificar en el UI de testing:
+  - Login con distribuidor: `tg@h.test.distriboo.yoisar.com` / `testing1234`.
+  - Login con cliente: `cliente.gen.test@test.distriboo.yoisar.com` / `testing1234`.
+  - El cliente ve catálogo (sin stock/precio) y puede crear pedidos.
+  - El distribuidor ve sus productos, clientes y pedidos.
+
+---
+
+## 💬 Mensaje WhatsApp para el distribuidor
+
+```
+Hola! 👋
+
+Ya te dejé el sistema listo para que lo puedas probar.
+
+🌐 Accedé desde acá:
+https://test.distriboo.yoisar.com/login
+
+---
+
+🔐 Tu acceso como DISTRIBUIDOR:
+📧 Usuario: tg@h.test.distriboo.yoisar.com
+🔑 Contraseña: testing1234
+
+👤 Acceso de CLIENTE de prueba (para ver cómo lo ve tu cliente):
+📧 Usuario: cliente.gen.test@test.distriboo.yoisar.com
+🔑 Contraseña: testing1234
+
+---
+
+Con el acceso de distribuidor vas a poder ver tus productos, clientes y pedidos.
+Con el de cliente podés ver cómo se ve el catálogo y armar un pedido de prueba.
+
+Cualquier cosa que quieras cambiar, ajustar o que no te convenza, me avisás y lo resolvemos. 🙌
+```

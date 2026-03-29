@@ -20,7 +20,8 @@ class ZonaLogisticaController extends Controller
             $query->where('distribuidor_id', $user->distribuidor_id);
         }
 
-        $zonas = $query->orderBy('provincia_id')->get();
+        $perPage = $request->get('per_page', 10);
+        $zonas = $query->orderBy('provincia_id')->paginate($perPage);
 
         return response()->json($zonas);
     }

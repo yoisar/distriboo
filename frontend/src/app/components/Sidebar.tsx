@@ -2,7 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  ChartBarIcon,
+  CubeIcon,
+  ShoppingCartIcon,
+  ClipboardListIcon,
+  UsersIcon,
+  TruckIcon,
+  DocumentTextIcon,
+  KeyIcon,
+  TrendingUpIcon,
+  BuildingOfficeIcon,
+} from "@/components/ui/Icons";
 import type { User } from "@/types";
+import type { ReactNode } from "react";
 
 interface SidebarProps {
   user: User;
@@ -10,24 +23,30 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const clienteLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/productos", label: "Catálogo", icon: "📦" },
-  { href: "/pedidos/nuevo", label: "Nuevo Pedido", icon: "🛒" },
-  { href: "/pedidos", label: "Mis Pedidos", icon: "📋" },
+interface NavLink {
+  href: string;
+  label: string;
+  icon: ReactNode;
+}
+
+const clienteLinks: NavLink[] = [
+  { href: "/dashboard", label: "Dashboard", icon: <ChartBarIcon /> },
+  { href: "/productos", label: "Catálogo", icon: <CubeIcon /> },
+  { href: "/pedidos/nuevo", label: "Nuevo Pedido", icon: <ShoppingCartIcon /> },
+  { href: "/pedidos", label: "Mis Pedidos", icon: <ClipboardListIcon /> },
 ];
 
-const adminLinks = [
-  { href: "/admin/productos", label: "Productos", icon: "📦" },
-  { href: "/admin/clientes", label: "Clientes", icon: "👥" },
-  { href: "/admin/zonas", label: "Zonas Logísticas", icon: "🚚" },
-  { href: "/admin/pedidos", label: "Gestión Pedidos", icon: "📑" },
-  { href: "/admin/usuarios", label: "Usuarios", icon: "🔑" },
-  { href: "/admin/reportes", label: "Reportes", icon: "📈" },
+const adminLinks: NavLink[] = [
+  { href: "/admin/productos", label: "Productos", icon: <CubeIcon /> },
+  { href: "/admin/clientes", label: "Clientes", icon: <UsersIcon /> },
+  { href: "/admin/zonas", label: "Zonas Logísticas", icon: <TruckIcon /> },
+  { href: "/admin/pedidos", label: "Gestión Pedidos", icon: <DocumentTextIcon /> },
+  { href: "/admin/usuarios", label: "Usuarios", icon: <KeyIcon /> },
+  { href: "/admin/reportes", label: "Reportes", icon: <TrendingUpIcon /> },
 ];
 
-const superAdminLinks = [
-  { href: "/admin/distribuidores", label: "Distribuidores", icon: "🏢" },
+const superAdminLinks: NavLink[] = [
+  { href: "/admin/distribuidores", label: "Distribuidores", icon: <BuildingOfficeIcon /> },
 ];
 
 export default function Sidebar({ user, open, onClose }: SidebarProps) {
@@ -42,7 +61,6 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay mobile */}
       {open && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -51,18 +69,16 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-gray-900 text-gray-100 transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-200 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-gray-800">
-          <Link href="/dashboard" className="text-2xl font-bold text-white tracking-wide">
+        <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800">
+          <Link href="/dashboard" className="text-2xl font-bold text-blue-600 tracking-wide">
             distriboo
           </Link>
         </div>
 
-        {/* Nav */}
         <nav className="mt-4 px-3 space-y-1">
           {clienteLinks.map((link) => (
             <Link
@@ -72,10 +88,10 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive(link.href)
                   ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              <span>{link.icon}</span>
+              {link.icon}
               {link.label}
             </Link>
           ))}
@@ -83,7 +99,7 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
           {isAdmin && (
             <>
               <div className="pt-4 pb-2 px-3">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Administración
                 </p>
               </div>
@@ -95,10 +111,10 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive(link.href)
                       ? "bg-blue-600 text-white"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
-                  <span>{link.icon}</span>
+                  {link.icon}
                   {link.label}
                 </Link>
               ))}
@@ -108,7 +124,7 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
           {user.role === "super_admin" && (
             <>
               <div className="pt-4 pb-2 px-3">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Super Admin
                 </p>
               </div>
@@ -120,10 +136,10 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive(link.href)
                       ? "bg-blue-600 text-white"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
-                  <span>{link.icon}</span>
+                  {link.icon}
                   {link.label}
                 </Link>
               ))}
@@ -131,14 +147,13 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
           )}
         </nav>
 
-        {/* User info at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-200 truncate">{user.name}</p>
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
               <p className="text-xs text-gray-500">
                 {user.role === "super_admin" ? "Super Admin" : user.role === "distribuidor" ? "Distribuidor" : "Cliente"}
               </p>

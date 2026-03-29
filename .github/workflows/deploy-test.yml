@@ -1,0 +1,68 @@
+name: Deploy to Testing
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Create .env.test on VPS
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cat > /www/wwwroot/distriboo.yoisar.com/.env.test << 'ENVEOF'
+          APP_NAME=Distriboo-Test
+          APP_ENV=testing
+          APP_DEBUG=true
+          APP_KEY=${{ secrets.TEST_APP_KEY }}
+          TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
+          TEST_ROOT_PASSWORD=${{ secrets.TEST_ROOT_PASSWORD }}
+          COMPOSE_PROJECT_NAME=distriboo_test
+          SANCTUM_STATEFUL_DOMAINS=test.distriboo.yoisar.com
+          SESSION_DOMAIN=test.distriboo.yoisar.com
+          MAIL_MAILER=log
+          MAIL_FROM_ADDRESS=test@distriboo.yoisar.com
+          MAIL_FROM_NAME='Distriboo Test'
+          ENVEOF
+          "
+
+      - name: Git pull on VPS
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /www/wwwroot/distriboo.yoisar.com &&
+            git checkout develop &&
+            git pull origin develop
+          "
+
+      - name: Rebuild and start containers
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /www/wwwroot/distriboo.yoisar.com &&
+            docker compose --env-file .env.test -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true &&
+            docker rm -f distriboo_test_mysql distriboo_test_backend distriboo_test_frontend distriboo_test_nginx 2>/dev/null || true &&
+            docker compose --env-file .env.test -f docker-compose.test.yml up -d --build
+          "
+
+      - name: Wait for MySQL and run migrations
+        run: |
+          sleep 20
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            docker exec distriboo_test_backend php artisan config:clear &&
+            docker exec distriboo_test_backend php artisan migrate --force &&
+            docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder --force &&
+            echo '✅ Testing deploy completado'
+          "
+
+      - name: Deployment summary
+        run: echo "✅ Testing deployed to https://test.distriboo.yoisar.com"

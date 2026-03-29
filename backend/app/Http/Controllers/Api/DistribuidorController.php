@@ -9,9 +9,10 @@ use Illuminate\Http\Request;
 
 class DistribuidorController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $distribuidores = Distribuidor::orderBy('nombre_comercial')->get();
+        $perPage = $request->get('per_page', 10);
+        $distribuidores = Distribuidor::orderBy('nombre_comercial')->paginate($perPage);
 
         return response()->json($distribuidores);
     }

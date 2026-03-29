@@ -141,8 +141,11 @@ class ApiClient {
   }
 
   // Zonas logísticas
-  getZonasLogisticas() {
-    return this.request<import("@/types").ZonaLogistica[]>("/zonas-logisticas");
+  getZonasLogisticas(params?: Record<string, string>) {
+    const query = params ? "?" + new URLSearchParams(params).toString() : "";
+    return this.request<import("@/types").PaginatedResponse<import("@/types").ZonaLogistica>>(
+      `/zonas-logisticas${query}`
+    );
   }
 
   createZonaLogistica(data: Partial<import("@/types").ZonaLogistica>) {
@@ -241,6 +244,10 @@ class ApiClient {
 
   getReporteStockBajo() {
     return this.request<import("@/types").Producto[]>("/reportes/stock-bajo");
+  }
+
+  getReportePedidosPorMes() {
+    return this.request<{ mes: string; total_pedidos: number; monto_total: number }[]>("/reportes/pedidos-por-mes");
   }
 
   // Usuarios

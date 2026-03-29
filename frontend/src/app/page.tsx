@@ -1,124 +1,307 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  CubeIcon,
+  TruckIcon,
+  ChartBarIcon,
+  ShoppingCartIcon,
+  CheckCircleIcon,
+  GlobeIcon,
+  BoltIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+  ArrowRightIcon,
+  SunIcon,
+  MoonIcon,
+} from "@/components/ui/Icons";
 
 export default function Home() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("distriboo_theme");
+    const isDark = saved === "dark";
+    setDark(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
+
+  function toggleTheme() {
+    const next = !dark;
+    setDark(next);
+    localStorage.setItem("distriboo_theme", next ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", next);
+  }
+
+  const features = [
+    { icon: CubeIcon, title: "Stock en Tiempo Real", desc: "Tus clientes ven disponibilidad actualizada al instante. Sin sorpresas ni demoras.", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/40" },
+    { icon: TruckIcon, title: "Logística por Provincia", desc: "Costos y tiempos de entrega calculados automáticamente según zona geográfica.", color: "text-green-600 dark:text-green-400", bg: "bg-green-100 dark:bg-green-900/40" },
+    { icon: ChartBarIcon, title: "Panel de Control", desc: "Gestioná productos, clientes, pedidos y reportes desde un solo panel intuitivo.", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/40" },
+    { icon: ShoppingCartIcon, title: "Pedidos Online 24/7", desc: "Tus clientes arman pedidos cuando quieran, desde cualquier dispositivo.", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-900/40" },
+    { icon: ShieldCheckIcon, title: "Seguro y Confiable", desc: "Autenticación robusta y datos protegidos. Tu información siempre segura.", color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/40" },
+    { icon: BoltIcon, title: "Rápido y Moderno", desc: "Tecnología de última generación para una experiencia ágil y sin fricciones.", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-900/40" },
+  ];
+
+  const steps = [
+    { num: "01", title: "Registrá tu empresa", desc: "Creá tu cuenta de distribuidor y configurá tu catálogo de productos." },
+    { num: "02", title: "Invitá a tus clientes", desc: "Cada cliente mayorista accede con su propia cuenta y ve precios personalizados." },
+    { num: "03", title: "Recibí pedidos online", desc: "Los pedidos llegan organizados con costo logístico y tiempo estimado." },
+    { num: "04", title: "Gestioná y despachá", desc: "Controlá el estado de cada pedido, stock y logística desde el panel." },
+  ];
+
+  const stats = [
+    { value: "100%", label: "Online", desc: "Accedé desde cualquier lugar" },
+    { value: "24/7", label: "Disponible", desc: "Sin horarios de atención" },
+    { value: "0", label: "Errores de pedido", desc: "Todo digitalizado y validado" },
+    { value: "∞", label: "Escalable", desc: "Crecé sin límites" },
+  ];
+
+  const marqueeItems = [
+    "Stock Actualizado", "Pedidos Online", "Logística Inteligente", "Multi-provincia",
+    "Panel Admin", "Reportes", "Modo Oscuro", "Responsive", "Seguro",
+    "Rápido", "Sin WhatsApp", "Automatizado",
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-600">distriboo</h1>
-          <Link
-            href="/login"
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Iniciar Sesión
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            distriboo
           </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {dark ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+            </button>
+            <Link
+              href="/login"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
+            >
+              Iniciar Sesión
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="flex-1 flex items-center">
-        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-          <h2 className="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-            Pedidos inteligentes para<br />tu distribución
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-            Centralizá tus pedidos, controlá el stock en tiempo real y gestioná
-            la logística por provincia. La herramienta que tu distribuidora
-            necesita.
-          </p>
-          <Link
-            href="/login"
-            className="bg-blue-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-700 transition-colors inline-block shadow-lg shadow-blue-600/25"
-          >
-            Empezar Ahora
-          </Link>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="bg-white py-20 border-t">
-        <div className="max-w-7xl mx-auto px-4">
-          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Todo lo que necesitás en un solo lugar
-          </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                📦
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Stock en Tiempo Real</h4>
-              <p className="text-sm text-gray-500">
-                Tus clientes ven disponibilidad actualizada al instante.
-              </p>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950" />
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-sm font-medium mb-8">
+              <BoltIcon className="w-4 h-4" />
+              Plataforma B2B para distribuidores
             </div>
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                🚚
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Logística por Provincia</h4>
-              <p className="text-sm text-gray-500">
-                Costos y tiempos de entrega calculados automáticamente.
-              </p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                📊
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Panel de Control</h4>
-              <p className="text-sm text-gray-500">
-                Gestioná productos, clientes, pedidos y reportes desde un solo lugar.
-              </p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-14 h-14 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                🛒
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Pedidos Online</h4>
-              <p className="text-sm text-gray-500">
-                Tus clientes arman pedidos cuando quieran, desde cualquier dispositivo.
-              </p>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+              Pedidos inteligentes para{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                tu distribución
+              </span>
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
+              Centralizá tus pedidos, controlá el stock en tiempo real y gestioná
+              la logística por provincia. La herramienta que tu distribuidora necesita.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/login"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-blue-600/25"
+              >
+                Empezar Ahora
+                <ArrowRightIcon className="w-5 h-5" />
+              </Link>
+              <a
+                href="#features"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+              >
+                Ver Funcionalidades
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 bg-blue-600 text-white text-center">
-        <div className="max-w-3xl mx-auto px-4">
-          <h3 className="text-3xl font-bold mb-4">
+      {/* Marquee */}
+      <section className="border-y border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-hidden py-4">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...marqueeItems, ...marqueeItems].map((item, i) => (
+            <span key={i} className="mx-6 text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <CheckCircleIcon className="w-4 h-4 text-blue-500" />
+              {item}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-20 sm:py-28 bg-white dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              Todo lo que necesitás en un solo lugar
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Herramientas potentes y fáciles de usar para modernizar tu operación de distribución mayorista.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((f, i) => (
+              <div
+                key={i}
+                className="group p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300"
+              >
+                <div className={`w-12 h-12 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-4`}>
+                  <f.icon className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-16 bg-gray-50 dark:bg-gray-900 border-y border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((s, i) => (
+              <div key={i} className="text-center">
+                <div className="text-3xl sm:text-4xl font-extrabold text-blue-600 dark:text-blue-400 mb-1">{s.value}</div>
+                <div className="text-lg font-semibold mb-1">{s.label}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-20 sm:py-28 bg-white dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              Cómo funciona
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              En 4 simples pasos, transformá la forma en que gestionás tu distribución.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((s, i) => (
+              <div key={i} className="relative">
+                <div className="text-5xl font-extrabold text-gray-100 dark:text-gray-800 mb-4">{s.num}</div>
+                <h3 className="text-lg font-semibold mb-2">{s.title}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{s.desc}</p>
+                {i < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-8 right-0 translate-x-1/2 w-8">
+                    <ArrowRightIcon className="w-5 h-5 text-gray-300 dark:text-gray-700" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits banner */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+                Dejá de tomar pedidos por WhatsApp
+              </h2>
+              <p className="text-blue-100 text-lg mb-8">
+                Menos errores, más velocidad. Tus clientes hacen pedidos organizados y vos te enfocás en despachar.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-50 transition-colors"
+              >
+                Probá Distriboo
+                <ArrowRightIcon className="w-5 h-5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: ClockIcon, text: "Ahorrá tiempo en gestión" },
+                { icon: GlobeIcon, text: "Acceso desde cualquier lugar" },
+                { icon: CheckCircleIcon, text: "Cero errores de pedido" },
+                { icon: ChartBarIcon, text: "Reportes en tiempo real" },
+              ].map((b, i) => (
+                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex items-start gap-3">
+                  <b.icon className="w-6 h-6 text-blue-200 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium text-blue-50">{b.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonial / Value prop */}
+      <section className="py-20 sm:py-28 bg-white dark:bg-gray-950">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 mb-8">
+            <CubeIcon className="w-8 h-8" />
+          </div>
+          <blockquote className="text-2xl sm:text-3xl font-semibold leading-relaxed mb-6">
+            &ldquo;Distriboo simplifica la operación mayorista: desde el pedido hasta
+            el despacho, todo en un solo sistema moderno y eficiente.&rdquo;
+          </blockquote>
+          <p className="text-gray-500 dark:text-gray-400">
+            Diseñado para distribuidores que quieren crecer sin complicaciones.
+          </p>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Simplificá tu operación mayorista
-          </h3>
-          <p className="text-blue-100 text-lg mb-8">
-            Menos errores, más velocidad. Dejá de tomar pedidos por WhatsApp.
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
+            Sumate a la plataforma que moderniza la distribución. Comenzá hoy mismo.
           </p>
           <Link
             href="/login"
-            className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors inline-block"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-blue-600/25"
           >
-            Iniciar Sesión
+            Empezar Ahora
+            <ArrowRightIcon className="w-5 h-5" />
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-center md:text-left">
-            <span className="text-white font-semibold">distriboo</span>
-            <span className="mx-2">·</span>
-            <span className="text-sm">Plataforma B2B para distribuidores</span>
-          </div>
-          <div className="text-sm">
-            Desarrollado por{" "}
-            <a
-              href="https://yoisar.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Yoisar
-            </a>
+      <footer className="bg-gray-900 dark:bg-gray-950 text-gray-400 py-12 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-white font-bold text-lg">distriboo</span>
+              <span className="text-gray-600">|</span>
+              <span className="text-sm">Plataforma B2B para distribuidores</span>
+            </div>
+            <div className="text-sm">
+              Desarrollado por{" "}
+              <a
+                href="https://yoisar.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
+              >
+                Yoisar
+              </a>
+            </div>
           </div>
         </div>
       </footer>

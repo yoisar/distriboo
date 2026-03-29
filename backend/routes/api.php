@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/productos-mas-vendidos', [ReporteController::class, 'productosMasVendidos']);
             Route::get('/clientes-top', [ReporteController::class, 'clientesTop']);
             Route::get('/stock-bajo', [ReporteController::class, 'stockBajo']);
+            Route::get('/pedidos-por-mes', [ReporteController::class, 'pedidosPorMes']);
         });
     });
 });
