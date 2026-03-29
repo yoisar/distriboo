@@ -194,8 +194,9 @@ export default function AdminUsuariosPage() {
         {loading ? (
           <Loading />
         ) : (
-          {/* Desktop: Tabla */}
-          <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+          <>
+            {/* Desktop: Tabla */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
@@ -262,6 +263,7 @@ export default function AdminUsuariosPage() {
               </div>
             ))}
           </div>
+          </>
         )}
 
         <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
