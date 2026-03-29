@@ -25,11 +25,11 @@ export default function NuevoPedidoPage() {
     if (authLoading || !user) return;
 
     Promise.all([
-      api.getProductos({ per_page: "100" }),
+      api.getProductos({ per_page: "200", activo: "1" }),
       api.getZonasLogisticas({ per_page: "100" }),
     ])
       .then(([prodData, zonasRes]) => {
-        setProductos(prodData.data.filter((p) => p.activo && p.stock > 0));
+        setProductos(prodData.data.filter((p) => p.activo && Number(p.stock ?? 0) > 0));
         if (user.cliente?.provincia_id) {
           const z = zonasRes.data.find(
             (z) => z.provincia_id === user.cliente?.provincia_id
@@ -37,6 +37,7 @@ export default function NuevoPedidoPage() {
           if (z) setZona(z);
         }
       })
+      .catch(() => setError("Error al cargar el catálogo. Intentá recargar la página."))
       .finally(() => setLoading(false));
   }, [authLoading, user]);
 

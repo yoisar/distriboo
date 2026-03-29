@@ -44,14 +44,6 @@ class ProductoController extends Controller
 
         $productos = $query->orderBy('nombre')->paginate(20);
 
-        // Clientes: ocultar stock y precio en la lista del catálogo
-        if ($user->role === 'cliente') {
-            $productos->getCollection()->transform(function ($p) {
-                $p->makeHidden(['stock', 'precio']);
-                return $p;
-            });
-        }
-
         return response()->json($productos);
     }
 
