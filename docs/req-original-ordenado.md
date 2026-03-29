@@ -1552,4 +1552,677 @@ Con ese archivo podré:
 - no usar emojos en la interfaz, mantener un diseño profesional y limpio solo icono sde laplantilla
 ---
 
+---
+
+# 📋 REQUERIMIENTO: AJUSTES UX/UI Y OPTIMIZACIONES
+
+## 🎯 **OBJETIVO**
+
+Mejorar la experiencia de usuario, el rendimiento y la organización del código de **distriboo** con los siguientes ajustes.
+
+---
+
+## 🎨 **1. TEMA CLARO POR DEFECTO + TOGGLE DARK MODE**
+
+### Especificación:
+
+| Ítem | Valor |
+|------|-------|
+| **Tema por defecto** | Light mode (claro) |
+| **Toggle** | Switch en el navbar (luna/sol) |
+| **Persistencia** | Guardar preferencia en `localStorage` |
+| **Comportamiento** | Al cargar la app, leer `localStorage` y aplicar el tema guardado |
+
+### Implementación:
+
+```jsx
+// lib/ThemeContext.jsx
+import { createContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('distriboo-theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('distriboo-theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+```
+
+---
+
+## 📄 **2. PAGINADO EN TODOS LOS LISTADOS**
+
+### Listados que requieren paginado:
+
+| Sección | Elementos por página |
+|---------|---------------------|
+| Productos | 10, 25, 50 (selector) |
+| Clientes | 10, 25, 50 |
+| Pedidos | 10, 25, 50 |
+| Zonas logísticas | 10, 25, 50 |
+| Distribuidores | 10, 25, 50 |
+| Catálogo (cliente) | 12 (grid) |
+
+### Comportamiento:
+
+```jsx
+// Componente de paginado reutilizable
+const Pagination = ({ currentPage, totalPages, onPageChange, itemsPerPage, onItemsPerPageChange }) => {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+      {/* Selector de items por página */}
+      <div className="flex items-center">
+        <span className="mr-2 text-sm text-gray-700">Mostrar</span>
+        <select
+          value={itemsPerPage}
+          onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+          className="px-2 py-1 border border-gray-300 rounded-md"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+        </select>
+        <span className="ml-2 text-sm text-gray-700">entradas</span>
+      </div>
+
+      {/* Botones de navegación */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border rounded-md disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <span className="px-3 py-1 text-sm">
+          Página {currentPage} de {totalPages}
+        </span>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border rounded-md disabled:opacity-50"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  );
+};
+```
+
+### Backend (Laravel):
+
+```php
+// Controlador
+public function index(Request $request)
+{
+    $perPage = $request->get('per_page', 10);
+    $productos = Producto::ownedByUser()->paginate($perPage);
+    
+    return response()->json($productos);
+}
+```
+
+---
+
+## 📊 **3. COMPONENTES GRÁFICOS DEL DASHBOARD**
+
+### Componentes a implementar (de la plantilla):
+
+| Componente | Ubicación | Función |
+|------------|-----------|---------|
+| **StatsCard** | Dashboard | Tarjetas con métricas (pedidos, productos, clientes, stock bajo) |
+| **LineChart** | Dashboard | Evolución de pedidos por mes |
+| **BarChart** | Dashboard | Pedidos por provincia |
+| **RecentOrdersTable** | Dashboard | Últimos 5 pedidos |
+| **TopProducts** | Dashboard | Productos más vendidos |
+| **ActivityTimeline** | Dashboard | Actividad reciente |
+
+### Estructura de gráficos:
+
+```jsx
+// components/dashboard/StatsCard.jsx
+const StatsCard = ({ title, value, icon, trend, color }) => {
+  return (
+    <div className="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
+      <div className="flex items-center">
+        <div className={`p-3 rounded-full ${color} bg-opacity-10`}>
+          {icon}
+        </div>
+        <div className="ml-4">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {title}
+          </h3>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+            {value}
+          </p>
+          {trend && (
+            <p className="text-sm text-green-600">{trend}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 🏠 **4. LANDING PAGE ACTUALIZADA**
+
+### Estructura similar a la homepage de TailwindAdmin:
+
+```jsx
+// app/page.tsx (landing page pública)
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header con navegación */}
+      <Header />
+      
+      {/* Hero Section */}
+      <HeroSection />
+      
+      {/* Features Section */}
+      <FeaturesSection />
+      
+      {/* Stats Section */}
+      <StatsSection />
+      
+      {/* Testimonials (opcional) */}
+      <TestimonialsSection />
+      
+      {/* CTA Section */}
+      <CTASection />
+      
+      {/* Footer con crédito Yoisar */}
+      <Footer />
+    </div>
+  );
+}
+```
+
+### Componentes de la landing:
+
+```jsx
+// Hero Section
+const HeroSection = () => (
+  <section className="py-20 px-4 text-center">
+    <h1 className="text-5xl font-bold text-gray-900 mb-4">
+      Distriboo: Pedidos inteligentes para tu distribución
+    </h1>
+    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+      Centraliza tus pedidos, controla el stock en tiempo real 
+      y gestiona la logística por provincia.
+    </p>
+    <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      Iniciar Sesión
+    </button>
+  </section>
+);
+```
+
+---
+
+## 🎨 **5. CSS Y ESTILOS LOCALES**
+
+### No usar CDN → archivos locales:
+
+```bash
+frontend/
+├── styles/
+│   ├── globals.css      # Estilos globales
+│   ├── tailwind.css     # Tailwind imports
+│   └── components.css   # Estilos específicos de componentes
+```
+
+### Configuración de Tailwind (local):
+
+```js
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class',  // Usar clase 'dark' para modo oscuro
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
+    './src/app/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+```css
+/* styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos personalizados sin depender de CDN */
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+  body.dark {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
+```
+
+---
+
+## 🖼️ **6. FAVICON PERSONALIZADO**
+
+### Estructura:
+
+```bash
+frontend/public/
+├── favicon.ico
+├── favicon-16x16.png
+├── favicon-32x32.png
+├── apple-touch-icon.png
+└── site.webmanifest
+```
+
+### Implementación en `<head>`:
+
+```jsx
+// app/layout.tsx
+export const metadata = {
+  title: 'Distriboo - Plataforma de Distribución',
+  description: 'Sistema de pedidos, stock y logística para distribuidores',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: { url: '/apple-touch-icon.png', sizes: '180x180' },
+  },
+};
+```
+
+---
+
+## ⏳ **7. LOADER/SPINNER PARA FETCHES**
+
+### Componente Spinner:
+
+```jsx
+// components/ui/Spinner.jsx
+const Spinner = ({ size = 'md', color = 'blue' }) => {
+  const sizes = {
+    sm: 'w-5 h-5',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12',
+  };
+  
+  return (
+    <div className="flex justify-center items-center">
+      <div
+        className={`${sizes[size]} border-4 border-${color}-200 border-t-${color}-600 rounded-full animate-spin`}
+      />
+    </div>
+  );
+};
+```
+
+### Uso con React Query:
+
+```jsx
+// Hook personalizado con loading state
+const { data, isLoading, error } = useQuery('productos', fetchProductos);
+
+if (isLoading) return <Spinner />;
+if (error) return <ErrorMessage error={error} />;
+
+return <ProductList products={data} />;
+```
+
+### Spinner de página completa:
+
+```jsx
+// components/ui/PageLoader.jsx
+const PageLoader = () => (
+  <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+    <div className="text-center">
+      <Spinner size="lg" />
+      <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando...</p>
+    </div>
+  </div>
+);
+```
+
+---
+
+## 📁 **8. REESTRUCTURACIÓN DE CARPETAS**
+
+### Nueva estructura optimizada:
+
+```bash
+frontend/src/
+├── app/                          # App router (páginas)
+│   ├── (auth)/                   # Rutas autenticadas
+│   │   ├── admin/
+│   │   │   ├── dashboard/
+│   │   │   ├── productos/
+│   │   │   ├── clientes/
+│   │   │   ├── pedidos/
+│   │   │   └── zonas/
+│   │   └── cliente/
+│   │       ├── dashboard/
+│   │       ├── catalogo/
+│   │       ├── pedidos/
+│   │       └── nuevo-pedido/
+│   ├── (public)/                 # Rutas públicas
+│   │   ├── login/
+│   │   └── page.tsx              # Landing
+│   └── layout.tsx
+│
+├── components/                   # Componentes reutilizables
+│   ├── ui/                       # UI básicos
+│   │   ├── Button.jsx
+│   │   ├── Input.jsx
+│   │   ├── Modal.jsx
+│   │   ├── Spinner.jsx
+│   │   ├── Pagination.jsx
+│   │   └── Toast.jsx
+│   ├── layout/                   # Layout components
+│   │   ├── Header.jsx
+│   │   ├── Sidebar.jsx
+│   │   ├── Footer.jsx
+│   │   └── ThemeToggle.jsx
+│   ├── dashboard/                # Dashboard específico
+│   │   ├── StatsCard.jsx
+│   │   ├── LineChart.jsx
+│   │   ├── BarChart.jsx
+│   │   └── RecentOrders.jsx
+│   ├── productos/                # Módulo productos
+│   │   ├── ProductList.jsx
+│   │   ├── ProductCard.jsx
+│   │   ├── ProductForm.jsx
+│   │   └── ProductFilters.jsx
+│   ├── clientes/                 # Módulo clientes
+│   │   ├── ClientList.jsx
+│   │   ├── ClientForm.jsx
+│   │   └── ClientFilters.jsx
+│   ├── pedidos/                  # Módulo pedidos
+│   │   ├── OrderList.jsx
+│   │   ├── OrderDetail.jsx
+│   │   ├── OrderForm.jsx
+│   │   └── OrderStatusBadge.jsx
+│   └── zonas/                    # Módulo zonas logísticas
+│       ├── ZoneList.jsx
+│       └── ZoneForm.jsx
+│
+├── hooks/                        # Custom hooks
+│   ├── useAuth.js
+│   ├── useTheme.js
+│   ├── usePagination.js
+│   └── useFetch.js
+│
+├── services/                     # API calls
+│   ├── api.js                    # Configuración base
+│   ├── productos.js
+│   ├── clientes.js
+│   ├── pedidos.js
+│   └── zonas.js
+│
+├── lib/                          # Utilidades
+│   ├── ThemeContext.jsx
+│   ├── AuthContext.jsx
+│   └── validations.js            # Esquemas de validación
+│
+├── types/                        # TypeScript types
+│   ├── product.types.ts
+│   ├── client.types.ts
+│   ├── order.types.ts
+│   └── user.types.ts
+│
+├── styles/                       # Estilos
+│   ├── globals.css
+│   └── tailwind.css
+│
+└── middleware.ts                 # Protección de rutas
+```
+
+---
+
+## ✅ **9. VALIDACIONES EN FORMULARIOS**
+
+### Esquemas de validación (Zod):
+
+```jsx
+// lib/validations.js
+import { z } from 'zod';
+
+// Validación de producto
+export const productSchema = z.object({
+  nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  descripcion: z.string().optional(),
+  marca: z.string().min(2, 'La marca es requerida'),
+  formato: z.string().min(1, 'El formato es requerido'),
+  precio: z.number().positive('El precio debe ser mayor a 0'),
+  stock: z.number().int().min(0, 'El stock no puede ser negativo'),
+});
+
+// Validación de cliente
+export const clientSchema = z.object({
+  razon_social: z.string().min(3, 'La razón social es requerida'),
+  email: z.string().email('Email inválido'),
+  telefono: z.string().min(8, 'Teléfono inválido'),
+  provincia_id: z.number().positive('Seleccione una provincia'),
+  direccion: z.string().min(5, 'La dirección es requerida'),
+});
+
+// Validación de zona logística
+export const zoneSchema = z.object({
+  provincia_id: z.number().positive('Seleccione una provincia'),
+  costo_base: z.number().min(0, 'El costo base no puede ser negativo'),
+  costo_por_bulto: z.number().min(0, 'El costo por bulto no puede ser negativo'),
+  pedido_minimo: z.number().min(0, 'El pedido mínimo no puede ser negativo'),
+  tiempo_entrega_dias: z.number().int().min(1, 'El tiempo debe ser al menos 1 día'),
+});
+```
+
+### Formulario con validación:
+
+```jsx
+// components/productos/ProductForm.jsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { productSchema } from '@/lib/validations';
+
+const ProductForm = ({ onSubmit, initialData }) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(productSchema),
+    defaultValues: initialData,
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Nombre</label>
+        <input
+          {...register('nombre')}
+          className="w-full px-3 py-2 border rounded-lg"
+        />
+        {errors.nombre && (
+          <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>
+        )}
+      </div>
+      {/* Más campos... */}
+      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+        Guardar
+      </button>
+    </form>
+  );
+};
+```
+
+---
+
+## 🔔 **10. MENSAJES DE ÉXITO/ERROR**
+
+### Sistema de Toast/Notificaciones:
+
+```jsx
+// components/ui/Toast.jsx
+import { useEffect } from 'react';
+
+const Toast = ({ message, type = 'success', onClose }) => {
+  const colors = {
+    success: 'bg-green-500',
+    error: 'bg-red-500',
+    info: 'bg-blue-500',
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50`}>
+      {message}
+    </div>
+  );
+};
+```
+
+### Hook para notificaciones:
+
+```jsx
+// hooks/useToast.js
+import { useState, useCallback } from 'react';
+
+export const useToast = () => {
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
+  return { toast, showToast, hideToast };
+};
+```
+
+### Uso en acciones:
+
+```jsx
+// Ejemplo: crear producto
+const handleCreateProduct = async (data) => {
+  try {
+    await api.post('/productos', data);
+    showToast('Producto creado exitosamente', 'success');
+    router.refresh();
+  } catch (error) {
+    showToast(error.response?.data?.message || 'Error al crear producto', 'error');
+  }
+};
+```
+
+---
+
+## 🚫 **11. SIN EMOJIS**
+
+### Reemplazar emojis con íconos de la plantilla:
+
+```jsx
+// ❌ NO usar:
+<button>📦 Productos</button>
+
+// ✅ Usar íconos de la plantilla:
+import { PackageIcon } from '@/components/icons';
+
+<button>
+  <PackageIcon className="w-5 h-5 mr-2" />
+  Productos
+</button>
+```
+
+### Íconos a usar (de Heroicons o Lucide):
+
+```jsx
+// components/icons/index.jsx
+export const DashboardIcon = () => (...);
+export const PackageIcon = () => (...);
+export const UsersIcon = () => (...);
+export const ShoppingCartIcon = () => (...);
+export const MapIcon = () => (...);
+export const SettingsIcon = () => (...);
+```
+
+---
+
+## ✅ **CHECKLIST DE IMPLEMENTACIÓN**
+
+### Tema y estilos:
+- [ ] Configurar tema claro por defecto
+- [ ] Implementar toggle dark mode con localStorage
+- [ ] Descargar CSS localmente (sin CDN)
+- [ ] Agregar favicon personalizado
+
+### Componentes y UX:
+- [ ] Implementar paginado en todos los listados
+- [ ] Crear componentes gráficos del dashboard (StatsCard, gráficos)
+- [ ] Agregar loader/spinner para fetches
+- [ ] Implementar mensajes de éxito/error (toast)
+
+### Landing page:
+- [ ] Actualizar landing con estructura de TailwindAdmin
+- [ ] Mantener footer con crédito Yoisar
+
+### Código y organización:
+- [ ] Reestructurar carpetas del frontend
+- [ ] Agregar validaciones en formularios (Zod)
+- [ ] Reemplazar todos los emojis por íconos
+
+---
+
+## 📝 **RESUMEN EJECUTIVO**
+
+| Ítem | Acción |
+|------|--------|
+| **Tema** | Light por defecto + toggle dark mode |
+| **Paginado** | 10/25/50 items por página en todos los listados |
+| **Gráficos** | StatsCard, LineChart, BarChart del dashboard |
+| **Landing** | Similar a homepage de TailwindAdmin |
+| **CSS** | Local (no CDN) |
+| **Favicon** | Logo de distriboo |
+| **Loader** | Spinner durante fetch de datos |
+| **Estructura** | Modular por funcionalidades |
+| **Validaciones** | Zod en formularios |
+| **Feedback** | Toast de éxito/error |
+| **Íconos** | Solo SVG, sin emojis |
+
+---
+
+
+# ajustes ux/ui - mobile first: 
 
