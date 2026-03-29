@@ -1,0 +1,291 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
+import AppHeader from "@/app/components/AppHeader";
+import Loading from "@/app/components/Loading";
+import type { Producto, CartItem, ZonaLogistica } from "@/types";
+
+export default function NuevoPedidoPage() {
+  const router = useRouter();
+  const { user, loading: authLoading, logout } = useAuth();
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [zona, setZona] = useState<ZonaLogistica | null>(null);
+  const [observaciones, setObservaciones] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    Promise.all([
+      api.getProductos({ per_page: "100" }),
+      api.getZonasLogisticas(),
+    ])
+      .then(([prodData, zonas]) => {
+        setProductos(prodData.data.filter((p) => p.activo && p.stock > 0));
+        if (user.cliente?.provincia_id) {
+          const z = zonas.find(
+            (z) => z.provincia_id === user.cliente?.provincia_id
+          );
+          if (z) setZona(z);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [authLoading, user]);
+
+  function addToCart(producto: Producto) {
+    setCart((prev) => {
+      const existing = prev.find((c) => c.producto.id === producto.id);
+      if (existing) {
+        return prev.map((c) =>
+          c.producto.id === producto.id
+            ? { ...c, cantidad: Math.min(c.cantidad + 1, producto.stock) }
+            : c
+        );
+      }
+      return [...prev, { producto, cantidad: 1 }];
+    });
+  }
+
+  function updateQuantity(productoId: number, cantidad: number) {
+    if (cantidad <= 0) {
+      setCart((prev) => prev.filter((c) => c.producto.id !== productoId));
+      return;
+    }
+    setCart((prev) =>
+      prev.map((c) =>
+        c.producto.id === productoId
+          ? { ...c, cantidad: Math.min(cantidad, c.producto.stock) }
+          : c
+      )
+    );
+  }
+
+  function removeFromCart(productoId: number) {
+    setCart((prev) => prev.filter((c) => c.producto.id !== productoId));
+  }
+
+  const subtotal = cart.reduce(
+    (sum, c) => sum + c.producto.precio * c.cantidad,
+    0
+  );
+  const totalBultos = cart.reduce((sum, c) => sum + c.cantidad, 0);
+  const costoLogistico = zona
+    ? zona.costo_base + zona.costo_por_bulto * totalBultos
+    : 0;
+  const total = subtotal + costoLogistico;
+  const pedidoMinimo = zona?.pedido_minimo || 0;
+  const cumpleMinimo = subtotal >= pedidoMinimo;
+
+  async function handleSubmit() {
+    if (!user?.cliente_id || cart.length === 0) return;
+    if (!cumpleMinimo) {
+      setError(
+        `El pedido mínimo para tu zona es $${pedidoMinimo.toLocaleString("es-AR")}`
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      await api.createPedido({
+        cliente_id: user.cliente_id,
+        items: cart.map((c) => ({
+          producto_id: c.producto.id,
+          cantidad: c.cantidad,
+        })),
+        observaciones: observaciones || undefined,
+      });
+      setSuccess("Pedido realizado con éxito");
+      setCart([]);
+      setTimeout(() => router.push("/pedidos"), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear pedido");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (authLoading || loading)
+    return <Loading />;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AppHeader user={user} title="Nuevo Pedido" onLogout={logout} />
+
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Catálogo */}
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Seleccioná productos
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {productos.map((p) => {
+                const inCart = cart.find((c) => c.producto.id === p.id);
+                return (
+                  <div
+                    key={p.id}
+                    className={`bg-white rounded-lg border p-4 ${inCart ? "border-blue-500 ring-1 ring-blue-200" : ""}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-medium text-gray-800">
+                          {p.nombre}
+                        </h3>
+                        {p.formato && (
+                          <p className="text-xs text-gray-400">{p.formato}</p>
+                        )}
+                      </div>
+                      <span className="text-lg font-bold text-blue-600">
+                        ${p.precio.toLocaleString("es-AR")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-400">
+                        Stock: {p.stock}
+                      </span>
+                      {inCart ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              updateQuantity(p.id, inCart.cantidad - 1)
+                            }
+                            className="w-8 h-8 border rounded text-lg"
+                          >
+                            -
+                          </button>
+                          <span className="font-medium w-8 text-center">
+                            {inCart.cantidad}
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateQuantity(p.id, inCart.cantidad + 1)
+                            }
+                            className="w-8 h-8 border rounded text-lg"
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(p.id)}
+                            className="text-red-500 text-sm ml-2"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => addToCart(p)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                        >
+                          Agregar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Resumen del pedido */}
+          <div>
+            <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">
+                Resumen del Pedido
+              </h2>
+
+              {cart.length === 0 ? (
+                <p className="text-gray-400 text-sm">
+                  Agregá productos al pedido
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-2 mb-4">
+                    {cart.map((item) => (
+                      <div
+                        key={item.producto.id}
+                        className="flex justify-between text-sm"
+                      >
+                        <span className="text-gray-600">
+                          {item.producto.nombre} x{item.cantidad}
+                        </span>
+                        <span className="font-medium">
+                          $
+                          {(
+                            item.producto.precio * item.cantidad
+                          ).toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t pt-3 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Subtotal</span>
+                      <span>${subtotal.toLocaleString("es-AR")}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">
+                        Costo logístico ({totalBultos} bultos)
+                      </span>
+                      <span>${costoLogistico.toLocaleString("es-AR")}</span>
+                    </div>
+                    {zona && (
+                      <div className="text-xs text-gray-400">
+                        Entrega estimada: {zona.tiempo_entrega_dias} días
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <span>Total</span>
+                      <span>${total.toLocaleString("es-AR")}</span>
+                    </div>
+                  </div>
+
+                  {!cumpleMinimo && (
+                    <p className="text-red-500 text-xs mt-2">
+                      Pedido mínimo: ${pedidoMinimo.toLocaleString("es-AR")}
+                    </p>
+                  )}
+
+                  <div className="mt-4">
+                    <textarea
+                      placeholder="Observaciones (opcional)"
+                      value={observaciones}
+                      onChange={(e) => setObservaciones(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      rows={2}
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-red-500 text-sm mt-2">{error}</p>
+                  )}
+                  {success && (
+                    <p className="text-green-600 text-sm mt-2">{success}</p>
+                  )}
+
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting || !cumpleMinimo}
+                    className="w-full mt-4 bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? "Enviando..." : "Confirmar Pedido"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
