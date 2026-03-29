@@ -14,7 +14,14 @@ class ClienteController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = Cliente::with('provincia');
+
+        // Filtrar por distribuidor según rol
+        if ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
+        }
+        // super_admin ve todo
 
         if ($request->has('activo')) {
             $query->where('activo', $request->boolean('activo'));
@@ -34,25 +41,50 @@ class ClienteController extends Controller
 
     public function store(StoreClienteRequest $request): JsonResponse
     {
-        $cliente = Cliente::create($request->validated());
+        $data = $request->validated();
+
+        $user = $request->user();
+        if ($user->role === 'distribuidor') {
+            $data['distribuidor_id'] = $user->distribuidor_id;
+        }
+
+        $cliente = Cliente::create($data);
 
         return response()->json($cliente->load('provincia'), 201);
     }
 
-    public function show(Cliente $cliente): JsonResponse
+    public function show(Cliente $cliente, Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $cliente->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         return response()->json($cliente->load('provincia'));
     }
 
     public function update(UpdateClienteRequest $request, Cliente $cliente): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $cliente->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $cliente->update($request->validated());
 
         return response()->json($cliente->load('provincia'));
     }
 
-    public function destroy(Cliente $cliente): JsonResponse
+    public function destroy(Cliente $cliente, Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $cliente->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         try {
             $cliente->delete();
         } catch (QueryException $e) {

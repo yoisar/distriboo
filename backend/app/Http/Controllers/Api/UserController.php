@@ -13,7 +13,13 @@ class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = User::with('cliente');
+
+        // Distribuidor solo ve usuarios de su distribuidora
+        if ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
+        }
 
         if ($request->has('role')) {
             $query->where('role', $request->input('role'));
@@ -32,27 +38,54 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = User::create($request->validated());
+        $data = $request->validated();
+        $user = $request->user();
 
-        return response()->json($user->load('cliente'), 201);
+        // Distribuidor solo puede crear clientes para sí mismo
+        if ($user->role === 'distribuidor') {
+            $data['distribuidor_id'] = $user->distribuidor_id;
+            $data['role'] = 'cliente'; // Solo puede crear clientes
+        }
+
+        $newUser = User::create($data);
+
+        return response()->json($newUser->load('cliente'), 201);
     }
 
-    public function show(User $user): JsonResponse
+    public function show(User $user, Request $request): JsonResponse
     {
+        $authUser = $request->user();
+
+        if ($authUser->role === 'distribuidor' && $user->distribuidor_id !== $authUser->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         return response()->json($user->load('cliente'));
     }
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
+        $authUser = $request->user();
+
+        if ($authUser->role === 'distribuidor' && $user->distribuidor_id !== $authUser->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $user->update($request->validated());
 
         return response()->json($user->load('cliente'));
     }
 
-    public function destroy(User $user): JsonResponse
+    public function destroy(User $user, Request $request): JsonResponse
     {
-        if ($user->id === auth()->id()) {
+        $authUser = $request->user();
+
+        if ($user->id === $authUser->id) {
             return response()->json(['message' => 'No podés eliminar tu propio usuario'], 403);
+        }
+
+        if ($authUser->role === 'distribuidor' && $user->distribuidor_id !== $authUser->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
         }
 
         $user->tokens()->delete();

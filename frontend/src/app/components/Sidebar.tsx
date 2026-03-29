@@ -26,9 +26,13 @@ const adminLinks = [
   { href: "/admin/reportes", label: "Reportes", icon: "📈" },
 ];
 
+const superAdminLinks = [
+  { href: "/admin/distribuidores", label: "Distribuidores", icon: "🏢" },
+];
+
 export default function Sidebar({ user, open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "super_admin" || user.role === "distribuidor";
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -100,6 +104,31 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
               ))}
             </>
           )}
+
+          {user.role === "super_admin" && (
+            <>
+              <div className="pt-4 pb-2 px-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Super Admin
+                </p>
+              </div>
+              {superAdminLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(link.href)
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  }`}
+                >
+                  <span>{link.icon}</span>
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* User info at bottom */}
@@ -110,7 +139,9 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-200 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.role}</p>
+              <p className="text-xs text-gray-500">
+                {user.role === "super_admin" ? "Super Admin" : user.role === "distribuidor" ? "Distribuidor" : "Cliente"}
+              </p>
             </div>
           </div>
         </div>

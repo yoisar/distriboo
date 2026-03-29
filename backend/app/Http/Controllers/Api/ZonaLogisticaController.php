@@ -11,36 +11,66 @@ use Illuminate\Http\Request;
 
 class ZonaLogisticaController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $zonas = ZonaLogistica::with('provincia')
-            ->orderBy('provincia_id')
-            ->get();
+        $user = $request->user();
+        $query = ZonaLogistica::with('provincia');
+
+        if ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
+        }
+
+        $zonas = $query->orderBy('provincia_id')->get();
 
         return response()->json($zonas);
     }
 
     public function store(StoreZonaLogisticaRequest $request): JsonResponse
     {
-        $zona = ZonaLogistica::create($request->validated());
+        $data = $request->validated();
+
+        $user = $request->user();
+        if ($user->role === 'distribuidor') {
+            $data['distribuidor_id'] = $user->distribuidor_id;
+        }
+
+        $zona = ZonaLogistica::create($data);
 
         return response()->json($zona->load('provincia'), 201);
     }
 
-    public function show(ZonaLogistica $zonasLogistica): JsonResponse
+    public function show(ZonaLogistica $zonasLogistica, Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $zonasLogistica->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         return response()->json($zonasLogistica->load('provincia'));
     }
 
     public function update(UpdateZonaLogisticaRequest $request, ZonaLogistica $zonasLogistica): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $zonasLogistica->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $zonasLogistica->update($request->validated());
 
         return response()->json($zonasLogistica->load('provincia'));
     }
 
-    public function destroy(ZonaLogistica $zonasLogistica): JsonResponse
+    public function destroy(ZonaLogistica $zonasLogistica, Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $zonasLogistica->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $zonasLogistica->delete();
 
         return response()->json(['message' => 'Zona logística eliminada']);

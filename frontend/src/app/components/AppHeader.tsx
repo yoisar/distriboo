@@ -25,7 +25,7 @@ export default function AppHeader({ user, title, onLogout }: AppHeaderProps) {
               <Link href="/pedidos" className="text-gray-600 hover:text-gray-900">
                 Pedidos
               </Link>
-              {user.role === "admin" && (
+              {user.role !== "cliente" && (
                 <>
                   <span className="text-gray-300">|</span>
                   <Link href="/admin/productos" className="text-blue-600 hover:text-blue-800">
@@ -60,7 +60,7 @@ export default function AppHeader({ user, title, onLogout }: AppHeaderProps) {
               <span className="text-sm text-gray-600">
                 {user.name}{" "}
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {user.role}
+                  {user.role === "super_admin" ? "Super Admin" : user.role === "distribuidor" ? "Distribuidor" : "Cliente"}
                 </span>
               </span>
               {onLogout && (

@@ -17,16 +17,26 @@ class ReporteController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role === 'admin') {
-            $totalPedidos = Pedido::count();
-            $pedidosPendientes = Pedido::where('estado', 'pendiente')->count();
-            $ventasMes = Pedido::whereMonth('created_at', now()->month)
+        if (in_array($user->role, ['super_admin', 'distribuidor'])) {
+            $pedidosQuery = Pedido::query();
+            $clientesQuery = Cliente::query();
+            $productosQuery = Producto::query();
+
+            if ($user->role === 'distribuidor') {
+                $pedidosQuery->where('distribuidor_id', $user->distribuidor_id);
+                $clientesQuery->where('distribuidor_id', $user->distribuidor_id);
+                $productosQuery->where('distribuidor_id', $user->distribuidor_id);
+            }
+
+            $totalPedidos = (clone $pedidosQuery)->count();
+            $pedidosPendientes = (clone $pedidosQuery)->where('estado', 'pendiente')->count();
+            $ventasMes = (clone $pedidosQuery)->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->whereNotIn('estado', ['cancelado'])
                 ->sum('total');
-            $totalClientes = Cliente::where('activo', true)->count();
-            $totalProductos = Producto::where('activo', true)->count();
-            $stockBajo = Producto::where('stock', '<', 10)->where('activo', true)->count();
+            $totalClientes = (clone $clientesQuery)->where('activo', true)->count();
+            $totalProductos = (clone $productosQuery)->where('activo', true)->count();
+            $stockBajo = (clone $productosQuery)->where('stock', '<', 10)->where('activo', true)->count();
 
             return response()->json([
                 'total_pedidos' => $totalPedidos,
@@ -53,11 +63,17 @@ class ReporteController extends Controller
         ]);
     }
 
-    public function pedidosPorProvincia(): JsonResponse
+    public function pedidosPorProvincia(Request $request): JsonResponse
     {
-        $data = Pedido::join('clientes', 'pedidos.cliente_id', '=', 'clientes.id')
-            ->join('provincias', 'clientes.provincia_id', '=', 'provincias.id')
-            ->select('provincias.nombre as provincia', DB::raw('COUNT(*) as total_pedidos'), DB::raw('SUM(pedidos.total) as monto_total'))
+        $user = $request->user();
+        $query = Pedido::join('clientes', 'pedidos.cliente_id', '=', 'clientes.id')
+            ->join('provincias', 'clientes.provincia_id', '=', 'provincias.id');
+
+        if ($user->role === 'distribuidor') {
+            $query->where('pedidos.distribuidor_id', $user->distribuidor_id);
+        }
+
+        $data = $query->select('provincias.nombre as provincia', DB::raw('COUNT(*) as total_pedidos'), DB::raw('SUM(pedidos.total) as monto_total'))
             ->groupBy('provincias.nombre')
             ->orderByDesc('total_pedidos')
             ->get();
@@ -65,10 +81,16 @@ class ReporteController extends Controller
         return response()->json($data);
     }
 
-    public function productosMasVendidos(): JsonResponse
+    public function productosMasVendidos(Request $request): JsonResponse
     {
-        $data = PedidoDetalle::join('productos', 'pedido_detalles.producto_id', '=', 'productos.id')
-            ->select('productos.nombre', DB::raw('SUM(pedido_detalles.cantidad) as total_vendido'), DB::raw('SUM(pedido_detalles.subtotal) as monto_total'))
+        $user = $request->user();
+        $query = PedidoDetalle::join('productos', 'pedido_detalles.producto_id', '=', 'productos.id');
+
+        if ($user->role === 'distribuidor') {
+            $query->where('productos.distribuidor_id', $user->distribuidor_id);
+        }
+
+        $data = $query->select('productos.nombre', DB::raw('SUM(pedido_detalles.cantidad) as total_vendido'), DB::raw('SUM(pedido_detalles.subtotal) as monto_total'))
             ->groupBy('productos.nombre')
             ->orderByDesc('total_vendido')
             ->limit(10)
@@ -77,10 +99,16 @@ class ReporteController extends Controller
         return response()->json($data);
     }
 
-    public function clientesTop(): JsonResponse
+    public function clientesTop(Request $request): JsonResponse
     {
-        $data = Pedido::join('clientes', 'pedidos.cliente_id', '=', 'clientes.id')
-            ->select('clientes.razon_social', DB::raw('COUNT(*) as total_pedidos'), DB::raw('SUM(pedidos.total) as monto_total'))
+        $user = $request->user();
+        $query = Pedido::join('clientes', 'pedidos.cliente_id', '=', 'clientes.id');
+
+        if ($user->role === 'distribuidor') {
+            $query->where('pedidos.distribuidor_id', $user->distribuidor_id);
+        }
+
+        $data = $query->select('clientes.razon_social', DB::raw('COUNT(*) as total_pedidos'), DB::raw('SUM(pedidos.total) as monto_total'))
             ->groupBy('clientes.razon_social')
             ->orderByDesc('monto_total')
             ->limit(10)
@@ -89,12 +117,16 @@ class ReporteController extends Controller
         return response()->json($data);
     }
 
-    public function stockBajo(): JsonResponse
+    public function stockBajo(Request $request): JsonResponse
     {
-        $data = Producto::where('stock', '<', 10)
-            ->where('activo', true)
-            ->orderBy('stock')
-            ->get(['id', 'nombre', 'marca', 'stock']);
+        $user = $request->user();
+        $query = Producto::where('stock', '<', 10)->where('activo', true);
+
+        if ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
+        }
+
+        $data = $query->orderBy('stock')->get(['id', 'nombre', 'marca', 'stock']);
 
         return response()->json($data);
     }

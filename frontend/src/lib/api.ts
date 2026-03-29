@@ -268,6 +268,36 @@ class ApiClient {
   deleteUser(id: number) {
     return this.request(`/users/${id}`, { method: "DELETE" });
   }
+
+  // Distribuidores (super_admin)
+  getDistribuidores(params?: Record<string, string>) {
+    const query = params ? "?" + new URLSearchParams(params).toString() : "";
+    return this.request<import("@/types").PaginatedResponse<import("@/types").Distribuidor>>(
+      `/distribuidores${query}`
+    );
+  }
+
+  getDistribuidor(id: number) {
+    return this.request<import("@/types").Distribuidor>(`/distribuidores/${id}`);
+  }
+
+  createDistribuidor(data: Partial<import("@/types").Distribuidor>) {
+    return this.request<import("@/types").Distribuidor>("/distribuidores", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  updateDistribuidor(id: number, data: Partial<import("@/types").Distribuidor>) {
+    return this.request<import("@/types").Distribuidor>(`/distribuidores/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  deleteDistribuidor(id: number) {
+    return this.request(`/distribuidores/${id}`, { method: "DELETE" });
+  }
 }
 
 export const api = new ApiClient();

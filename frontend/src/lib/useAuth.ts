@@ -24,7 +24,7 @@ export function useAuth(options: UseAuthOptions = {}) {
     api
       .getUser()
       .then((userData) => {
-        if (options.requireAdmin && userData.role !== "admin") {
+        if (options.requireAdmin && userData.role === "cliente") {
           router.push("/dashboard");
           return;
         }

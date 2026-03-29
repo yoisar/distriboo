@@ -14,7 +14,8 @@ class StoreZonaLogisticaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'provincia_id' => 'required|exists:provincias,id|unique:zonas_logisticas,provincia_id',
+            'distribuidor_id' => 'nullable|exists:distribuidores,id',
+            'provincia_id' => 'required|exists:provincias,id',
             'costo_base' => 'required|numeric|min:0',
             'costo_por_bulto' => 'numeric|min:0',
             'pedido_minimo' => 'numeric|min:0',

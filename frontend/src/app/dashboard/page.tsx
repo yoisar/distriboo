@@ -19,7 +19,7 @@ export default function DashboardPage() {
   if (loading) return <Loading />;
   if (!user) return null;
 
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "super_admin" || user.role === "distribuidor";
 
   return (
     <AppLayout user={user} title={isAdmin ? "Panel de Administración" : "Panel de Cliente"} onLogout={logout}>
@@ -51,9 +51,13 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <h3 className="text-lg font-semibold text-gray-300 mb-4">Accesos Rápidos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <QuickLink href="/productos" title="Catálogo de Productos" desc="Ver productos disponibles con stock y precios" />
-          <QuickLink href="/pedidos/nuevo" title="Nuevo Pedido" desc="Armar un nuevo pedido con cálculo logístico" />
-          <QuickLink href="/pedidos" title="Mis Pedidos" desc="Historial y seguimiento de pedidos" />
+          {user.role !== "super_admin" && (
+            <>
+              <QuickLink href="/productos" title="Catálogo de Productos" desc="Ver productos disponibles con stock y precios" />
+              <QuickLink href="/pedidos/nuevo" title="Nuevo Pedido" desc="Armar un nuevo pedido con cálculo logístico" />
+              <QuickLink href="/pedidos" title="Mis Pedidos" desc="Historial y seguimiento de pedidos" />
+            </>
+          )}
 
           {isAdmin && (
             <>
@@ -64,6 +68,10 @@ export default function DashboardPage() {
               <QuickLink href="/admin/reportes" title="Reportes" desc="Estadísticas de ventas, clientes y stock" accent="green" />
               <QuickLink href="/admin/usuarios" title="Usuarios" desc="Gestionar usuarios y permisos del sistema" accent="purple" />
             </>
+          )}
+
+          {user.role === "super_admin" && (
+            <QuickLink href="/admin/distribuidores" title="Distribuidores" desc="Gestión de distribuidores de la plataforma" accent="purple" />
           )}
         </div>
       </div>

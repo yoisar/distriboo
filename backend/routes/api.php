@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClienteController;
+use App\Http\Controllers\Api\DistribuidorController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\ProvinciaController;
@@ -23,7 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Dashboard stats ──
     Route::get('/dashboard/stats', [ReporteController::class, 'dashboardStats']);
 
-    // ── Productos (lectura para todos) ──
+    // ── Productos (lectura para todos los autenticados) ──
     Route::get('/productos', [ProductoController::class, 'index']);
     Route::get('/productos/{producto}', [ProductoController::class, 'show']);
 
@@ -35,7 +36,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pedidos/{pedido}/pdf', [PedidoController::class, 'pdf']);
     Route::put('/pedidos/{pedido}/cancelar', [PedidoController::class, 'cancelar']);
 
-    // ── Admin only ──
+    // ── Super Admin only: gestión de distribuidores ──
+    Route::middleware('role:super_admin')->group(function () {
+        Route::apiResource('distribuidores', DistribuidorController::class);
+    });
+
+    // ── Admin (super_admin + distribuidor) ──
     Route::middleware(\App\Http\Middleware\EnsureIsAdmin::class)->group(function () {
         // Productos CRUD
         Route::post('/productos', [ProductoController::class, 'store']);

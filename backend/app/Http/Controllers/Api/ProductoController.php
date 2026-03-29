@@ -14,7 +14,18 @@ class ProductoController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = Producto::query();
+
+        // Filtrar por distribuidor según rol
+        if ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
+        } elseif ($user->role === 'cliente') {
+            // Cliente ve catálogo de su distribuidor, sin stock ni precio
+            $query->where('distribuidor_id', $user->distribuidor_id)
+                  ->where('activo', true);
+        }
+        // super_admin ve todo
 
         if ($request->has('activo')) {
             $query->where('activo', $request->boolean('activo'));
@@ -28,30 +39,73 @@ class ProductoController extends Controller
             });
         }
 
-        return response()->json($query->orderBy('nombre')->paginate(20));
+        $productos = $query->orderBy('nombre')->paginate(20);
+
+        // Clientes: ocultar stock y precio en la lista del catálogo
+        if ($user->role === 'cliente') {
+            $productos->getCollection()->transform(function ($p) {
+                $p->makeHidden(['stock', 'precio']);
+                return $p;
+            });
+        }
+
+        return response()->json($productos);
     }
 
     public function store(StoreProductoRequest $request): JsonResponse
     {
-        $producto = Producto::create($request->validated());
+        $data = $request->validated();
+
+        // Distribuidor crea para sí mismo
+        $user = $request->user();
+        if ($user->role === 'distribuidor') {
+            $data['distribuidor_id'] = $user->distribuidor_id;
+        }
+        // super_admin debe enviar distribuidor_id en el request
+
+        $producto = Producto::create($data);
 
         return response()->json($producto, 201);
     }
 
-    public function show(Producto $producto): JsonResponse
+    public function show(Producto $producto, Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        // Distribuidor solo ve sus productos
+        if ($user->role === 'distribuidor' && $producto->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        // Cliente solo ve productos de su distribuidor
+        if ($user->role === 'cliente' && $producto->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         return response()->json($producto);
     }
 
     public function update(UpdateProductoRequest $request, Producto $producto): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $producto->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $producto->update($request->validated());
 
         return response()->json($producto);
     }
 
-    public function destroy(Producto $producto): JsonResponse
+    public function destroy(Producto $producto, Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $producto->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         try {
             $producto->delete();
         } catch (QueryException $e) {

@@ -13,6 +13,7 @@ class Cliente extends Model
     use HasFactory;
 
     protected $fillable = [
+        'distribuidor_id',
         'razon_social',
         'email',
         'telefono',
@@ -25,6 +26,11 @@ class Cliente extends Model
     protected $casts = [
         'activo' => 'boolean',
     ];
+
+    public function distribuidor(): BelongsTo
+    {
+        return $this->belongsTo(Distribuidor::class);
+    }
 
     public function provincia(): BelongsTo
     {

@@ -18,7 +18,8 @@ class StoreUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['admin', 'cliente'])],
+            'role' => ['required', Rule::in(['super_admin', 'distribuidor', 'cliente'])],
+            'distribuidor_id' => 'nullable|exists:distribuidores,id',
             'cliente_id' => 'nullable|exists:clientes,id',
         ];
     }

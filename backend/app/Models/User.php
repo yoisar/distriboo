@@ -19,6 +19,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'distribuidor_id',
         'cliente_id',
     ];
 
@@ -40,8 +41,41 @@ class User extends Authenticatable
         return $this->belongsTo(Cliente::class);
     }
 
+    public function distribuidor(): BelongsTo
+    {
+        return $this->belongsTo(Distribuidor::class);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isDistribuidor(): bool
+    {
+        return $this->role === 'distribuidor';
+    }
+
+    public function isCliente(): bool
+    {
+        return $this->role === 'cliente';
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['super_admin', 'distribuidor']);
+    }
+
+    /**
+     * Obtiene el distribuidor_id efectivo del usuario.
+     * Super admin: null (ve todo). Distribuidor: su propio distribuidor_id. Cliente: el de su cliente.
+     */
+    public function getEffectiveDistribuidorId(): ?int
+    {
+        if ($this->role === 'super_admin') {
+            return null;
+        }
+
+        return $this->distribuidor_id;
     }
 }

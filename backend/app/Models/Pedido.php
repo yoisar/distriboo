@@ -13,6 +13,7 @@ class Pedido extends Model
 
     protected $fillable = [
         'cliente_id',
+        'distribuidor_id',
         'subtotal',
         'costo_logistico',
         'total',
@@ -31,6 +32,11 @@ class Pedido extends Model
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function distribuidor(): BelongsTo
+    {
+        return $this->belongsTo(Distribuidor::class);
     }
 
     public function detalles(): HasMany

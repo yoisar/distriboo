@@ -17,6 +17,15 @@ class Provincia extends Model
         'activo' => 'boolean',
     ];
 
+    public function zonasLogisticas(): HasMany
+    {
+        return $this->hasMany(ZonaLogistica::class);
+    }
+
+    /**
+     * Alias de compatibilidad para acceso directo a zona (sin multi-tenant).
+     * Si hay una sola zona sin distribuidor_id, la retorna.
+     */
     public function zonaLogistica(): HasOne
     {
         return $this->hasOne(ZonaLogistica::class);

@@ -4,9 +4,22 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: "admin" | "cliente";
+  role: "super_admin" | "distribuidor" | "cliente";
   cliente_id: number | null;
+  distribuidor_id: number | null;
   cliente?: Cliente;
+  distribuidor?: Distribuidor;
+}
+
+export interface Distribuidor {
+  id: number;
+  nombre_comercial: string;
+  razon_social: string | null;
+  email_contacto: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  activo: boolean;
+  created_at?: string;
 }
 
 export interface Provincia {
@@ -19,6 +32,7 @@ export interface Provincia {
 export interface ZonaLogistica {
   id: number;
   provincia_id: number;
+  distribuidor_id?: number;
   costo_base: number;
   costo_por_bulto: number;
   pedido_minimo: number;
@@ -30,6 +44,7 @@ export interface ZonaLogistica {
 
 export interface Cliente {
   id: number;
+  distribuidor_id?: number;
   razon_social: string;
   email: string;
   telefono: string | null;
@@ -42,6 +57,7 @@ export interface Cliente {
 
 export interface Producto {
   id: number;
+  distribuidor_id?: number;
   nombre: string;
   descripcion: string | null;
   marca: string | null;

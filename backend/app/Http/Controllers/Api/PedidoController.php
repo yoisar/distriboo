@@ -26,10 +26,13 @@ class PedidoController extends Controller
 
         $user = $request->user();
 
-        // Cliente solo ve sus pedidos
+        // Filtrar por rol
         if ($user->role === 'cliente' && $user->cliente_id) {
             $query->where('cliente_id', $user->cliente_id);
+        } elseif ($user->role === 'distribuidor') {
+            $query->where('distribuidor_id', $user->distribuidor_id);
         }
+        // super_admin ve todo
 
         if ($request->has('estado')) {
             $query->where('estado', $request->input('estado'));
@@ -47,6 +50,7 @@ class PedidoController extends Controller
 
             // Obtener zona logística del cliente
             $cliente = \App\Models\Cliente::with('provincia.zonaLogistica')->findOrFail($clienteId);
+            $distribuidorId = $cliente->distribuidor_id;
             $zona = $cliente->provincia->zonaLogistica;
 
             $subtotal = 0;
@@ -96,6 +100,7 @@ class PedidoController extends Controller
 
             $pedido = Pedido::create([
                 'cliente_id' => $clienteId,
+                'distribuidor_id' => $distribuidorId,
                 'subtotal' => $subtotal,
                 'costo_logistico' => $costoLogistico,
                 'total' => $total,
@@ -124,6 +129,11 @@ class PedidoController extends Controller
 
         // Cliente solo puede ver sus pedidos
         if ($user->role === 'cliente' && $user->cliente_id !== $pedido->cliente_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        // Distribuidor solo puede ver pedidos de su distribuidora
+        if ($user->role === 'distribuidor' && $pedido->distribuidor_id !== $user->distribuidor_id) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
@@ -217,6 +227,12 @@ class PedidoController extends Controller
 
     public function updateEstado(UpdateEstadoPedidoRequest $request, Pedido $pedido): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role === 'distribuidor' && $pedido->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $nuevoEstado = $request->validated()['estado'];
         $estadoActual = $pedido->estado;
 
@@ -259,6 +275,10 @@ class PedidoController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
+        if ($user->role === 'distribuidor' && $pedido->distribuidor_id !== $user->distribuidor_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $pedido->load(['cliente.provincia', 'detalles.producto']);
 
         $pdf = Pdf::loadView('pdf.pedido', compact('pedido'));
@@ -271,6 +291,10 @@ class PedidoController extends Controller
         $user = $request->user();
 
         if ($user->role === 'cliente' && $user->cliente_id !== $pedido->cliente_id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        if ($user->role === 'distribuidor' && $pedido->distribuidor_id !== $user->distribuidor_id) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 

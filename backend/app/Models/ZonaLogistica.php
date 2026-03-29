@@ -13,6 +13,7 @@ class ZonaLogistica extends Model
     protected $table = 'zonas_logisticas';
 
     protected $fillable = [
+        'distribuidor_id',
         'provincia_id',
         'costo_base',
         'costo_por_bulto',
@@ -29,6 +30,11 @@ class ZonaLogistica extends Model
         'tiempo_entrega_dias' => 'integer',
         'activo' => 'boolean',
     ];
+
+    public function distribuidor(): BelongsTo
+    {
+        return $this->belongsTo(Distribuidor::class);
+    }
 
     public function provincia(): BelongsTo
     {
