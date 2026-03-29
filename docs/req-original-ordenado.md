@@ -3769,3 +3769,21 @@ Con el de cliente podés ver cómo se ve el catálogo y armar un pedido de prueb
 
 Cualquier cosa que quieras cambiar, ajustar o que no te convenza, me avisás y lo resolvemos. 🙌
 ```
+
+---
+# critico:
+https://distriboo.yoisar.com/ desactualizado la version mas actualiada es https://test.distriboo.yoisar.com/
+- reconstriuor contenedor produccion con la version actualizada del codigo, para que el cliente pueda ver la version mas actualizada en produccion y no haya confusiones.
+# critico - gestion de usuarios:
+- los usuarios con rol de distirbuidor y cliente no pueden ver ni modificar usuarios de roles super usuarios. 
+
+# errores varios:
+- revisar y corregir erroes que aparecen en file #console.log. 
+
+# nueos feuatures:
+- permitir cargar, productos, stock, zonas, desde file csv o excel, para facilitar la carga masiva de productos y zonas logísticas.
+- permitr descarga de modelo de importacion en csv o excel, para que el cliente pueda cargar los datos con el formato correcto.
+- importacion/exportacon de:
+- productos
+- clientes
+- zonas logísticas
