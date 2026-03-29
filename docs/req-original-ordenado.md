@@ -3061,3 +3061,655 @@ docker-compose -f docker-compose.prod.yml down
 ```
 
 ---
+
+# gestión de datos de testing/producción y el flujo de despliegue con GitHub.
+
+---
+
+# 📋 REQUERIMIENTO: GESTIÓN DE DATOS Y FLUJO DE DEPLOY
+
+## 🎯 **OBJETIVO**
+
+Establecer un flujo limpio y profesional donde:
+- **Producción** solo tenga datos reales (empezando con el Super Admin)
+- **Testing** tenga datos de prueba para desarrollo
+- **GitHub** maneje dos ramas separadas: `main` (producción) y `develop` (testing)
+
+---
+
+## 🗑️ **1. LIMPIEZA DE DATOS EN PRODUCCIÓN**
+
+### Base de datos a limpiar: `distriboo_prod`
+
+### Datos a eliminar (manteniendo estructura):
+
+| Tabla | Acción | Excepción |
+|-------|--------|-----------|
+| `pedido_detalles` | Eliminar todos | - |
+| `pedidos` | Eliminar todos | - |
+| `productos` | Eliminar todos | - |
+| `clientes` | Eliminar todos | - |
+| `zonas_logisticas` | Eliminar todos | - |
+| `distribuidores` | Eliminar todos | - |
+| `users` | Eliminar todos excepto Super Admin | `sioy23@gmail.com` |
+| `provincias` | **Mantener** (datos maestros) | Todas las provincias argentinas |
+
+### Script de limpieza: `scripts/clean-production-data.php`
+
+```php
+<?php
+// scripts/clean-production-data.php
+// Ejecutar: php scripts/clean-production-data.php
+
+use Illuminate\Database\Capsule\Manager as DB;
+
+require_once __DIR__ . '/../backend/bootstrap.php';
+
+echo "=== LIMPIEZA DE DATOS DE PRODUCCIÓN ===\n";
+
+try {
+    DB::beginTransaction();
+
+    // 1. Limpiar detalles de pedidos
+    echo "Eliminando pedido_detalles...\n";
+    DB::table('pedido_detalles')->truncate();
+
+    // 2. Limpiar pedidos
+    echo "Eliminando pedidos...\n";
+    DB::table('pedidos')->truncate();
+
+    // 3. Limpiar productos
+    echo "Eliminando productos...\n";
+    DB::table('productos')->truncate();
+
+    // 4. Limpiar clientes
+    echo "Eliminando clientes...\n";
+    DB::table('clientes')->truncate();
+
+    // 5. Limpiar zonas logísticas
+    echo "Eliminando zonas_logisticas...\n";
+    DB::table('zonas_logisticas')->truncate();
+
+    // 6. Limpiar distribuidores
+    echo "Eliminando distribuidores...\n";
+    DB::table('distribuidores')->truncate();
+
+    // 7. Limpiar usuarios excepto Super Admin
+    echo "Eliminando usuarios (excepto Super Admin)...\n";
+    DB::table('users')
+        ->where('email', '!=', 'sioy23@gmail.com')
+        ->delete();
+
+    // 8. Verificar que Super Admin existe
+    $superAdmin = DB::table('users')
+        ->where('email', 'sioy23@gmail.com')
+        ->first();
+
+    if (!$superAdmin) {
+        echo "Creando Super Admin...\n";
+        DB::table('users')->insert([
+            'name' => 'Yassel Omar Izquierdo Souchay',
+            'email' => 'sioy23@gmail.com',
+            'password' => bcrypt('12345678'),
+            'role' => 'super_admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    DB::commit();
+    echo "✅ Limpieza completada exitosamente!\n";
+    echo "✅ Solo queda el Super Admin: sioy23@gmail.com\n";
+
+} catch (Exception $e) {
+    DB::rollBack();
+    echo "❌ Error durante la limpieza: " . $e->getMessage() . "\n";
+    exit(1);
+}
+```
+
+### Script de limpieza remota: `scripts/clean-production.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Limpieza de datos en producción
+# Uso: ./scripts/clean-production.sh
+# ============================================
+
+set -e
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+echo ""
+log_warn "=== ADVERTENCIA ==="
+log_warn "Este script ELIMINARÁ TODOS LOS DATOS de producción"
+log_warn "excepto el Super Admin (sioy23@gmail.com)"
+echo ""
+read -p "¿Estás seguro de continuar? (escribe 'CONFIRMAR'): " confirm
+
+if [ "$confirm" != "CONFIRMAR" ]; then
+    log_info "Operación cancelada."
+    exit 0
+fi
+
+log_info "Conectando al VPS y limpiando datos de producción..."
+
+ssh user@your-vps-ip << 'EOF'
+    cd /www/wwwroot/distriboo.yoisar.com
+    
+    # Ejecutar limpieza dentro del contenedor backend
+    docker exec distriboo_prod_backend php scripts/clean-production-data.php
+    
+    echo "✅ Producción limpiada correctamente"
+EOF
+
+log_info "✅ Limpieza de producción completada!"
+```
+
+---
+
+## 🧪 **2. DATOS DE PRUEBA PARA TESTING**
+
+### Script de seed para testing: `database/seeders/TestDataSeeder.php`
+
+```php
+<?php
+// database/seeders/TestDataSeeder.php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
+class TestDataSeeder extends Seeder
+{
+    public function run()
+    {
+        echo "=== CARGANDO DATOS DE PRUEBA ===\n";
+
+        // 1. Limpiar datos existentes (excepto Super Admin)
+        DB::table('pedido_detalles')->truncate();
+        DB::table('pedidos')->truncate();
+        DB::table('productos')->truncate();
+        DB::table('clientes')->truncate();
+        DB::table('zonas_logisticas')->truncate();
+        DB::table('distribuidores')->truncate();
+        DB::table('users')->where('email', '!=', 'sioy23@gmail.com')->delete();
+
+        // 2. Crear distribuidores de prueba
+        $distribuidores = [
+            [
+                'nombre_comercial' => 'Helados del Sur',
+                'razon_social' => 'Helados del Sur SRL',
+                'email_contacto' => 'admin@heladosdelsur.com',
+                'telefono' => '011-4567-8901',
+                'direccion' => 'Av. Corrientes 1234, CABA',
+                'activo' => true,
+            ],
+            [
+                'nombre_comercial' => 'Distribuidora Norte',
+                'razon_social' => 'Norte Distribuciones SA',
+                'email_contacto' => 'admin@distribuidoranorte.com',
+                'telefono' => '0351-4567-8901',
+                'direccion' => 'Av. Colon 567, Córdoba',
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($distribuidores as $data) {
+            $id = DB::table('distribuidores')->insertGetId($data);
+            
+            // Crear usuario distribuidor
+            DB::table('users')->insert([
+                'name' => $data['nombre_comercial'],
+                'email' => $data['email_contacto'],
+                'password' => Hash::make('12345678'),
+                'role' => 'distribuidor',
+                'distribuidor_id' => $id,
+                'created_at' => now(),
+            ]);
+        }
+
+        // 3. Crear provincias (si no existen)
+        $provincias = [
+            'Buenos Aires', 'CABA', 'Catamarca', 'Chaco', 'Chubut', 'Córdoba',
+            'Corrientes', 'Entre Ríos', 'Formosa', 'Jujuy', 'La Pampa', 'La Rioja',
+            'Mendoza', 'Misiones', 'Neuquén', 'Río Negro', 'Salta', 'San Juan',
+            'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero',
+            'Tierra del Fuego', 'Tucumán'
+        ];
+
+        foreach ($provincias as $provincia) {
+            DB::table('provincias')->updateOrInsert(
+                ['nombre' => $provincia],
+                ['created_at' => now()]
+            );
+        }
+
+        // 4. Crear clientes de prueba
+        $clientes = [
+            [
+                'distribuidor_id' => 1,
+                'razon_social' => 'Kiosco El Centro',
+                'email' => 'cliente1@test.com',
+                'telefono' => '011-5555-1234',
+                'provincia_id' => 1, // Buenos Aires
+                'direccion' => 'Av. Rivadavia 123',
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 1,
+                'razon_social' => 'Supermercado La Familia',
+                'email' => 'cliente2@test.com',
+                'telefono' => '011-5555-5678',
+                'provincia_id' => 2, // CABA
+                'direccion' => 'Av. Santa Fe 456',
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 2,
+                'razon_social' => 'Heladería Patagonia',
+                'email' => 'cliente3@test.com',
+                'telefono' => '0291-5555-9012',
+                'provincia_id' => 5, // Chubut
+                'direccion' => 'Av. Rawson 789',
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($clientes as $data) {
+            $id = DB::table('clientes')->insertGetId($data);
+            
+            // Crear usuario cliente
+            DB::table('users')->insert([
+                'name' => $data['razon_social'],
+                'email' => $data['email'],
+                'password' => Hash::make('12345678'),
+                'role' => 'cliente',
+                'distribuidor_id' => $data['distribuidor_id'],
+                'cliente_id' => $id,
+                'created_at' => now(),
+            ]);
+        }
+
+        // 5. Crear productos de prueba
+        $productos = [
+            [
+                'distribuidor_id' => 1,
+                'nombre' => 'Helado Vainilla 1L',
+                'descripcion' => 'Helado cremoso sabor vainilla',
+                'marca' => 'Cremolatti',
+                'formato' => '1 Litro',
+                'precio' => 2500,
+                'stock_actual' => 100,
+                'stock_minimo' => 20,
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 1,
+                'nombre' => 'Helado Chocolate 1L',
+                'descripcion' => 'Helado intenso sabor chocolate',
+                'marca' => 'Cremolatti',
+                'formato' => '1 Litro',
+                'precio' => 2600,
+                'stock_actual' => 85,
+                'stock_minimo' => 20,
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 1,
+                'nombre' => 'Pote de Dulce de Leche 2L',
+                'descripcion' => 'Helado de dulce de leche granizado',
+                'marca' => 'Grido',
+                'formato' => '2 Litros',
+                'precio' => 4800,
+                'stock_actual' => 50,
+                'stock_minimo' => 15,
+                'activo' => true,
+            ],
+            [
+                'distribuidor_id' => 2,
+                'nombre' => 'Bombón Suizo 1L',
+                'descripcion' => 'Helado con trozos de bombón suizo',
+                'marca' => 'Freddo',
+                'formato' => '1 Litro',
+                'precio' => 3200,
+                'stock_actual' => 40,
+                'stock_minimo' => 10,
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($productos as $producto) {
+            DB::table('productos')->insert($producto);
+        }
+
+        // 6. Crear zonas logísticas
+        $zonas = [
+            ['distribuidor_id' => 1, 'provincia_id' => 1, 'costo_base' => 1500, 'costo_por_bulto' => 200, 'pedido_minimo' => 5000, 'tiempo_entrega_dias' => 2],
+            ['distribuidor_id' => 1, 'provincia_id' => 2, 'costo_base' => 1000, 'costo_por_bulto' => 150, 'pedido_minimo' => 4000, 'tiempo_entrega_dias' => 1],
+            ['distribuidor_id' => 1, 'provincia_id' => 23, 'costo_base' => 5000, 'costo_por_bulto' => 500, 'pedido_minimo' => 10000, 'tiempo_entrega_dias' => 7],
+            ['distribuidor_id' => 2, 'provincia_id' => 5, 'costo_base' => 3000, 'costo_por_bulto' => 300, 'pedido_minimo' => 8000, 'tiempo_entrega_dias' => 4],
+        ];
+
+        foreach ($zonas as $zona) {
+            DB::table('zonas_logisticas')->insert($zona);
+        }
+
+        echo "✅ Datos de prueba cargados exitosamente!\n";
+        echo "\n=== CREDENCIALES DE PRUEBA ===\n";
+        echo "Super Admin: sioy23@gmail.com / 12345678\n";
+        echo "Distribuidor 1: admin@heladosdelsur.com / 12345678\n";
+        echo "Distribuidor 2: admin@distribuidoranorte.com / 12345678\n";
+        echo "Cliente 1: cliente1@test.com / 12345678\n";
+        echo "Cliente 2: cliente2@test.com / 12345678\n";
+        echo "Cliente 3: cliente3@test.com / 12345678\n";
+    }
+}
+```
+
+---
+
+## 🌿 **3. ESTRATEGIA DE RAMAS GITHUB**
+
+### Estructura:
+
+```
+main (producción)
+  └── develop (testing)
+       ├── feature/nueva-funcionalidad
+       └── bugfix/correccion
+```
+
+### Reglas:
+
+| Rama | Entorno | Deploy automático | Quién puede mergear |
+|------|---------|-------------------|---------------------|
+| `main` | `distriboo.yoisar.com` | Manual | Solo después de testing |
+| `develop` | `test.distriboo.yoisar.com` | Automático | Desarrolladores |
+| `feature/*` | Local | No | Pull Request a develop |
+| `bugfix/*` | Local | No | Pull Request a develop |
+
+---
+
+## 🚀 **4. WORKFLOWS DE GITHUB ACTIONS**
+
+### Workflow Testing: `.github/workflows/deploy-test.yml`
+
+```yaml
+name: Deploy to Testing
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      
+      - name: Deploy to Testing Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /www/wwwroot/distriboo.yoisar.com
+            git checkout develop
+            git pull origin develop
+            
+            # Cargar datos de prueba
+            docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder
+            
+            # Reiniciar contenedores
+            docker-compose -f docker-compose.test.yml down
+            docker-compose -f docker-compose.test.yml up -d --build
+            
+            # Ejecutar migraciones
+            docker exec distriboo_test_backend php artisan migrate --force
+          'EOF'
+      
+      - name: Notify deployment
+        run: |
+          echo "✅ Testing deployed to https://test.distriboo.yoisar.com"
+```
+
+### Workflow Producción: `.github/workflows/deploy-prod.yml`
+
+```yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      
+      - name: Deploy to Production Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /www/wwwroot/distriboo.yoisar.com
+            git checkout main
+            git pull origin main
+            
+            # Limpiar datos de prueba antes de deploy
+            docker exec distriboo_prod_backend php scripts/clean-production-data.php
+            
+            # Reiniciar contenedores
+            docker-compose -f docker-compose.prod.yml down
+            docker-compose -f docker-compose.prod.yml up -d --build
+            
+            # Ejecutar migraciones
+            docker exec distriboo_prod_backend php artisan migrate --force
+          'EOF'
+      
+      - name: Notify deployment
+        run: |
+          echo "✅ Production deployed to https://distriboo.yoisar.com"
+```
+
+---
+
+## 🔧 **5. SCRIPTS DE UTILIDAD**
+
+### Reset testing con datos frescos: `scripts/reset-testing.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Resetear entorno de testing con datos nuevos
+# Uso: ./scripts/reset-testing.sh
+# ============================================
+
+set -e
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+
+log_warn "Esto ELIMINARÁ y RECREARÁ todos los datos de testing"
+read -p "¿Continuar? (s/n): " confirm
+
+if [ "$confirm" != "s" ]; then
+    log_info "Operación cancelada."
+    exit 0
+fi
+
+cd /www/wwwroot/distriboo.yoisar.com
+
+# Detener contenedores
+log_info "Deteniendo contenedores de testing..."
+docker-compose -f docker-compose.test.yml down
+
+# Eliminar volúmenes (datos limpios)
+log_info "Eliminando volúmenes de testing..."
+docker volume rm distriboo_test_mysql_data || true
+
+# Levantar contenedores
+log_info "Levantando contenedores..."
+docker-compose -f docker-compose.test.yml up -d --build
+
+# Esperar a que MySQL esté listo
+log_info "Esperando a MySQL..."
+sleep 10
+
+# Ejecutar migraciones
+log_info "Ejecutando migraciones..."
+docker exec distriboo_test_backend php artisan migrate --force
+
+# Cargar datos de prueba
+log_info "Cargando datos de prueba..."
+docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder
+
+log_info "✅ Testing reset completado!"
+log_info "🌐 https://test.distriboo.yoisar.com"
+```
+
+### Script de backup producción: `scripts/backup-production.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Backup de base de datos de producción
+# Uso: ./scripts/backup-production.sh
+# ============================================
+
+DATE=$(date +"%Y%m%d_%H%M%S")
+BACKUP_DIR="/www/backups/distriboo/production"
+
+mkdir -p $BACKUP_DIR
+
+cd /www/wwwroot/distriboo.yoisar.com
+
+# Backup de la base de datos
+docker exec distriboo_prod_mysql mysqldump \
+    -u distriboo_prod_user \
+    -p${PROD_DB_PASSWORD} \
+    distriboo_prod > ${BACKUP_DIR}/backup_${DATE}.sql
+
+# Comprimir
+gzip ${BACKUP_DIR}/backup_${DATE}.sql
+
+# Eliminar backups antiguos (más de 30 días)
+find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete
+
+echo "✅ Backup guardado en: ${BACKUP_DIR}/backup_${DATE}.sql.gz"
+```
+
+---
+
+## 📋 **6. CONFIGURACIÓN DE SECRETS EN GITHUB**
+
+### Secrets necesarios:
+
+| Secret | Valor | Dónde obtener |
+|--------|-------|---------------|
+| `VPS_HOST` | IP del VPS | Proveedor VPS |
+| `VPS_USER` | Usuario SSH | Configuración VPS |
+| `VPS_SSH_KEY` | Clave privada SSH | `~/.ssh/id_rsa` |
+
+### Configurar en GitHub:
+1. Ir a `Settings` → `Secrets and variables` → `Actions`
+2. Agregar los 3 secrets arriba
+
+---
+
+## ✅ **CHECKLIST DE CONFIGURACIÓN**
+
+### GitHub:
+- [ ] Crear rama `develop` desde `main`
+- [ ] Configurar protección de ramas (`main` requiere PR)
+- [ ] Agregar secrets en GitHub Actions
+- [ ] Subir workflows a `.github/workflows/`
+
+### VPS - Testing:
+- [ ] Configurar `docker-compose.test.yml`
+- [ ] Crear `.env.test` con credenciales
+- [ ] Ejecutar `./scripts/reset-testing.sh`
+- [ ] Verificar `https://test.distriboo.yoisar.com`
+
+### VPS - Producción:
+- [ ] Configurar `docker-compose.prod.yml`
+- [ ] Crear `.env.production` con credenciales
+- [ ] Ejecutar limpieza inicial
+- [ ] Verificar `https://distriboo.yoisar.com`
+
+### Datos:
+- [ ] Producción: solo Super Admin
+- [ ] Testing: datos de prueba cargados
+- [ ] Provincias: mantenidas en ambos
+
+---
+
+## 📝 **COMANDOS RÁPIDOS**
+
+```bash
+# Resetear testing (datos nuevos)
+./scripts/reset-testing.sh
+
+# Limpiar producción (solo Super Admin)
+./scripts/clean-production.sh
+
+# Backup producción
+./scripts/backup-production.sh
+
+# Deploy manual testing
+git checkout develop
+git push origin develop
+# (GitHub Actions ejecuta automáticamente)
+
+# Deploy manual producción
+git checkout main
+git merge develop
+git push origin main
+```
+
+---
+
+## 🔥 **FLUJO DE TRABAJO RECOMENDADO**
+
+```mermaid
+git checkout -b feature/nueva-funcionalidad
+# ... desarrollar ...
+git push origin feature/nueva-funcionalidad
+# Crear Pull Request a develop
+# GitHub Actions → deploy automático a testing
+# Probar en https://test.distriboo.yoisar.com
+# Crear Pull Request a main
+# GitHub Actions → deploy manual a producción
+```
+
+---
