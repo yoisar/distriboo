@@ -18,35 +18,59 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      - name: Create .env.production on VPS
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cat > /www/wwwroot/distriboo.yoisar.com/.env.production << 'ENVEOF'
+          APP_NAME=Distriboo
+          APP_ENV=production
+          APP_DEBUG=false
+          APP_KEY=${{ secrets.PROD_APP_KEY }}
+          PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}
+          PROD_ROOT_PASSWORD=${{ secrets.PROD_ROOT_PASSWORD }}
+          COMPOSE_PROJECT_NAME=distriboo_prod
+          SANCTUM_STATEFUL_DOMAINS=distriboo.yoisar.com
+          SESSION_DOMAIN=distriboo.yoisar.com
+          MAIL_MAILER=smtp
+          MAIL_HOST=${{ secrets.MAIL_HOST }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM_ADDRESS=no-reply@distriboo.yoisar.com
+          MAIL_FROM_NAME='Distriboo'
+          ENVEOF
+          "
+
       - name: Backup production database
         run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /www/wwwroot/distriboo.yoisar.com
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /www/wwwroot/distriboo.yoisar.com &&
             ./scripts/backup-production.sh
-          EOF
+          "
 
-      - name: Deploy to Production Server
+      - name: Git pull on VPS
         run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /www/wwwroot/distriboo.yoisar.com
-            git checkout main
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /www/wwwroot/distriboo.yoisar.com &&
+            git checkout main &&
             git pull origin main
+          "
 
-            # Reconstruir y levantar contenedores
-            docker compose -f docker-compose.prod.yml down
+      - name: Rebuild and start containers
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /www/wwwroot/distriboo.yoisar.com &&
+            docker compose -f docker-compose.prod.yml down &&
             docker compose -f docker-compose.prod.yml up -d --build
+          "
 
-            # Esperar a MySQL
-            echo "Esperando a MySQL..."
-            until docker exec distriboo_prod_mysql mysqladmin ping -h localhost --silent 2>/dev/null; do
-              sleep 2
-            done
-
-            # Ejecutar migraciones (sin seed en producción)
-            docker exec distriboo_prod_backend php artisan migrate --force
-
-            echo "✅ Production deploy completado"
-          EOF
+      - name: Wait for MySQL and run migrations
+        run: |
+          sleep 20
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            docker exec distriboo_prod_backend php artisan migrate --force &&
+            echo '✅ Production deploy completado'
+          "
 
       - name: Deployment summary
         run: echo "✅ Production deployed to https://distriboo.yoisar.com"
