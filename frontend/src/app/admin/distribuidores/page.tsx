@@ -17,6 +17,8 @@ export default function AdminDistribuidoresPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Distribuidor | null>(null);
   const [form, setForm] = useState({
@@ -44,6 +46,8 @@ export default function AdminDistribuidoresPage() {
       const res = await api.getDistribuidores({ page: String(page) });
       setDistribuidores(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } finally {
       setLoading(false);
     }
@@ -234,7 +238,7 @@ export default function AdminDistribuidoresPage() {
                 ))
               )}
             </div>
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>

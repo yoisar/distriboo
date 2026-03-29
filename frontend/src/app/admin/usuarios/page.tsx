@@ -18,6 +18,9 @@ export default function AdminUsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [form, setForm] = useState({
@@ -36,14 +39,18 @@ export default function AdminUsuariosPage() {
       loadUsers();
       loadClientes();
     }
-  }, [authLoading, currentUser, page]);
+  }, [authLoading, currentUser, page, search]);
 
   async function loadUsers() {
     setLoading(true);
     try {
-      const res = await api.getUsers({ page: String(page) });
+      const params: Record<string, string> = { page: String(page) };
+      if (search) params.search = search;
+      const res = await api.getUsers(params);
       setUsers(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } finally {
       setLoading(false);
     }
@@ -143,11 +150,20 @@ export default function AdminUsuariosPage() {
   return (
     <AppLayout user={currentUser} title="Usuarios" onLogout={logout}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Usuarios</h2>
-          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-            + Nuevo Usuario
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <input
+              type="text"
+              placeholder="Buscar por nombre o email..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="flex-1 sm:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 whitespace-nowrap">
+              + Nuevo
+            </button>
+          </div>
         </div>
 
         <Modal open={showForm} onClose={() => setShowForm(false)} title={`${editing ? "Editar" : "Nuevo"} Usuario`}>
@@ -276,7 +292,7 @@ export default function AdminUsuariosPage() {
           </>
         )}
 
-        <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+        <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
       </div>
     </AppLayout>
   );

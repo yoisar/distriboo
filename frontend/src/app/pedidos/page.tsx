@@ -16,6 +16,8 @@ export default function PedidosPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
 
   useEffect(() => {
     if (!authLoading && user) loadPedidos();
@@ -27,6 +29,8 @@ export default function PedidosPage() {
       const res = await api.getPedidos({ page: String(page) });
       setPedidos(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } catch {
       // silently fail
     } finally {
@@ -110,7 +114,7 @@ export default function PedidosPage() {
               </div>
             </div>
 
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>

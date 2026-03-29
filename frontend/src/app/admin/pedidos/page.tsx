@@ -26,6 +26,8 @@ export default function AdminPedidosPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [updating, setUpdating] = useState<number | null>(null);
   const [filtroEstado, setFiltroEstado] = useState("");
 
@@ -41,6 +43,8 @@ export default function AdminPedidosPage() {
       const res = await api.getPedidos(params);
       setPedidos(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } finally {
       setLoading(false);
     }
@@ -201,7 +205,7 @@ export default function AdminPedidosPage() {
               ))}
             </div>
 
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>

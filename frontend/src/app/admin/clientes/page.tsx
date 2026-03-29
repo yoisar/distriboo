@@ -19,6 +19,8 @@ export default function AdminClientesPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [form, setForm] = useState({
@@ -51,6 +53,8 @@ export default function AdminClientesPage() {
       ]);
       setClientes(clientesRes.data);
       setLastPage(clientesRes.last_page);
+      setTotal(clientesRes.total);
+      setPerPage(clientesRes.per_page);
       setProvincias(provinciasRes);
     } finally {
       setLoading(false);
@@ -267,7 +271,7 @@ export default function AdminClientesPage() {
                 </div>
               ))}
             </div>
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>

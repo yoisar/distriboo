@@ -19,6 +19,8 @@ export default function AdminZonasPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ZonaLogistica | null>(null);
   const [form, setForm] = useState({
@@ -48,6 +50,8 @@ export default function AdminZonasPage() {
       ]);
       setZonas(zonasRes.data);
       setLastPage(zonasRes.last_page);
+      setTotal(zonasRes.total);
+      setPerPage(zonasRes.per_page);
       setProvincias(provinciasRes);
     } finally {
       setLoading(false);
@@ -235,10 +239,10 @@ export default function AdminZonasPage() {
                 </tbody>
               </table>
             </div>
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </div>
 
-          {/* Mobile: Tarjetas */}
+          {/* Mobile: Tarjetas */}}
           <div className="md:hidden space-y-3">
             {zonas.map((z) => (
               <div key={z.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
@@ -259,7 +263,7 @@ export default function AdminZonasPage() {
                 </div>
               </div>
             ))}
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </div>
           </>
         )}
