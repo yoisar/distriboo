@@ -58,6 +58,7 @@ jobs:
         run: |
           sleep 20
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            docker exec distriboo_test_backend php artisan config:clear &&
             docker exec distriboo_test_backend php artisan migrate --force &&
             docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder --force &&
             echo '✅ Testing deploy completado'
