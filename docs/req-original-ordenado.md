@@ -3061,6 +3061,3 @@ docker-compose -f docker-compose.prod.yml down
 ```
 
 ---
-
-**¿Necesitas que genere algún archivo específico completo (Dockerfile.test, Dockerfile.prod, etc.)?** 🚀
-
