@@ -8,6 +8,7 @@ import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import Modal from "@/app/components/Modal";
 import Pagination from "@/app/components/Pagination";
+import ImportModal from "@/components/ImportModal";
 import type { Producto } from "@/types";
 
 export default function AdminProductosPage() {
@@ -32,6 +33,7 @@ export default function AdminProductosPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) loadProductos();
@@ -133,10 +135,22 @@ export default function AdminProductosPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Productos</h2>
-          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-            + Nuevo Producto
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowImport(true)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+              Importar CSV
+            </button>
+            <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+              + Nuevo Producto
+            </button>
+          </div>
         </div>
+
+        <ImportModal
+          open={showImport}
+          onClose={() => setShowImport(false)}
+          tipo="productos"
+          onSuccess={loadProductos}
+        />
 
         <div className="mb-4">
           <input
