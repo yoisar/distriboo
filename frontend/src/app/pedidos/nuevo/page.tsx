@@ -73,15 +73,15 @@ export default function NuevoPedidoPage() {
   }
 
   const subtotal = cart.reduce(
-    (sum, c) => sum + c.producto.precio * c.cantidad,
+    (sum, c) => sum + Number(c.producto.precio) * c.cantidad,
     0
   );
   const totalBultos = cart.reduce((sum, c) => sum + c.cantidad, 0);
   const costoLogistico = zona
-    ? zona.costo_base + zona.costo_por_bulto * totalBultos
+    ? Number(zona.costo_base) + Number(zona.costo_por_bulto) * totalBultos
     : 0;
   const total = subtotal + costoLogistico;
-  const pedidoMinimo = zona?.pedido_minimo || 0;
+  const pedidoMinimo = Number(zona?.pedido_minimo ?? 0);
   const cumpleMinimo = subtotal >= pedidoMinimo;
 
   async function handleSubmit() {
@@ -224,7 +224,7 @@ export default function NuevoPedidoPage() {
                         <span className="font-medium text-gray-800 dark:text-gray-200">
                           $
                           {(
-                            item.producto.precio * item.cantidad
+                            Number(item.producto.precio) * item.cantidad
                           ).toLocaleString("es-AR")}
                         </span>
                       </div>
