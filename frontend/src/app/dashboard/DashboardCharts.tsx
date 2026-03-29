@@ -186,14 +186,14 @@ function ChartSkeleton() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
       <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4 animate-pulse" />
-      <div className="h-[250px] bg-gray-100 dark:bg-gray-700/50 rounded animate-pulse" />
+      <div className="h-62.5 bg-gray-100 dark:bg-gray-700/50 rounded animate-pulse" />
     </div>
   );
 }
 
 function EmptyChart({ text }: { text: string }) {
   return (
-    <div className="h-[250px] flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+    <div className="h-62.5 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
       {text}
     </div>
   );

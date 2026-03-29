@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\DistribuidorController;
+use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\ProvinciaController;
@@ -69,5 +70,16 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/stock-bajo', [ReporteController::class, 'stockBajo']);
             Route::get('/pedidos-por-mes', [ReporteController::class, 'pedidosPorMes']);
         });
+
+        // ── Importación / Exportación CSV ──
+        // Plantillas descargables
+        Route::get('/importar/plantilla/productos', [ImportController::class, 'plantillaProductos']);
+        Route::get('/importar/plantilla/clientes', [ImportController::class, 'plantillaClientes']);
+        Route::get('/importar/plantilla/zonas', [ImportController::class, 'plantillaZonas']);
+
+        // Importar desde CSV
+        Route::post('/importar/productos', [ImportController::class, 'importarProductos']);
+        Route::post('/importar/clientes', [ImportController::class, 'importarClientes']);
+        Route::post('/importar/zonas', [ImportController::class, 'importarZonas']);
     });
 });

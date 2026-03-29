@@ -224,9 +224,14 @@ export default function AdminUsuariosPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.cliente?.razon_social || "-"}</td>
                       <td className="px-4 py-3 text-sm space-x-2">
-                        <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline">Editar</button>
-                        {u.id !== currentUser?.id && (
+                        {(currentUser?.role === 'super_admin' || u.role !== 'super_admin') && (
+                          <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline">Editar</button>
+                        )}
+                        {u.id !== currentUser?.id && (currentUser?.role === 'super_admin' || u.role !== 'super_admin') && (
                           <button onClick={() => handleDelete(u.id)} className="text-red-600 hover:underline">Eliminar</button>
+                        )}
+                        {u.role === 'super_admin' && currentUser?.role !== 'super_admin' && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500 italic">Protegido</span>
                         )}
                       </td>
                     </tr>
@@ -255,9 +260,14 @@ export default function AdminUsuariosPage() {
                   <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Cliente</span><span className="text-gray-700 dark:text-gray-300">{u.cliente?.razon_social || "-"}</span></div>
                 </div>
                 <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <button onClick={() => openEdit(u)} className="flex-1 text-center text-sm text-blue-600 dark:text-blue-400 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">Editar</button>
-                  {u.id !== currentUser?.id && (
+                  {(currentUser?.role === 'super_admin' || u.role !== 'super_admin') && (
+                    <button onClick={() => openEdit(u)} className="flex-1 text-center text-sm text-blue-600 dark:text-blue-400 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">Editar</button>
+                  )}
+                  {u.id !== currentUser?.id && (currentUser?.role === 'super_admin' || u.role !== 'super_admin') && (
                     <button onClick={() => handleDelete(u.id)} className="flex-1 text-center text-sm text-red-600 dark:text-red-400 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Eliminar</button>
+                  )}
+                  {u.role === 'super_admin' && currentUser?.role !== 'super_admin' && (
+                    <span className="flex-1 text-center text-xs text-gray-400 dark:text-gray-500 italic py-2">Protegido</span>
                   )}
                 </div>
               </div>

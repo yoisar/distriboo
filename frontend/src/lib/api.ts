@@ -305,6 +305,85 @@ class ApiClient {
   deleteDistribuidor(id: number) {
     return this.request(`/distribuidores/${id}`, { method: "DELETE" });
   }
+
+  // ── Importación CSV ───────────────────────────────────────────────────────
+
+  async importarProductos(archivo: File) {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    const token = this.getToken();
+    const response = await fetch(`${API_URL}/importar/productos`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Error ${response.status}`);
+    }
+    return response.json() as Promise<{ message: string; creados: number; actualizados: number; errores: string[] }>;
+  }
+
+  async importarClientes(archivo: File) {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    const token = this.getToken();
+    const response = await fetch(`${API_URL}/importar/clientes`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Error ${response.status}`);
+    }
+    return response.json() as Promise<{ message: string; creados: number; actualizados: number; errores: string[] }>;
+  }
+
+  async importarZonas(archivo: File) {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    const token = this.getToken();
+    const response = await fetch(`${API_URL}/importar/zonas`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Error ${response.status}`);
+    }
+    return response.json() as Promise<{ message: string; creados: number; actualizados: number; errores: string[] }>;
+  }
+
+  async descargarPlantilla(tipo: "productos" | "clientes" | "zonas") {
+    const token = this.getToken();
+    const response = await fetch(`${API_URL}/importar/plantilla/${tipo}`, {
+      headers: {
+        Accept: "text/csv",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!response.ok) throw new Error(`Error ${response.status}`);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `plantilla_${tipo}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 export const api = new ApiClient();
