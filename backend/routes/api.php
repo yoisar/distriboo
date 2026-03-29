@@ -29,6 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/productos', [ProductoController::class, 'index']);
     Route::get('/productos/{producto}', [ProductoController::class, 'show']);
 
+    // ── Zonas logísticas (lectura para todos los autenticados) ──
+    Route::get('/zonas-logisticas', [ZonaLogisticaController::class, 'index']);
+    Route::get('/zonas-logisticas/{zonasLogistica}', [ZonaLogisticaController::class, 'show']);
+
     // ── Pedidos ──
     Route::get('/pedidos', [PedidoController::class, 'index']);
     Route::post('/pedidos', [PedidoController::class, 'store']);
@@ -52,9 +56,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Clientes CRUD
         Route::apiResource('clientes', ClienteController::class);
 
-        // Zonas logísticas CRUD
+        // Zonas logísticas CRUD (solo escritura; lectura disponible para todos los autenticados)
         Route::apiResource('zonas-logisticas', ZonaLogisticaController::class)
-            ->parameters(['zonas-logisticas' => 'zonasLogistica']);
+            ->parameters(['zonas-logisticas' => 'zonasLogistica'])
+            ->except(['index', 'show']);
 
         // Estado pedidos
         Route::put('/pedidos/{pedido}/estado', [PedidoController::class, 'updateEstado']);
