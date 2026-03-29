@@ -194,42 +194,73 @@ export default function AdminUsuariosPage() {
         {loading ? (
           <Loading />
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rol</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{u.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        u.role === "super_admin" ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300" :
-                        u.role === "distribuidor" ? "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300" :
-                        "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                      }`}>
-                        {u.role === "super_admin" ? "Super Admin" : u.role === "distribuidor" ? "Distribuidor" : "Cliente"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.cliente?.razon_social || "-"}</td>
-                    <td className="px-4 py-3 text-sm space-x-2">
-                      <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline">Editar</button>
-                      {u.id !== currentUser?.id && (
-                        <button onClick={() => handleDelete(u.id)} className="text-red-600 hover:underline">Eliminar</button>
-                      )}
-                    </td>
+          {/* Desktop: Tabla */}
+          <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rol</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {users.map((u) => (
+                    <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{u.name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.email}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          u.role === "super_admin" ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300" :
+                          u.role === "distribuidor" ? "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300" :
+                          "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                        }`}>
+                          {u.role === "super_admin" ? "Super Admin" : u.role === "distribuidor" ? "Distribuidor" : "Cliente"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.cliente?.razon_social || "-"}</td>
+                      <td className="px-4 py-3 text-sm space-x-2">
+                        <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline">Editar</button>
+                        {u.id !== currentUser?.id && (
+                          <button onClick={() => handleDelete(u.id)} className="text-red-600 hover:underline">Eliminar</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile: Tarjetas */}
+          <div className="md:hidden space-y-3">
+            {users.map((u) => (
+              <div key={u.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{u.name}</h3>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    u.role === "super_admin" ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300" :
+                    u.role === "distribuidor" ? "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300" :
+                    "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                  }`}>
+                    {u.role === "super_admin" ? "Super Admin" : u.role === "distribuidor" ? "Distribuidor" : "Cliente"}
+                  </span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Email</span><span className="text-gray-700 dark:text-gray-300 truncate ml-2">{u.email}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Cliente</span><span className="text-gray-700 dark:text-gray-300">{u.cliente?.razon_social || "-"}</span></div>
+                </div>
+                <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <button onClick={() => openEdit(u)} className="flex-1 text-center text-sm text-blue-600 dark:text-blue-400 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">Editar</button>
+                  {u.id !== currentUser?.id && (
+                    <button onClick={() => handleDelete(u.id)} className="flex-1 text-center text-sm text-red-600 dark:text-red-400 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Eliminar</button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

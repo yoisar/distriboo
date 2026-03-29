@@ -184,39 +184,66 @@ export default function AdminZonasPage() {
         {loading ? (
           <Loading />
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Provincia</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Costo Base</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">$/Bulto</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Mínimo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {zonas.map((z) => (
-                  <tr key={z.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{getProvinciaName(z.provincia_id)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.costo_base.toLocaleString("es-AR")}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.costo_por_bulto.toLocaleString("es-AR")}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.pedido_minimo.toLocaleString("es-AR")}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{z.tiempo_entrega_dias}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded ${z.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
-                        {z.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <button onClick={() => openEdit(z)} className="text-blue-600 hover:underline">Editar</button>
-                    </td>
+          {/* Desktop: Tabla */}
+          <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Provincia</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Costo Base</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">$/Bulto</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Mínimo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {zonas.map((z) => (
+                    <tr key={z.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{getProvinciaName(z.provincia_id)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.costo_base.toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.costo_por_bulto.toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.pedido_minimo.toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{z.tiempo_entrega_dias}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-1 rounded ${z.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
+                          {z.activo ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <button onClick={() => openEdit(z)} className="text-blue-600 hover:underline">Editar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+          </div>
+
+          {/* Mobile: Tarjetas */}
+          <div className="md:hidden space-y-3">
+            {zonas.map((z) => (
+              <div key={z.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{getProvinciaName(z.provincia_id)}</h3>
+                  <span className={`text-xs px-2 py-1 rounded ${z.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
+                    {z.activo ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Costo Base</span><span className="text-gray-700 dark:text-gray-300">${z.costo_base.toLocaleString("es-AR")}</span></div>
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">$/Bulto</span><span className="text-gray-700 dark:text-gray-300">${z.costo_por_bulto.toLocaleString("es-AR")}</span></div>
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Mínimo</span><span className="text-gray-700 dark:text-gray-300">${z.pedido_minimo.toLocaleString("es-AR")}</span></div>
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Días entrega</span><span className="text-gray-700 dark:text-gray-300">{z.tiempo_entrega_dias}</span></div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <button onClick={() => openEdit(z)} className="w-full text-center text-sm text-blue-600 dark:text-blue-400 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">Editar</button>
+                </div>
+              </div>
+            ))}
             <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
           </div>
         )}

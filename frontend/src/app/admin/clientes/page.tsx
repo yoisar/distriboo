@@ -194,38 +194,64 @@ export default function AdminClientesPage() {
           <Loading />
         ) : (
           <>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Razón Social</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Provincia</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CUIT</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {clientes.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{c.razon_social}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.provincia?.nombre || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.cuit || "-"}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded ${c.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
-                          {c.activo ? "Activo" : "Inactivo"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm space-x-2">
-                        <button onClick={() => openEdit(c)} className="text-blue-600 hover:underline">Editar</button>
-                        <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:underline">Eliminar</button>
-                      </td>
+            {/* Desktop: Tabla */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Razón Social</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Provincia</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CUIT</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {clientes.map((c) => (
+                      <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{c.razon_social}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.provincia?.nombre || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.cuit || "-"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-1 rounded ${c.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
+                            {c.activo ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm space-x-2">
+                          <button onClick={() => openEdit(c)} className="text-blue-600 hover:underline">Editar</button>
+                          <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:underline">Eliminar</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile: Tarjetas */}
+            <div className="md:hidden space-y-3">
+              {clientes.map((c) => (
+                <div key={c.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{c.razon_social}</h3>
+                    <span className={`text-xs px-2 py-1 rounded ${c.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
+                      {c.activo ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Email</span><span className="text-gray-700 dark:text-gray-300 truncate ml-2">{c.email}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Provincia</span><span className="text-gray-700 dark:text-gray-300">{c.provincia?.nombre || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">CUIT</span><span className="text-gray-700 dark:text-gray-300">{c.cuit || "-"}</span></div>
+                  </div>
+                  <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <button onClick={() => openEdit(c)} className="flex-1 text-center text-sm text-blue-600 dark:text-blue-400 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">Editar</button>
+                    <button onClick={() => handleDelete(c.id)} className="flex-1 text-center text-sm text-red-600 dark:text-red-400 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Eliminar</button>
+                  </div>
+                </div>
+              ))}
             </div>
             <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
           </>
