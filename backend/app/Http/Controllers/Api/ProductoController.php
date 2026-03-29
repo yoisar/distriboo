@@ -21,8 +21,11 @@ class ProductoController extends Controller
         if ($user->role === 'distribuidor') {
             $query->where('distribuidor_id', $user->distribuidor_id);
         } elseif ($user->role === 'cliente') {
+            // Obtener distribuidor_id: del campo directo o del cliente asociado
+            $distribuidorId = $user->distribuidor_id
+                ?? ($user->cliente ? $user->cliente->distribuidor_id : null);
             // Cliente ve catálogo de su distribuidor, sin stock ni precio
-            $query->where('distribuidor_id', $user->distribuidor_id)
+            $query->where('distribuidor_id', $distribuidorId)
                   ->where('activo', true);
         }
         // super_admin ve todo

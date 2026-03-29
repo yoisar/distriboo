@@ -57,6 +57,15 @@ class UserController extends Controller
             $data['role'] = 'cliente'; // Solo puede crear clientes
         }
 
+        // Si se crea un usuario cliente con cliente_id pero sin distribuidor_id,
+        // derivar el distribuidor_id desde el registro de cliente
+        if (($data['role'] ?? '') === 'cliente' && !empty($data['cliente_id']) && empty($data['distribuidor_id'])) {
+            $cliente = \App\Models\Cliente::find($data['cliente_id']);
+            if ($cliente && $cliente->distribuidor_id) {
+                $data['distribuidor_id'] = $cliente->distribuidor_id;
+            }
+        }
+
         $newUser = User::create($data);
 
         return response()->json($newUser->load('cliente'), 201);

@@ -85,7 +85,11 @@ export default function NuevoPedidoPage() {
   const cumpleMinimo = subtotal >= pedidoMinimo;
 
   async function handleSubmit() {
-    if (!user?.cliente_id || cart.length === 0) return;
+    if (!user?.cliente_id) {
+      setError("Tu usuario no tiene un cliente asociado. Contactá al administrador.");
+      return;
+    }
+    if (cart.length === 0) return;
     if (!cumpleMinimo) {
       setError(
         `El pedido mínimo para tu zona es $${pedidoMinimo.toLocaleString("es-AR")}`

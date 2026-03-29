@@ -242,7 +242,7 @@ export default function AdminZonasPage() {
             <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </div>
 
-          {/* Mobile: Tarjetas */}}
+          {/* Mobile: Tarjetas */}
           <div className="md:hidden space-y-3">
             {zonas.map((z) => (
               <div key={z.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">

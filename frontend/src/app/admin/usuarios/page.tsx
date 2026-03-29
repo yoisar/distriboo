@@ -8,13 +8,14 @@ import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import Modal from "@/app/components/Modal";
 import Pagination from "@/app/components/Pagination";
-import type { User, Cliente } from "@/types";
+import type { User, Cliente, Distribuidor } from "@/types";
 
 export default function AdminUsuariosPage() {
   const { user: currentUser, loading: authLoading, logout } = useAuth({ requireAdmin: true });
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [distribuidores, setDistribuidores] = useState<Distribuidor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -29,6 +30,7 @@ export default function AdminUsuariosPage() {
     password: "",
     role: "cliente" as string,
     cliente_id: "" as string,
+    distribuidor_id: "" as string,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -38,6 +40,7 @@ export default function AdminUsuariosPage() {
     if (!authLoading && currentUser) {
       loadUsers();
       loadClientes();
+      if (currentUser.role === "super_admin") loadDistribuidores();
     }
   }, [authLoading, currentUser, page, search]);
 
@@ -65,9 +68,18 @@ export default function AdminUsuariosPage() {
     }
   }
 
+  async function loadDistribuidores() {
+    try {
+      const res = await api.getDistribuidores({ per_page: "100" });
+      setDistribuidores(res.data);
+    } catch {
+      // silently fail
+    }
+  }
+
   function openCreate() {
     setEditing(null);
-    setForm({ name: "", email: "", password: "", role: "cliente", cliente_id: "" });
+    setForm({ name: "", email: "", password: "", role: "cliente", cliente_id: "", distribuidor_id: "" });
     setShowForm(true);
     setError("");
     setFormErrors({});
@@ -81,6 +93,7 @@ export default function AdminUsuariosPage() {
       password: "",
       role: u.role,
       cliente_id: u.cliente_id ? String(u.cliente_id) : "",
+      distribuidor_id: u.distribuidor_id ? String(u.distribuidor_id) : "",
     });
     setShowForm(true);
     setError("");
@@ -109,6 +122,7 @@ export default function AdminUsuariosPage() {
           email: form.email,
           role: form.role,
           cliente_id: form.cliente_id ? parseInt(form.cliente_id) : null,
+          distribuidor_id: form.distribuidor_id ? parseInt(form.distribuidor_id) : null,
         };
         if (form.password) data.password = form.password;
         await api.updateUser(editing.id, data as Parameters<typeof api.updateUser>[1]);
@@ -120,6 +134,7 @@ export default function AdminUsuariosPage() {
           password: form.password,
           role: form.role,
           cliente_id: form.cliente_id ? parseInt(form.cliente_id) : null,
+          distribuidor_id: form.distribuidor_id ? parseInt(form.distribuidor_id) : null,
         });
         toast("Usuario creado", "success");
       }
@@ -195,6 +210,14 @@ export default function AdminUsuariosPage() {
                 <option value="">Sin cliente asociado</option>
                 {clientes.map((c) => (
                   <option key={c.id} value={c.id}>{c.razon_social}</option>
+                ))}
+              </select>
+            )}
+            {form.role === "distribuidor" && currentUser?.role === "super_admin" && (
+              <select value={form.distribuidor_id} onChange={(e) => setForm({ ...form, distribuidor_id: e.target.value })} className={inputClass}>
+                <option value="">Sin distribuidor asociado</option>
+                {distribuidores.map((d) => (
+                  <option key={d.id} value={d.id}>{d.nombre_comercial}</option>
                 ))}
               </select>
             )}
