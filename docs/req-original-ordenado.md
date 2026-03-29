@@ -2224,5 +2224,843 @@ export const SettingsIcon = () => (...);
 ---
 
 
-# ajustes ux/ui - mobile first: 
+# ajustes ux/ui - mobile first + deploy + testing: 
+
+Perfecto. Aquí tienes el requerimiento completo y ordenado para las fases de **UX/UI Mobile First** y **Deploy + Testing**.
+
+---
+
+# 📋 REQUERIMIENTO: FASE 1 - UX/UI MOBILE FIRST
+
+## 🎯 **OBJETIVO**
+
+Garantizar que **todas** las pantallas de distriboo sean completamente funcionales y adaptadas a dispositivos móviles (smartphones y tablets).
+
+---
+
+## 📱 **1. PRINCIPIOS MOBILE FIRST APLICADOS**
+
+### Estrategia general:
+
+| Principio | Implementación |
+|-----------|----------------|
+| **Diseño fluido** | Usar `w-full`, `max-w-`, flexbox y grid responsivo |
+| **Breakpoints** | `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px) |
+| **Touch targets** | Botones mínimos de 44x44px para dedos |
+| **Fuentes legibles** | Tamaño base 16px en móvil |
+| **Espaciado** | Padding/ margins mayores en móvil (p-4 vs p-6 en desktop) |
+
+### Clases Tailwind a usar:
+
+```css
+/* Móvil primero */
+.contenedor {
+  @apply w-full px-4 py-3;  /* Base móvil */
+  @apply md:px-6 md:py-4;   /* Tablet */
+  @apply lg:px-8 lg:py-6;   /* Desktop */
+}
+
+/* Grid responsivo */
+.grid-lista {
+  @apply grid grid-cols-1 gap-4;      /* Móvil: 1 columna */
+  @apply sm:grid-cols-2;              /* Tablet pequeña: 2 */
+  @apply md:grid-cols-3;              /* Tablet grande: 3 */
+  @apply lg:grid-cols-4;              /* Desktop: 4 */
+}
+
+/* Tabla responsiva */
+.tabla-responsive {
+  @apply w-full overflow-x-auto;      /* Scroll horizontal en móvil */
+  -webkit-overflow-scrolling: touch;
+}
+```
+
+---
+
+## 📊 **2. LISTADOS RESPONSIVOS (TABLAS)**
+
+### Problema detectado:
+Las tablas se cortan en móviles y no se pueden desplazar.
+
+### Solución aplicada a:
+
+| Sección | Archivo | Solución |
+|---------|---------|----------|
+| **Productos** | `ProductList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Clientes** | `ClientList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Pedidos** | `OrderList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Zonas logísticas** | `ZoneList.jsx` | Scroll horizontal + tarjetas en móvil |
+| **Distribuidores** | `DistribuidorList.jsx` | Scroll horizontal + tarjetas en móvil |
+
+### Implementación estándar para tablas:
+
+```jsx
+// components/ui/ResponsiveTable.jsx
+const ResponsiveTable = ({ columns, data, onEdit, onDelete }) => {
+  return (
+    <div className="w-full">
+      {/* Desktop: Tabla normal */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  {col.label}
+                </th>
+              ))}
+              <th className="px-6 py-3 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data.map((item) => (
+              <tr key={item.id}>
+                {columns.map((col) => (
+                  <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item[col.key]}
+                  </td>
+                ))}
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button onClick={() => onEdit(item)} className="text-blue-600 hover:text-blue-900 mr-3">
+                    Editar
+                  </button>
+                  <button onClick={() => onDelete(item)} className="text-red-600 hover:text-red-900">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile: Tarjetas */}
+      <div className="md:hidden space-y-4">
+        {data.map((item) => (
+          <div key={item.id} className="bg-white rounded-lg shadow p-4 border border-gray-200">
+            {columns.map((col) => (
+              <div key={col.key} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                <span className="text-sm font-medium text-gray-500">{col.label}:</span>
+                <span className="text-sm text-gray-900">{item[col.key]}</span>
+              </div>
+            ))}
+            <div className="flex justify-end space-x-3 mt-3 pt-2">
+              <button onClick={() => onEdit(item)} className="text-blue-600 text-sm font-medium">
+                Editar
+              </button>
+              <button onClick={() => onDelete(item)} className="text-red-600 text-sm font-medium">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 📝 **3. FORMULARIOS RESPONSIVOS**
+
+### Problema detectado:
+Los formularios no se adaptan bien en móviles (inputs muy anchos, botones pequeños).
+
+### Solución:
+
+```jsx
+// components/ui/ResponsiveForm.jsx
+const ResponsiveForm = ({ children, onSubmit }) => {
+  return (
+    <form onSubmit={onSubmit} className="w-full max-w-2xl mx-auto">
+      <div className="space-y-4 md:space-y-6">
+        {children}
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t">
+        <button type="submit" className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg">
+          Guardar
+        </button>
+        <button type="button" className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-700 rounded-lg">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// Campo de formulario responsivo
+const FormField = ({ label, error, children }) => {
+  return (
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <div className="w-full">
+        {children}
+      </div>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+};
+```
+
+### Grid responsivo para formularios:
+
+```jsx
+// Formulario con 2 columnas en desktop, 1 en móvil
+<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+  <FormField label="Nombre">
+    <input className="w-full px-3 py-2 border rounded-lg" />
+  </FormField>
+  <FormField label="Email">
+    <input className="w-full px-3 py-2 border rounded-lg" />
+  </FormField>
+</div>
+```
+
+---
+
+## 📊 **4. DASHBOARD RESPONSIVO**
+
+### Componentes a adaptar:
+
+| Componente | Móvil | Tablet | Desktop |
+|------------|-------|--------|---------|
+| **StatsCard** | 1 columna, texto pequeño | 2 columnas | 4 columnas |
+| **Gráficos** | 100% ancho, altura reducida | 100% ancho | 50% ancho |
+| **Tablas recientes** | Scroll horizontal | Scroll horizontal | Normal |
+
+### Implementación:
+
+```jsx
+// Dashboard principal
+const Dashboard = () => {
+  return (
+    <div className="p-4 md:p-6">
+      {/* Stats Cards - Grid responsivo */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard title="Pedidos hoy" value="24" />
+        <StatsCard title="Productos" value="156" />
+        <StatsCard title="Clientes" value="89" />
+        <StatsCard title="Stock bajo" value="5" />
+      </div>
+
+      {/* Gráficos - Stack en móvil, grid en desktop */}
+      <div className="mt-6 flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-1/2">
+          <LineChart title="Pedidos por mes" />
+        </div>
+        <div className="w-full lg:w-1/2">
+          <BarChart title="Pedidos por provincia" />
+        </div>
+      </div>
+
+      {/* Tabla de pedidos recientes - Scroll horizontal en móvil */}
+      <div className="mt-6 overflow-x-auto">
+        <RecentOrdersTable />
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 🏠 **5. LANDING PAGE RESPONSIVA**
+
+### Estructura responsiva:
+
+```jsx
+// Landing page
+const LandingPage = () => {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header responsivo */}
+      <header className="px-4 py-3 md:px-8 md:py-4">
+        <div className="flex justify-between items-center">
+          <Logo className="h-8 md:h-10" />
+          <button className="px-4 py-2 text-sm md:px-6 md:py-2 md:text-base bg-blue-600 text-white rounded-lg">
+            Iniciar Sesión
+          </button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="px-4 py-12 text-center md:py-20">
+        <h1 className="text-3xl font-bold md:text-5xl">
+          Distriboo: Pedidos inteligentes
+        </h1>
+        <p className="mt-4 text-base text-gray-600 max-w-md mx-auto md:text-lg md:max-w-2xl">
+          Centraliza tus pedidos, controla el stock y gestiona la logística por provincia.
+        </p>
+      </section>
+
+      {/* Features - Grid responsivo */}
+      <section className="px-4 py-12 bg-gray-50">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+          <FeatureCard icon={PackageIcon} title="Stock en tiempo real" />
+          <FeatureCard icon={TruckIcon} title="Logística por provincia" />
+          <FeatureCard icon={ChartIcon} title="Reportes y estadísticas" />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-4 py-6 text-center text-sm text-gray-500 border-t">
+        Desarrollado por{' '}
+        <a href="https://yoisar.com" className="text-blue-600 hover:underline">
+          Yoisar
+        </a>
+      </footer>
+    </div>
+  );
+};
+```
+
+---
+
+# 🚀 REQUERIMIENTO: FASE 2 - DEPLOY + TESTING
+
+## 🎯 **OBJETIVO**
+
+Configurar entorno de testing (`test.distriboo.yoisar.com`) y producción (`distriboo.yoisar.com`) sin conflictos en el mismo VPS.
+
+---
+
+## 🐳 **1. ESTRUCTURA DE CONTENEDORES**
+
+### Puertos asignados:
+
+| Entorno | Frontend | Backend | MySQL |
+|---------|----------|---------|-------|
+| **Testing** | 3002 | 8002 | 3308 |
+| **Producción** | 3001 | 8001 | 3307 |
+
+### Nombres de contenedores:
+
+| Entorno | Frontend | Backend | MySQL |
+|---------|----------|---------|-------|
+| **Testing** | `distriboo_test_frontend` | `distriboo_test_backend` | `distriboo_test_mysql` |
+| **Producción** | `distriboo_prod_frontend` | `distriboo_prod_backend` | `distriboo_prod_mysql` |
+
+---
+
+## 📁 **2. ARCHIVOS DE CONFIGURACIÓN**
+
+### Docker Compose Testing: `docker-compose.test.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: distriboo_test_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3002:3000"
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://localhost:8002/api
+    networks:
+      - distriboo_test_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: distriboo_test_backend
+    restart: always
+    ports:
+      - "127.0.0.1:8002:8000"
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - DB_HOST=mysql_test
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_test
+      - DB_USERNAME=distriboo_test_user
+      - DB_PASSWORD=${TEST_DB_PASSWORD}
+    networks:
+      - distriboo_test_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_test_mysql
+    restart: always
+    ports:
+      - "127.0.0.1:3308:3306"
+    environment:
+      - MYSQL_DATABASE=distriboo_test
+      - MYSQL_USER=distriboo_test_user
+      - MYSQL_PASSWORD=${TEST_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${TEST_ROOT_PASSWORD}
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+    networks:
+      - distriboo_test_network
+
+networks:
+  distriboo_test_network:
+    driver: bridge
+
+volumes:
+  mysql_test_data:
+```
+
+### Docker Compose Producción: `docker-compose.prod.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_prod_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://distriboo.yoisar.com/api
+    networks:
+      - distriboo_prod_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_prod_backend
+    restart: always
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=mysql_prod
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_prod
+      - DB_USERNAME=distriboo_prod_user
+      - DB_PASSWORD=${PROD_DB_PASSWORD}
+    networks:
+      - distriboo_prod_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_prod_mysql
+    restart: always
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      - MYSQL_DATABASE=distriboo_prod
+      - MYSQL_USER=distriboo_prod_user
+      - MYSQL_PASSWORD=${PROD_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${PROD_ROOT_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    networks:
+      - distriboo_prod_network
+
+networks:
+  distriboo_prod_network:
+    driver: bridge
+
+volumes:
+  mysql_prod_data:
+```
+
+---
+
+## 🌐 **3. CONFIGURACIÓN NGINX ACTUALIZADA**
+
+### Archivo: `infra/vps/nginx.conf`
+
+```nginx
+# /etc/nginx/conf.d/distriboo.conf
+
+# === TESTING ENVIRONMENT ===
+server {
+    listen 80;
+    listen [::]:80;
+    server_name test.distriboo.yoisar.com;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_test_access.log;
+    error_log /var/log/nginx/distriboo_test_error.log;
+
+    # Frontend Testing
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API Testing
+    location /api {
+        proxy_pass http://127.0.0.1:8002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# === PRODUCTION ENVIRONMENT ===
+server {
+    listen 80;
+    listen [::]:80;
+    server_name distriboo.yoisar.com;
+
+    # Redirigir HTTP a HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name distriboo.yoisar.com;
+
+    # SSL Certificados (configurar según tu VPS)
+    ssl_certificate /path/to/ssl/certificate.crt;
+    ssl_certificate_key /path/to/ssl/private.key;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_prod_access.log;
+    error_log /var/log/nginx/distriboo_prod_error.log;
+
+    # Frontend Producción
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API Producción
+    location /api {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Archivos estáticos
+    location /storage {
+        alias /www/wwwroot/distriboo.yoisar.com/backend/storage/app/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 🚀 **4. SCRIPT DE DEPLOY LOCAL**
+
+### Archivo: `scripts/deploy-local.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Script de Deploy Local - Distriboo
+# Uso: ./deploy-local.sh [test|prod]
+# ============================================
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Verificar argumento
+ENVIRONMENT=$1
+if [[ ! "$ENVIRONMENT" =~ ^(test|prod)$ ]]; then
+    echo "Uso: $0 [test|prod]"
+    exit 1
+fi
+
+# Configurar archivos según entorno
+if [ "$ENVIRONMENT" == "test" ]; then
+    COMPOSE_FILE="docker-compose.test.yml"
+    ENV_FILE=".env.test"
+    DOMAIN="test.distriboo.yoisar.com"
+    CONTAINER_PREFIX="distriboo_test"
+else
+    COMPOSE_FILE="docker-compose.prod.yml"
+    ENV_FILE=".env.production"
+    DOMAIN="distriboo.yoisar.com"
+    CONTAINER_PREFIX="distriboo_prod"
+fi
+
+log_info "Desplegando entorno: $ENVIRONMENT"
+log_info "Dominio: $DOMAIN"
+
+# Verificar archivos
+if [ ! -f "$COMPOSE_FILE" ]; then
+    log_error "No se encuentra $COMPOSE_FILE"
+    exit 1
+fi
+
+if [ ! -f "$ENV_FILE" ]; then
+    log_error "No se encuentra $ENV_FILE"
+    exit 1
+fi
+
+# Cargar variables de entorno
+export $(cat $ENV_FILE | grep -v '^#' | xargs)
+
+# Detener contenedores existentes
+log_info "Deteniendo contenedores existentes..."
+docker-compose -f $COMPOSE_FILE down
+
+# Construir y levantar
+log_info "Construyendo imágenes..."
+docker-compose -f $COMPOSE_FILE build --no-cache
+
+log_info "Levantando contenedores..."
+docker-compose -f $COMPOSE_FILE up -d
+
+# Ejecutar migraciones
+log_info "Ejecutando migraciones..."
+if [ "$ENVIRONMENT" == "test" ]; then
+    docker exec ${CONTAINER_PREFIX}_backend php artisan migrate --force
+    docker exec ${CONTAINER_PREFIX}_backend php artisan db:seed --force
+else
+    docker exec ${CONTAINER_PREFIX}_backend php artisan migrate --force
+fi
+
+# Limpiar caché
+log_info "Limpiando caché..."
+docker exec ${CONTAINER_PREFIX}_backend php artisan config:cache
+docker exec ${CONTAINER_PREFIX}_backend php artisan route:cache
+docker exec ${CONTAINER_PREFIX}_backend php artisan view:cache
+
+# Verificar estado
+log_info "Verificando estado de contenedores..."
+docker ps --filter "name=$CONTAINER_PREFIX"
+
+log_info "✅ Deploy completado exitosamente!"
+log_info "🌐 Sitio disponible en: http://$DOMAIN"
+
+# Mostrar logs si hay error
+if [ $? -ne 0 ]; then
+    log_error "El deploy falló. Revisa los logs:"
+    docker-compose -f $COMPOSE_FILE logs --tail=50
+fi
+```
+
+### Script de deploy remoto VPS: `scripts/deploy-remote.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Script de Deploy Remoto - Distriboo
+# Uso: ./deploy-remote.sh [test|prod]
+# ============================================
+
+ENVIRONMENT=$1
+
+if [[ ! "$ENVIRONMENT" =~ ^(test|prod)$ ]]; then
+    echo "Uso: $0 [test|prod]"
+    exit 1
+fi
+
+# Configuración VPS
+VPS_USER="tu_usuario"
+VPS_HOST="tu_vps_ip"
+
+log_info() { echo -e "\033[0;32m[INFO]\033[0m $1"; }
+
+log_info "Conectando al VPS y desplegando $ENVIRONMENT..."
+
+ssh $VPS_USER@$VPS_HOST << EOF
+    cd /www/wwwroot/distriboo.yoisar.com
+    git pull origin main
+    ./scripts/deploy-local.sh $ENVIRONMENT
+EOF
+
+log_info "✅ Deploy remoto completado!"
+```
+
+---
+
+## 📝 **5. ARCHIVOS .ENV**
+
+### `.env.test` (Testing)
+
+```env
+# Testing Environment
+APP_NAME=Distriboo-Test
+APP_ENV=testing
+APP_DEBUG=true
+
+# Database Testing
+TEST_DB_PASSWORD=TestPass123!
+TEST_ROOT_PASSWORD=TestRoot456!
+
+# Docker
+COMPOSE_PROJECT_NAME=distriboo_test
+```
+
+### `.env.production` (Producción)
+
+```env
+# Production Environment
+APP_NAME=Distriboo
+APP_ENV=production
+APP_DEBUG=false
+
+# Database Production
+PROD_DB_PASSWORD=ProdPass123!
+PROD_ROOT_PASSWORD=ProdRoot456!
+
+# Docker
+COMPOSE_PROJECT_NAME=distriboo_prod
+```
+
+---
+
+## 🐛 **6. CORRECCIÓN DE ERRORES EN CONSOLE.LOG**
+
+### Puntos a revisar:
+
+| Archivo | Posible error | Solución |
+|---------|---------------|----------|
+| `frontend/src/lib/api.js` | `fetch` sin manejo de error | Agregar try/catch |
+| `frontend/src/hooks/useAuth.js` | Token expirado | Redirigir a login |
+| `frontend/src/components/ui/Modal.jsx` | `setState` después de unmount | Usar ref para evitar |
+| `backend/routes/api.php` | Rutas sin middleware auth | Agregar verificación |
+
+### Ejemplo de corrección:
+
+```jsx
+// lib/api.js - Corrección de errores
+const api = {
+  async get(endpoint) {
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  },
+};
+```
+
+---
+
+## ✅ **CHECKLIST DE VERIFICACIÓN**
+
+### Testing (`test.distriboo.yoisar.com`):
+- [ ] Docker compose testing levantado sin errores
+- [ ] Puerto 3002 (frontend) funcionando
+- [ ] Puerto 8002 (backend) funcionando
+- [ ] Base de datos testing accesible
+- [ ] Nginx redirige correctamente
+- [ ] Todos los listados responsivos
+- [ ] Todos los formularios responsivos
+- [ ] Dashboard responsivo
+- [ ] Landing page responsiva
+- [ ] Sin errores en consola
+
+### Producción (`distriboo.yoisar.com`):
+- [ ] Docker compose producción levantado
+- [ ] Puerto 3001 (frontend) funcionando
+- [ ] Puerto 8001 (backend) funcionando
+- [ ] Base de datos producción separada
+- [ ] SSL configurado correctamente
+- [ ] No hay conflictos con testing
+- [ ] Performance optimizada
+
+### Conflictos evitados:
+- [ ] Testing y producción usan puertos diferentes
+- [ ] Contenedores tienen nombres distintos
+- [ ] Redes Docker separadas
+- [ ] Volúmenes de BD separados
+- [ ] Nginx distingue por dominio
+
+---
+
+## 📝 **RESUMEN EJECUTIVO**
+
+| Entorno | URL | Frontend | Backend | MySQL |
+|---------|-----|----------|---------|-------|
+| **Testing** | test.distriboo.yoisar.com | 3002 | 8002 | 3308 |
+| **Producción** | distriboo.yoisar.com | 3001 | 8001 | 3307 |
+
+### Comandos útiles:
+
+```bash
+# Deploy local testing
+./scripts/deploy-local.sh test
+
+# Deploy local producción
+./scripts/deploy-local.sh prod
+
+# Deploy remoto testing
+./scripts/deploy-remote.sh test
+
+# Deploy remoto producción
+./scripts/deploy-remote.sh prod
+
+# Ver logs testing
+docker-compose -f docker-compose.test.yml logs -f
+
+# Ver logs producción
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Detener testing
+docker-compose -f docker-compose.test.yml down
+
+# Detener producción
+docker-compose -f docker-compose.prod.yml down
+```
+
+---
+
+**¿Necesitas que genere algún archivo específico completo (Dockerfile.test, Dockerfile.prod, etc.)?** 🚀
 
