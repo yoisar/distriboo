@@ -22,15 +22,18 @@ return new class extends Migration
         });
 
         // 2. Actualizar users: cambiar enum role y agregar distribuidor_id
-        // MySQL no permite ALTER ENUM fácilmente, recreamos la columna
+        // Primero expandir ENUM para incluir todos los valores (viejos + nuevos)
+        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin','super_admin','distribuidor','cliente') DEFAULT 'cliente'");
+
+        // Convertir admin existente a super_admin
+        DB::table('users')->where('role', 'admin')->update(['role' => 'super_admin']);
+
+        // Ahora quitar 'admin' del ENUM
         DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin','distribuidor','cliente') DEFAULT 'cliente'");
 
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('distribuidor_id')->nullable()->after('role')->constrained('distribuidores')->nullOnDelete();
         });
-
-        // Convertir admin existente a super_admin
-        DB::table('users')->where('role', 'admin')->update(['role' => 'super_admin']);
 
         // 3. Agregar distribuidor_id a clientes
         Schema::table('clientes', function (Blueprint $table) {
