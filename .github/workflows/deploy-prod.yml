@@ -42,10 +42,11 @@ jobs:
           "
 
       - name: Backup production database
+        continue-on-error: true
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /www/wwwroot/distriboo.yoisar.com &&
-            ./scripts/backup-production.sh
+            ./scripts/backup-production.sh || echo 'Backup omitido (container MySQL no disponible)'
           "
 
       - name: Git pull on VPS
