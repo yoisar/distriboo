@@ -7,6 +7,9 @@ use Illuminate\Database\Seeder;
 
 class ProductoSeeder extends Seeder
 {
+    /**
+     * @deprecated Use DistribuidorSeeder instead. Kept for reference.
+     */
     public function run(): void
     {
         $productos = [

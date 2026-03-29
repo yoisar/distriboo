@@ -10,14 +10,17 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    /**
+     * @deprecated Use DistribuidorSeeder instead. Kept for reference.
+     */
     public function run(): void
     {
-        // Admin
+        // Super Admin
         User::create([
             'name' => 'Administrador',
-            'email' => 'sioy23@gmail.com',
+            'email' => 'admin@distriboo.com',
             'password' => 'distriboo2026',
-            'role' => 'admin',
+            'role' => 'super_admin',
         ]);
 
         // Clientes demo
