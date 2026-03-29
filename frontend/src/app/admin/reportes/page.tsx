@@ -10,19 +10,19 @@ import type { Producto } from "@/types";
 interface PedidosPorProvincia {
   provincia: string;
   total_pedidos: number;
-  total_facturado: number;
+  monto_total: number;
 }
 
 interface ProductoMasVendido {
-  producto: string;
+  nombre: string;
   total_vendido: number;
-  total_facturado: number;
+  monto_total: number;
 }
 
 interface ClienteTop {
-  cliente: string;
+  razon_social: string;
   total_pedidos: number;
-  total_facturado: number;
+  monto_total: number;
 }
 
 export default function AdminReportesPage() {
@@ -112,7 +112,7 @@ export default function AdminReportesPage() {
                         <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                           <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.provincia}</td>
                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{d.total_pedidos}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.monto_total ?? 0).toLocaleString("es-AR")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -124,7 +124,7 @@ export default function AdminReportesPage() {
                     <div key={i} className="p-4 space-y-1">
                       <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.provincia}</h3>
                       <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Pedidos</span><span className="text-gray-700 dark:text-gray-300">{d.total_pedidos}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Facturado</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Facturado</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(d.monto_total ?? 0).toLocaleString("es-AR")}</span></div>
                     </div>
                   ))}
                 </div>
@@ -145,9 +145,9 @@ export default function AdminReportesPage() {
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                       {(data as ProductoMasVendido[]).map((d, i) => (
                         <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.producto}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.nombre}</td>
                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{d.total_vendido}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.monto_total ?? 0).toLocaleString("es-AR")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -156,9 +156,9 @@ export default function AdminReportesPage() {
                 <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
                   {(data as ProductoMasVendido[]).map((d, i) => (
                     <div key={i} className="p-4 space-y-1">
-                      <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.producto}</h3>
+                      <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.nombre}</h3>
                       <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Unidades</span><span className="text-gray-700 dark:text-gray-300">{d.total_vendido}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Facturado</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Facturado</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(d.monto_total ?? 0).toLocaleString("es-AR")}</span></div>
                     </div>
                   ))}
                 </div>
@@ -179,9 +179,9 @@ export default function AdminReportesPage() {
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                       {(data as ClienteTop[]).map((d, i) => (
                         <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.cliente}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.razon_social}</td>
                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{d.total_pedidos}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.monto_total ?? 0).toLocaleString("es-AR")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -190,9 +190,9 @@ export default function AdminReportesPage() {
                 <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
                   {(data as ClienteTop[]).map((d, i) => (
                     <div key={i} className="p-4 space-y-1">
-                      <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.cliente}</h3>
+                      <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.razon_social}</h3>
                       <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Pedidos</span><span className="text-gray-700 dark:text-gray-300">{d.total_pedidos}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Facturado</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Facturado</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(d.monto_total ?? 0).toLocaleString("es-AR")}</span></div>
                     </div>
                   ))}
                 </div>
@@ -219,7 +219,7 @@ export default function AdminReportesPage() {
                               {d.stock}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${d.precio.toLocaleString("es-AR")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.precio ?? 0).toLocaleString("es-AR")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -230,7 +230,7 @@ export default function AdminReportesPage() {
                     <div key={d.id} className="p-4 flex justify-between items-center">
                       <div>
                         <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.nombre}</h3>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">${d.precio.toLocaleString("es-AR")}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">${Number(d.precio ?? 0).toLocaleString("es-AR")}</span>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded font-medium ${d.stock <= 5 ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300" : "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300"}`}>
                         Stock: {d.stock}
