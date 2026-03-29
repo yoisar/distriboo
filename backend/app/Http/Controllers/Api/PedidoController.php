@@ -49,9 +49,14 @@ class PedidoController extends Controller
             $clienteId = $request->input('cliente_id');
 
             // Obtener zona logística del cliente
-            $cliente = \App\Models\Cliente::with('provincia.zonaLogistica')->findOrFail($clienteId);
+            $cliente = \App\Models\Cliente::with('provincia')->findOrFail($clienteId);
             $distribuidorId = $cliente->distribuidor_id;
-            $zona = $cliente->provincia->zonaLogistica;
+            $zona = $cliente->provincia_id
+                ? ZonaLogistica::where('provincia_id', $cliente->provincia_id)
+                    ->where('distribuidor_id', $distribuidorId)
+                    ->where('activo', true)
+                    ->first()
+                : null;
 
             $subtotal = 0;
             $totalBultos = 0;
@@ -158,8 +163,13 @@ class PedidoController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $pedido) {
-            $cliente = $pedido->cliente->load('provincia.zonaLogistica');
-            $zona = $cliente->provincia->zonaLogistica;
+            $cliente = $pedido->cliente->load('provincia');
+            $zona = $cliente->provincia_id
+                ? ZonaLogistica::where('provincia_id', $cliente->provincia_id)
+                    ->where('distribuidor_id', $pedido->distribuidor_id)
+                    ->where('activo', true)
+                    ->first()
+                : null;
 
             $subtotal = 0;
             $totalBultos = 0;
