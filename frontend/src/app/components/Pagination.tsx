@@ -12,17 +12,17 @@ export default function Pagination({ page, lastPage, onPageChange }: PaginationP
       <button
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        className="px-4 py-2 border border-gray-700 rounded-lg text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+        className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
       >
         Anterior
       </button>
-      <span className="px-4 py-2 text-sm text-gray-400">
+      <span className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
         {page} / {lastPage}
       </span>
       <button
         onClick={() => onPageChange(Math.min(lastPage, page + 1))}
         disabled={page === lastPage}
-        className="px-4 py-2 border border-gray-700 rounded-lg text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+        className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
       >
         Siguiente
       </button>
