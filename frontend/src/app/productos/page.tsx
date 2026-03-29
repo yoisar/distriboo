@@ -90,7 +90,7 @@ export default function ProductosPage() {
                   )}
                   <div className="flex justify-between items-end">
                     <span className="text-2xl font-bold text-blue-600">
-                      ${p.precio.toLocaleString("es-AR")}
+                      ${Number(p.precio ?? 0).toLocaleString("es-AR")}
                     </span>
                     <span
                       className={`text-sm font-medium px-2 py-1 rounded ${

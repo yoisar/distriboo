@@ -224,8 +224,8 @@ export default function AdminProductosPage() {
                         <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{p.nombre}</td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{p.marca || "-"}</td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{p.formato || "-"}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${p.precio.toLocaleString("es-AR")}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{p.stock}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(p.precio ?? 0).toLocaleString("es-AR")}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{Number(p.stock ?? 0)}</td>
                         <td className="px-4 py-3">
                           <span className={`text-xs px-2 py-1 rounded ${p.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
                             {p.activo ? "Activo" : "Inactivo"}
@@ -255,7 +255,7 @@ export default function AdminProductosPage() {
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Marca</span><span className="text-gray-700 dark:text-gray-300">{p.marca || "-"}</span></div>
                     <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Formato</span><span className="text-gray-700 dark:text-gray-300">{p.formato || "-"}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Precio</span><span className="font-medium text-gray-700 dark:text-gray-300">${p.precio.toLocaleString("es-AR")}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Precio</span><span className="font-medium text-gray-700 dark:text-gray-300">${Number(p.precio ?? 0).toLocaleString("es-AR")}</span></div>
                     <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Stock</span><span className="text-gray-700 dark:text-gray-300">{p.stock}</span></div>
                   </div>
                   <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">

@@ -149,7 +149,7 @@ export default function NuevoPedidoPage() {
                         )}
                       </div>
                       <span className="text-lg font-bold text-blue-600">
-                        ${p.precio.toLocaleString("es-AR")}
+                        ${Number(p.precio ?? 0).toLocaleString("es-AR")}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
