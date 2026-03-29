@@ -3713,3 +3713,59 @@ git push origin feature/nueva-funcionalidad
 ```
 
 ---
+
+# test https://test.distriboo.yoisar.com/:
+- validar revisar https://test.distriboo.yoisar.com/
+- corregir revisar condig /Users/yois/projects/my-mac-portfolio/distriboo/infra/vps/nginx.cfg - para qeu apunte bien a los puertos correspondientes a testing y producción.
+- corregir revisar contenedores y nginx para evitar conflictos entre testing y producción, asegurando que cada entorno tenga su propia configuración de puertos, redes y volúmenes.
+
+## 🧪 Usuario de prueba para Testing
+- Crear usuario distribuidor de prueba en el entorno de testing:
+  - Nombre: `T.G Helados Proteicos` (o el nombre que indique el cliente).
+  - Email: `tg@h.test.distriboo.yoisar.com` (o `tg@demo.test.distriboo.yoisar.com`).
+  - Password: `testing1234` (generar y guardar en el seed/DB testing).
+  - Rol: `distribuidor`.
+  - Empresa/Marca: `BENLIVE`.
+
+- Crear cliente genérico asociado al distribuidor de prueba:
+  - Nombre: `Cliente genérico`.
+  - Email: `cliente.gen.test@test.distriboo.yoisar.com`.
+  - Password: `testing1234`.
+  - Rol: `cliente`.
+  - Asociado a distribuidor: `T.G Helados Proteicos`.
+
+- Verificar en el UI de testing:
+  - Login con distribuidor: `tg@h.test.distriboo.yoisar.com` / `testing1234`.
+  - Login con cliente: `cliente.gen.test@test.distriboo.yoisar.com` / `testing1234`.
+  - El cliente ve catálogo (sin stock/precio) y puede crear pedidos.
+  - El distribuidor ve sus productos, clientes y pedidos.
+
+---
+
+## 💬 Mensaje WhatsApp para el distribuidor
+
+```
+Hola! 👋
+
+Ya te dejé el sistema listo para que lo puedas probar.
+
+🌐 Accedé desde acá:
+https://test.distriboo.yoisar.com/login
+
+---
+
+🔐 Tu acceso como DISTRIBUIDOR:
+📧 Usuario: tg@h.test.distriboo.yoisar.com
+🔑 Contraseña: testing1234
+
+👤 Acceso de CLIENTE de prueba (para ver cómo lo ve tu cliente):
+📧 Usuario: cliente.gen.test@test.distriboo.yoisar.com
+🔑 Contraseña: testing1234
+
+---
+
+Con el acceso de distribuidor vas a poder ver tus productos, clientes y pedidos.
+Con el de cliente podés ver cómo se ve el catálogo y armar un pedido de prueba.
+
+Cualquier cosa que quieras cambiar, ajustar o que no te convenza, me avisás y lo resolvemos. 🙌
+```
