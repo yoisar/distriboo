@@ -73,7 +73,7 @@ export default function AdminReportesPage() {
   return (
     <AppLayout user={user} title="Reportes" onLogout={logout}>
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-100 mb-6">Reportes</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Reportes</h2>
 
         <div className="flex gap-2 mb-6">
           {tabs.map((t) => (
@@ -81,7 +81,7 @@ export default function AdminReportesPage() {
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === t.key ? "bg-blue-600 text-white" : "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
+                activeTab === t.key ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               {t.label}
@@ -90,26 +90,26 @@ export default function AdminReportesPage() {
         </div>
 
         {loading ? (
-          <p className="text-gray-400">Cargando...</p>
+          <Loading />
         ) : (data as unknown[]).length === 0 ? (
-          <p className="text-gray-400">Sin datos para mostrar.</p>
+          <p className="text-gray-500 dark:text-gray-400">Sin datos para mostrar.</p>
         ) : (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
             {activeTab === "provincias" && (
               <table className="w-full">
-                <thead className="bg-gray-700/50">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Provincia</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Pedidos</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Facturado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Provincia</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Pedidos</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Facturado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {(data as PedidosPorProvincia[]).map((d, i) => (
-                    <tr key={i} className="hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-200">{d.provincia}</td>
-                      <td className="px-4 py-3 text-sm">{d.total_pedidos}</td>
-                      <td className="px-4 py-3 text-sm text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.provincia}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{d.total_pedidos}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -118,19 +118,19 @@ export default function AdminReportesPage() {
 
             {activeTab === "productos" && (
               <table className="w-full">
-                <thead className="bg-gray-700/50">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Producto</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Unidades</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Facturado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Producto</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Facturado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {(data as ProductoMasVendido[]).map((d, i) => (
-                    <tr key={i} className="hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-200">{d.producto}</td>
-                      <td className="px-4 py-3 text-sm">{d.total_vendido}</td>
-                      <td className="px-4 py-3 text-sm text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.producto}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{d.total_vendido}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -139,19 +139,19 @@ export default function AdminReportesPage() {
 
             {activeTab === "clientes" && (
               <table className="w-full">
-                <thead className="bg-gray-700/50">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Pedidos</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Facturado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Pedidos</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Facturado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {(data as ClienteTop[]).map((d, i) => (
-                    <tr key={i} className="hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-200">{d.cliente}</td>
-                      <td className="px-4 py-3 text-sm">{d.total_pedidos}</td>
-                      <td className="px-4 py-3 text-sm text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.cliente}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{d.total_pedidos}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(d.total_facturado).toLocaleString("es-AR")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -160,23 +160,23 @@ export default function AdminReportesPage() {
 
             {activeTab === "stock" && (
               <table className="w-full">
-                <thead className="bg-gray-700/50">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Producto</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Stock</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Precio</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Producto</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Stock</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Precio</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {(data as Producto[]).map((d) => (
-                    <tr key={d.id} className="hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-200">{d.nombre}</td>
+                    <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{d.nombre}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded font-medium ${d.stock <= 5 ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>
+                        <span className={`text-xs px-2 py-1 rounded font-medium ${d.stock <= 5 ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300" : "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300"}`}>
                           {d.stock}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-300">${d.precio.toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${d.precio.toLocaleString("es-AR")}</td>
                     </tr>
                   ))}
                 </tbody>
