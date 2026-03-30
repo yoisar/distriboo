@@ -18,6 +18,20 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      - name: Git pull on VPS
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            if [ ! -d /www/wwwroot/test.distriboo.yoisar.com/.git ]; then
+              rm -rf /www/wwwroot/test.distriboo.yoisar.com
+              git clone -b develop https://github.com/yoisar/distriboo.git /www/wwwroot/test.distriboo.yoisar.com
+            else
+              cd /www/wwwroot/test.distriboo.yoisar.com &&
+              git fetch origin &&
+              git checkout develop &&
+              git reset --hard origin/develop
+            fi
+          "
+
       - name: Create .env.test on VPS
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
@@ -35,15 +49,6 @@ jobs:
           MAIL_FROM_ADDRESS=test@distriboo.yoisar.com
           MAIL_FROM_NAME="Distriboo Test"
           ENVEOF
-
-      - name: Git pull on VPS
-        run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/test.distriboo.yoisar.com &&
-            git fetch origin &&
-            git checkout develop &&
-            git reset --hard origin/develop
-          "
 
       - name: Rebuild and start containers
         run: |
