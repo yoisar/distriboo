@@ -28,10 +28,10 @@ VPS_PORT="${VPS_PORT:-2223}"
 # Determinar rama y directorio según entorno
 if [ "$ENVIRONMENT" == "test" ]; then
     BRANCH="develop"
-    REMOTE_DIR="/www/wwwroot/test.distriboo.yoisar.com"
+    REMOTE_DIR="/www/wwwroot/test.distriboo.yoisar.com/app"
 else
     BRANCH="main"
-    REMOTE_DIR="/www/wwwroot/distriboo.yoisar.com"
+    REMOTE_DIR="/www/wwwroot/distriboo.yoisar.com/app"
 fi
 
 log_info "Desplegando $ENVIRONMENT (rama: $BRANCH) en $VPS_HOST:$VPS_PORT..."

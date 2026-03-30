@@ -24,7 +24,7 @@ if [ "$confirm" != "s" ]; then
     exit 0
 fi
 
-cd /www/wwwroot/test.distriboo.yoisar.com
+cd /www/wwwroot/test.distriboo.yoisar.com/app
 
 # Detener contenedores
 log_info "Deteniendo contenedores de testing..."
