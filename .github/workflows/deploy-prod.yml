@@ -53,8 +53,9 @@ jobs:
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /www/wwwroot/distriboo.yoisar.com &&
+            git fetch origin &&
             git checkout main &&
-            git pull origin main
+            git reset --hard origin/main
           "
 
       - name: Rebuild and start containers
