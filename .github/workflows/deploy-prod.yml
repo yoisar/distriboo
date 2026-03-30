@@ -20,8 +20,8 @@ jobs:
 
       - name: Create .env.production on VPS
         run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cat > /www/wwwroot/distriboo.yoisar.com/.env.production << 'ENVEOF'
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cat > /www/wwwroot/distriboo.yoisar.com/.env.production" << 'ENVEOF'
           APP_NAME=Distriboo
           APP_ENV=production
           APP_DEBUG=false
@@ -37,9 +37,8 @@ jobs:
           MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
           MAIL_FROM_ADDRESS=no-reply@distriboo.yoisar.com
-          MAIL_FROM_NAME='Distriboo'
+          MAIL_FROM_NAME="Distriboo"
           ENVEOF
-          "
 
       - name: Backup production database
         continue-on-error: true

@@ -20,8 +20,8 @@ jobs:
 
       - name: Create .env.test on VPS
         run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cat > /www/wwwroot/distriboo.yoisar.com/.env.test << 'ENVEOF'
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cat > /www/wwwroot/distriboo.yoisar.com/.env.test" << 'ENVEOF'
           APP_NAME=Distriboo-Test
           APP_ENV=testing
           APP_DEBUG=true
@@ -33,9 +33,8 @@ jobs:
           SESSION_DOMAIN=test.distriboo.yoisar.com
           MAIL_MAILER=log
           MAIL_FROM_ADDRESS=test@distriboo.yoisar.com
-          MAIL_FROM_NAME='Distriboo Test'
+          MAIL_FROM_NAME="Distriboo Test"
           ENVEOF
-          "
 
       - name: Git pull on VPS
         run: |
