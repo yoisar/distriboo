@@ -58,7 +58,7 @@ class PedidoController extends Controller
                     ->first()
                 : null;
 
-            $subtotal = 0;
+            $subtotal = 0.0;
             $totalBultos = 0;
             $detalles = [];
 
@@ -71,8 +71,8 @@ class PedidoController extends Controller
                     ], 422);
                 }
 
-                $precioUnitario = $producto->precio;
-                $subtotalItem = $precioUnitario * $item['cantidad'];
+                $precioUnitario = (float) $producto->precio;
+                $subtotalItem = $precioUnitario * (int) $item['cantidad'];
                 $subtotal += $subtotalItem;
                 $totalBultos += $item['cantidad'];
 
@@ -85,17 +85,18 @@ class PedidoController extends Controller
             }
 
             // Calcular logística
-            $costoLogistico = 0;
+            $costoLogistico = 0.0;
             $tiempoEntrega = 1;
 
             if ($zona) {
-                $costoLogistico = $zona->costo_base + ($totalBultos * $zona->costo_por_bulto);
+                $costoLogistico = (float) $zona->costo_base + ($totalBultos * (float) $zona->costo_por_bulto);
                 $tiempoEntrega = $zona->tiempo_entrega_dias;
 
                 // Validar pedido mínimo
-                if ($zona->pedido_minimo > 0 && $subtotal < $zona->pedido_minimo) {
+                $pedidoMinimo = (float) $zona->pedido_minimo;
+                if ($pedidoMinimo > 0 && $subtotal < $pedidoMinimo) {
                     return response()->json([
-                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \${$zona->pedido_minimo}",
+                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($subtotal, 2, '.', ''),
                     ], 422);
                 }
             }
@@ -171,7 +172,7 @@ class PedidoController extends Controller
                     ->first()
                 : null;
 
-            $subtotal = 0;
+            $subtotal = 0.0;
             $totalBultos = 0;
             $nuevosDetalles = [];
 
@@ -184,8 +185,8 @@ class PedidoController extends Controller
                     ], 422);
                 }
 
-                $precioUnitario = $producto->precio;
-                $subtotalItem = $precioUnitario * $item['cantidad'];
+                $precioUnitario = (float) $producto->precio;
+                $subtotalItem = $precioUnitario * (int) $item['cantidad'];
                 $subtotal += $subtotalItem;
                 $totalBultos += $item['cantidad'];
 
@@ -197,16 +198,17 @@ class PedidoController extends Controller
                 ];
             }
 
-            $costoLogistico = 0;
+            $costoLogistico = 0.0;
             $tiempoEntrega = 1;
 
             if ($zona) {
-                $costoLogistico = $zona->costo_base + ($totalBultos * $zona->costo_por_bulto);
+                $costoLogistico = (float) $zona->costo_base + ($totalBultos * (float) $zona->costo_por_bulto);
                 $tiempoEntrega = $zona->tiempo_entrega_dias;
 
-                if ($zona->pedido_minimo > 0 && $subtotal < $zona->pedido_minimo) {
+                $pedidoMinimo = (float) $zona->pedido_minimo;
+                if ($pedidoMinimo > 0 && $subtotal < $pedidoMinimo) {
                     return response()->json([
-                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \${$zona->pedido_minimo}",
+                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($subtotal, 2, '.', ''),
                     ], 422);
                 }
             }
