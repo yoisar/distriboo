@@ -20,10 +20,10 @@ cd ..
 echo ""
 echo ">> Configurando frontend..."
 cd frontend
-if [ ! -f .env.local ]; then
-  cp .env.example .env.local
-  echo "   .env.local creado desde .env.example"
-fi
+# NOTA: No se crea .env.local en el frontend aquí.
+# Las variables NEXT_PUBLIC_* se pasan como build args en docker-compose
+# y se hornean en el bundle durante el build. Si existiera .env.local,
+# podría colarse en la imagen Docker y pisar los build args.
 npm install
 echo "   Frontend listo."
 cd ..

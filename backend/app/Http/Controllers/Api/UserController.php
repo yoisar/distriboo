@@ -14,7 +14,7 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = User::with('cliente');
+        $query = User::with(['clientes.provincia']);
 
         // Solo super_admin puede ver otros super_admin
         if ($user->role !== 'super_admin') {
@@ -26,11 +26,11 @@ class UserController extends Controller
             $query->where('distribuidor_id', $user->distribuidor_id);
         }
 
-        if ($request->has('role')) {
+        if ($request->has('role') && $request->input('role') !== '') {
             $query->where('role', $request->input('role'));
         }
 
-        if ($request->has('search')) {
+        if ($request->has('search') && $request->input('search') !== '') {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -57,9 +57,23 @@ class UserController extends Controller
             $data['role'] = 'cliente'; // Solo puede crear clientes
         }
 
+        $clienteIds = $data['cliente_ids'] ?? [];
+        unset($data['cliente_ids']);
+
+        // Mantener compatibilidad: si viene cliente_id (singular) agregarlo a la lista
+        if (!empty($data['cliente_id']) && !in_array($data['cliente_id'], $clienteIds)) {
+            $clienteIds[] = $data['cliente_id'];
+        }
+        unset($data['cliente_id']);
+
         $newUser = User::create($data);
 
-        return response()->json($newUser->load('cliente'), 201);
+        // Sincronizar relación many-to-many con clientes
+        if (!empty($clienteIds)) {
+            $newUser->clientes()->sync($clienteIds);
+        }
+
+        return response()->json($newUser->load('clientes.provincia'), 201);
     }
 
     public function show(User $user, Request $request): JsonResponse
@@ -75,7 +89,7 @@ class UserController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        return response()->json($user->load('cliente'));
+        return response()->json($user->load('clientes.provincia'));
     }
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
@@ -97,9 +111,27 @@ class UserController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
+        $clienteIds = $data['cliente_ids'] ?? null;
+        unset($data['cliente_ids']);
+
+        // Mantener compat: si viene cliente_id singular, fusionarlo
+        if (array_key_exists('cliente_id', $data)) {
+            $singleClienteId = $data['cliente_id'];
+            unset($data['cliente_id']);
+            if ($clienteIds === null) {
+                // Si no se envió cliente_ids pero sí cliente_id, construir array
+                $clienteIds = $singleClienteId ? [$singleClienteId] : [];
+            }
+        }
+
         $user->update($data);
 
-        return response()->json($user->load('cliente'));
+        // Sincronizar relación many-to-many si se enviaron cliente_ids
+        if ($clienteIds !== null) {
+            $user->clientes()->sync($clienteIds);
+        }
+
+        return response()->json($user->load('clientes.provincia'));
     }
 
     public function destroy(User $user, Request $request): JsonResponse

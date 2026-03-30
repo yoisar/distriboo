@@ -3722,21 +3722,21 @@ git push origin feature/nueva-funcionalidad
 ## 🧪 Usuario de prueba para Testing
 - Crear usuario distribuidor de prueba en el entorno de testing:
   - Nombre: `T.G Helados Proteicos` (o el nombre que indique el cliente).
-  - Email: `tg@h.test.distriboo.yoisar.com` (o `tg@demo.test.distriboo.yoisar.com`).
+  - Email: `benlive@distriboo.com` (o `benlive@distriboo.com`).
   - Password: `testing1234` (generar y guardar en el seed/DB testing).
   - Rol: `distribuidor`.
   - Empresa/Marca: `BENLIVE`.
 
 - Crear cliente genérico asociado al distribuidor de prueba:
   - Nombre: `Cliente genérico`.
-  - Email: `cliente.gen.test@test.distriboo.yoisar.com`.
+  - Email: `cliente.benlive@distriboo.com`.
   - Password: `testing1234`.
   - Rol: `cliente`.
   - Asociado a distribuidor: `T.G Helados Proteicos`.
 
 - Verificar en el UI de testing:
-  - Login con distribuidor: `tg@h.test.distriboo.yoisar.com` / `testing1234`.
-  - Login con cliente: `cliente.gen.test@test.distriboo.yoisar.com` / `testing1234`.
+  - Login con distribuidor: `benlive@distriboo.com` / `testing1234`.
+  - Login con cliente: `cliente.benlive@distriboo.com` / `testing1234`.
   - El cliente ve catálogo (sin stock/precio) y puede crear pedidos.
   - El distribuidor ve sus productos, clientes y pedidos.
 
@@ -3755,11 +3755,11 @@ https://test.distriboo.yoisar.com/login
 ---
 
 🔐 Tu acceso como DISTRIBUIDOR:
-📧 Usuario: tg@h.test.distriboo.yoisar.com
+📧 Usuario: benlive@distriboo.com
 🔑 Contraseña: testing1234
 
 👤 Acceso de CLIENTE de prueba (para ver cómo lo ve tu cliente):
-📧 Usuario: cliente.gen.test@test.distriboo.yoisar.com
+📧 Usuario: cliente.benlive@distriboo.com
 🔑 Contraseña: testing1234
 
 ---
@@ -3787,3 +3787,828 @@ https://distriboo.yoisar.com/ desactualizado la version mas actualiada es https:
 - productos
 - clientes
 - zonas logísticas
+
+
+-- 
+# agregar paginados en todos los listados para mejorar la experiencia de usuario y rendimiento, especialmente en:
+- catalogo
+- Mis Pedidos
+- productos
+- clientes
+- zonas logísticas
+- gestion de pedidos
+- usuarios
+aplicar paginaod en todos las listas para mejorar la experiencia de usuario y rendimiento.
+
+# errores en /admin/reportes:
+- corregir errores que aparecen en consola al acceder a la sección de reportes en el dashboard de administración, para asegurar que los gráficos y datos se muestren correctamente sin afectar la experiencia del usuario.
+
+# validar y testear funcionalidades:
+
+Caso:
+Existen funcionaidades y botones que no ejecutan la accion : ejeplo crear pedido: 
+
+- validar funcionalidad de crear pedidos
+- validar funcionalidad de editar pedidos
+- validar funcionalidad de eliminar pedidos
+- validar funcionalidad de ver detalles de pedidos
+- validar funcionalidad de crear productos
+- validar funcionalidad de editar productos
+
+# generacion de pedidos de parte de un cliente /pedidos/nuevo:
+ - no se puede agregar nada de parte de un cleinte
+ - no exieten accion para crear pedidos, agregar productos al pedido, eliminar productos del pedido, editar cantidades, etc. 
+ - validar y corregir la funcionalidad de creación de pedidos por parte de un cliente, asegurando que el cliente pueda agregar productos al pedido, editar cantidades, eliminar productos, y finalmente enviar el pedido para su procesamiento por parte del distribuidor.
+
+# mejorar usabiliad y generacion de pedidos /pedidos/nuevo:
+- debe ser mas agil y practica la seleccond de prducto dspara el pediodactualmente es incomodo e ineficiente la selecion de productos para armar un pedido, mejorar la interfaz y experiencia de usuario en la sección de creación de pedidos para que sea más ágil, práctica e intuitiva, permitiendo al cliente seleccionar productos, editar cantidades y gestionar su pedido de manera eficiente.
+- modificar o mejorar la interfaz de creación de pedidos para que el cliente pueda buscar productos por nombre, filtrar por categoría o marca, y agregar productos al pedido con un solo clic, además de permitir editar cantidades y eliminar productos del pedido de manera sencilla.
+
+# errores:
+- /admin/zonas: Request URL:
+http://localhost:8000/api/zonas-logisticas
+en formulario Nueva Zona Logística
+
+Failed to fetch
+----
+# Revisiones QA:  
+---
+## admin/usuarios:
+- agregar buscador y paginado en admin/usuarios para facilitar la gestión de usuarios, especialmente cuando hay muchos usuarios registrados, permitiendo buscar por nombre, email o rol, y navegar fácilmente entre las páginas de usuarios.
+- permiter email en misma linea de listado sin necesidad de abrir cada usuario para ver su email, para facilitar la identificación de usuarios en la lista, mostrar el email junto al nombre y rol en el listado de usuarios en la sección de administración.
+
+## admin/cliente:
+- un mismo usuario puede ser le mismo para varios distribuidores - ejemplo - cliente que compra a varios proveedores - permitir que un mismo usuario cliente pueda estar asociado a varios distribuidores, para reflejar la realidad de clientes que compran a diferentes proveedores, y permitir gestionar sus pedidos y relaciones comerciales desde una sola cuenta de cliente.
+- corregir logica crud de admin/cliente y  admin/usuarios para permitir que un mismo usuario cliente pueda estar asociado a varios distribuidores, asegurando que la gestión de usuarios y clientes en el panel de administración refleje esta posibilidad sin generar conflictos o errores en la base de datos.
+
+## corregir relaciones :
+- resolver error: Tu usuario no tiene un cliente asociado. Contactá al administrador.:
+- Caso : 18
+yois
+sioy_23@gmail.com
+cliente 
+
+- es un usuario asociado con un cliente IZQUIERDO SOUCHAY YASSEL OMAR - 
+- agregar funcionalidad en formulario Nuevo Cliente - al escribir razon social se debe buscar en sistema existencia de cliente con esa razon social, si existe mostrar mensaje "Ya existe un cliente con esa razón social, traer datos sin preguntar, todos, desde raxon social hasta el cuit.
+
+# api testing vps incorrecto - critico:
+- la url de api http://localhost:8000/api/ en https://test.distriboo.yoisar.com/ no es correcta, corregir la url de la api en el entorno de testing para que apunte a la dirección correcta del backend en el VPS, asegurando que las solicitudes API se realicen correctamente y los datos se muestren en el frontend sin errores.
+
+# ajustes busqueda de cliente http://localhost:8000/api/clientes en formulairo Nuevo Cliente:
+- debe mostrar lista de coicidencias en componente de edicion 
+- la busqueda debe ser de cualquier palabra no solo de la primera letra, ejemplo si escribo "super" me debe mostrar "supermercado la familia" y no solo si escribo "s" o "su" al principio.
+- corregir la funcionalidad de búsqueda de clientes en el formulario de Nuevo Cliente para que muestre una lista de coincidencias en un componente de edición, y que la búsqueda sea más flexible, permitiendo encontrar clientes por cualquier palabra en su razón social, no solo por la primera letra o las primeras letras, mejorando así la usabilidad y eficiencia al asociar clientes a distribuidores.
+
+## validacion de zona creada en formulario Nuevo Cliente:
+- antes de guardar un nuevo cliente, validar que la zona logística seleccionada en el formulario Nuevo Cliente exista en el sistema, para evitar errores de datos y asegurar que los clientes estén asociados a zonas logísticas válidas, mostrando un mensaje de error si la zona logística no existe o no es válida. de lo contraroio mostrar mensaje de error "La zona logística seleccionada no existe. Por favor, selecciona una zona válida." y evitar guardar el cliente hasta que se seleccione una zona logística existente en el sistema. o invitar a cerar la zona logística si no existe.
+
+## CONFIGURACIÓN DE APIS CON SUBDOMINIOS
+
+## 🎯 **OBJETIVO**
+
+Configurar entornos de API separados con subdominios dedicados:
+
+| Entorno | URL API | Puerto Backend | Puerto Frontend |
+|---------|---------|----------------|-----------------|
+| **Producción** | `api.distriboo.yoisar.com` | 8001 | 3001 |
+| **Testing** | `test.api.distriboo.yoisar.com` | 8002 | 3002 |
+
+---
+
+## 🏗️ **1. ARQUITECTURA ACTUALIZADA**
+
+### Estructura completa de puertos:
+
+| Servicio | Testing (test.*) | Producción (*) |
+|----------|------------------|----------------|
+| Frontend (Next.js) | 3002 | 3001 |
+| Backend API (Laravel) | 8002 | 8001 |
+| MySQL | 3308 | 3307 |
+
+### Subdominios:
+
+```
+distriboo.yoisar.com          → Frontend Producción
+api.distriboo.yoisar.com      → API Producción
+
+test.distriboo.yoisar.com     → Frontend Testing
+test.api.distriboo.yoisar.com → API Testing
+```
+
+---
+
+## 🐳 **2. DOCKER COMPOSE ACTUALIZADO**
+
+### `docker-compose.prod.yml` (Producción)
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_prod_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.distriboo.yoisar.com/api
+      - NEXT_PUBLIC_APP_URL=https://distriboo.yoisar.com
+    networks:
+      - distriboo_prod_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: distriboo_prod_backend
+    restart: always
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=https://api.distriboo.yoisar.com
+      - APP_FRONTEND_URL=https://distriboo.yoisar.com
+      - DB_HOST=mysql_prod
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_prod
+      - DB_USERNAME=distriboo_prod_user
+      - DB_PASSWORD=${PROD_DB_PASSWORD}
+      - SANCTUM_STATEFUL_DOMAINS=distriboo.yoisar.com
+      - SESSION_DOMAIN=.yoisar.com
+    networks:
+      - distriboo_prod_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_prod_mysql
+    restart: always
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      - MYSQL_DATABASE=distriboo_prod
+      - MYSQL_USER=distriboo_prod_user
+      - MYSQL_PASSWORD=${PROD_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${PROD_ROOT_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    networks:
+      - distriboo_prod_network
+
+networks:
+  distriboo_prod_network:
+    driver: bridge
+
+volumes:
+  mysql_prod_data:
+```
+
+### `docker-compose.test.yml` (Testing)
+
+```yaml
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: distriboo_test_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3002:3000"
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=https://test.api.distriboo.yoisar.com/api
+      - NEXT_PUBLIC_APP_URL=https://test.distriboo.yoisar.com
+    networks:
+      - distriboo_test_network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: distriboo_test_backend
+    restart: always
+    ports:
+      - "127.0.0.1:8002:8000"
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - APP_URL=https://test.api.distriboo.yoisar.com
+      - APP_FRONTEND_URL=https://test.distriboo.yoisar.com
+      - DB_HOST=mysql_test
+      - DB_PORT=3306
+      - DB_DATABASE=distriboo_test
+      - DB_USERNAME=distriboo_test_user
+      - DB_PASSWORD=${TEST_DB_PASSWORD}
+      - SANCTUM_STATEFUL_DOMAINS=test.distriboo.yoisar.com
+      - SESSION_DOMAIN=.yoisar.com
+    networks:
+      - distriboo_test_network
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    container_name: distriboo_test_mysql
+    restart: always
+    ports:
+      - "127.0.0.1:3308:3306"
+    environment:
+      - MYSQL_DATABASE=distriboo_test
+      - MYSQL_USER=distriboo_test_user
+      - MYSQL_PASSWORD=${TEST_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${TEST_ROOT_PASSWORD}
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+    networks:
+      - distriboo_test_network
+
+networks:
+  distriboo_test_network:
+    driver: bridge
+
+volumes:
+  mysql_test_data:
+```
+
+---
+
+## 🌐 **3. CONFIGURACIÓN NGINX ACTUALIZADA**
+
+### Archivo: `infra/vps/nginx.conf`
+
+```nginx
+# /etc/nginx/conf.d/distriboo.conf
+# Configuración completa para distriboo.yoisar.com
+
+# ============================================
+# PRODUCCIÓN - Frontend
+# ============================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name distriboo.yoisar.com;
+
+    # Redirigir HTTP a HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name distriboo.yoisar.com;
+
+    # SSL Certificados
+    ssl_certificate /etc/nginx/ssl/distriboo.yoisar.com.crt;
+    ssl_certificate_key /etc/nginx/ssl/distriboo.yoisar.com.key;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_prod_access.log;
+    error_log /var/log/nginx/distriboo_prod_error.log;
+
+    # Configuración de seguridad
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Frontend Producción
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Archivos estáticos
+    location /storage {
+        alias /www/wwwroot/distriboo.yoisar.com/backend/storage/app/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+
+# ============================================
+# PRODUCCIÓN - API
+# ============================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.distriboo.yoisar.com;
+
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name api.distriboo.yoisar.com;
+
+    # SSL Certificados
+    ssl_certificate /etc/nginx/ssl/api.distriboo.yoisar.com.crt;
+    ssl_certificate_key /etc/nginx/ssl/api.distriboo.yoisar.com.key;
+
+    # Logs
+    access_log /var/log/nginx/distriboo_prod_api_access.log;
+    error_log /var/log/nginx/distriboo_prod_api_error.log;
+
+    # CORS para API
+    add_header 'Access-Control-Allow-Origin' 'https://distriboo.yoisar.com' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-Requested-With' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+    # Preflight requests
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' 'https://distriboo.yoisar.com';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-Requested-With';
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        add_header 'Content-Length' 0;
+        return 204;
+    }
+
+    # Backend API Producción
+    location / {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Headers específicos para Laravel Sanctum
+        proxy_set_header Origin $scheme://$host;
+        proxy_set_header Referer $scheme://$host;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+
+# ============================================
+# TESTING - Frontend
+# ============================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name test.distriboo.yoisar.com;
+
+    # Redirigir HTTP a HTTPS (opcional para testing)
+    # Para testing se puede mantener HTTP para simplificar
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# ============================================
+# TESTING - API
+# ============================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name test.api.distriboo.yoisar.com;
+
+    # CORS para API Testing
+    add_header 'Access-Control-Allow-Origin' 'https://test.distriboo.yoisar.com' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-Requested-With' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+    # Preflight requests
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' 'https://test.distriboo.yoisar.com';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-Requested-With';
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        add_header 'Content-Length' 0;
+        return 204;
+    }
+
+    # Backend API Testing
+    location / {
+        proxy_pass http://127.0.0.1:8002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Headers específicos para Laravel Sanctum
+        proxy_set_header Origin $scheme://$host;
+        proxy_set_header Referer $scheme://$host;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+```
+
+---
+
+## 🔧 **4. CONFIGURACIÓN DE LARAVEL (BACKEND)**
+
+### Archivo: `backend/config/cors.php`
+
+```php
+<?php
+
+return [
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
+    
+    'allowed_methods' => ['*'],
+    
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'https://distriboo.yoisar.com'),
+        env('FRONTEND_TEST_URL', 'https://test.distriboo.yoisar.com'),
+    ],
+    
+    'allowed_origins_patterns' => [],
+    
+    'allowed_headers' => ['*'],
+    
+    'exposed_headers' => [],
+    
+    'max_age' => 0,
+    
+    'supports_credentials' => true,
+];
+```
+
+### Archivo: `backend/config/sanctum.php`
+
+```php
+<?php
+
+return [
+    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
+        '%s%s',
+        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
+        env('APP_URL') ? ','.parse_url(env('APP_URL'), PHP_URL_HOST) : ''
+    ))),
+    
+    'guard' => ['web'],
+    
+    'expiration' => null,
+    
+    'token_prefix' => '',
+    
+    'middleware' => [
+        'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
+        'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
+    ],
+];
+```
+
+### Archivo: `backend/.env.production`
+
+```env
+# Producción
+APP_NAME=Distriboo
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://api.distriboo.yoisar.com
+APP_FRONTEND_URL=https://distriboo.yoisar.com
+
+# Database
+DB_CONNECTION=mysql
+DB_HOST=mysql_prod
+DB_PORT=3306
+DB_DATABASE=distriboo_prod
+DB_USERNAME=distriboo_prod_user
+DB_PASSWORD=your_secure_password_here
+
+# Sanctum
+SANCTUM_STATEFUL_DOMAINS=distriboo.yoisar.com
+SESSION_DOMAIN=.yoisar.com
+
+# CORS
+FRONTEND_URL=https://distriboo.yoisar.com
+```
+
+### Archivo: `backend/.env.test`
+
+```env
+# Testing
+APP_NAME=Distriboo-Test
+APP_ENV=testing
+APP_DEBUG=true
+APP_URL=https://test.api.distriboo.yoisar.com
+APP_FRONTEND_URL=https://test.distriboo.yoisar.com
+
+# Database
+DB_CONNECTION=mysql
+DB_HOST=mysql_test
+DB_PORT=3306
+DB_DATABASE=distriboo_test
+DB_USERNAME=distriboo_test_user
+DB_PASSWORD=your_test_password_here
+
+# Sanctum
+SANCTUM_STATEFUL_DOMAINS=test.distriboo.yoisar.com
+SESSION_DOMAIN=.yoisar.com
+
+# CORS
+FRONTEND_URL=https://test.distriboo.yoisar.com
+```
+
+---
+
+## 🌐 **5. CONFIGURACIÓN DE NEXT.JS (FRONTEND)**
+
+### Archivo: `frontend/.env.production`
+
+```env
+# Producción
+NEXT_PUBLIC_API_URL=https://api.distriboo.yoisar.com/api
+NEXT_PUBLIC_APP_URL=https://distriboo.yoisar.com
+NEXT_PUBLIC_APP_NAME=Distriboo
+```
+
+### Archivo: `frontend/.env.test`
+
+```env
+# Testing
+NEXT_PUBLIC_API_URL=https://test.api.distriboo.yoisar.com/api
+NEXT_PUBLIC_APP_URL=https://test.distriboo.yoisar.com
+NEXT_PUBLIC_APP_NAME=Distriboo-Test
+```
+
+### Archivo: `frontend/lib/api.ts`
+
+```typescript
+// lib/api.ts
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Cliente-side: usar variable de entorno
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // Server-side: usar URL según el host
+  const host = process.env.VERCEL_URL || process.env.HOSTNAME;
+  if (host?.includes('test')) {
+    return 'https://test.api.distriboo.yoisar.com/api';
+  }
+  return 'https://api.distriboo.yoisar.com/api';
+};
+
+export const API_URL = getApiUrl();
+
+export const api = {
+  async get(endpoint: string) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+    return response.json();
+  },
+
+  async post(endpoint: string, data: any) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+};
+```
+
+---
+
+## 🔄 **6. SCRIPT DE CONFIGURACIÓN DE SSL**
+
+### Archivo: `scripts/setup-ssl.sh`
+
+```bash
+#!/bin/bash
+
+# ============================================
+# Configurar SSL para todos los subdominios
+# Uso: ./scripts/setup-ssl.sh
+# ============================================
+
+DOMAINS=(
+    "distriboo.yoisar.com"
+    "api.distriboo.yoisar.com"
+    "test.distriboo.yoisar.com"
+    "test.api.distriboo.yoisar.com"
+)
+
+for DOMAIN in "${DOMAINS[@]}"; do
+    echo "Configurando SSL para $DOMAIN..."
+    
+    # Usar certbot para obtener certificados
+    sudo certbot certonly --nginx \
+        -d $DOMAIN \
+        --non-interactive \
+        --agree-tos \
+        --email admin@yoisar.com
+    
+    echo "✅ SSL configurado para $DOMAIN"
+done
+
+# Recargar Nginx
+sudo nginx -s reload
+
+echo "✅ Todos los SSL configurados correctamente"
+```
+
+---
+
+## ✅ **CHECKLIST DE CONFIGURACIÓN**
+
+### DNS (Configurar en el panel del dominio):
+- [ ] `distriboo.yoisar.com` → IP del VPS
+- [ ] `api.distriboo.yoisar.com` → IP del VPS
+- [ ] `test.distriboo.yoisar.com` → IP del VPS
+- [ ] `test.api.distriboo.yoisar.com` → IP del VPS
+
+### Nginx:
+- [ ] Configurar archivo `nginx.conf` con los 4 server blocks
+- [ ] Probar configuración: `sudo nginx -t`
+- [ ] Recargar Nginx: `sudo nginx -s reload`
+- [ ] Configurar SSL para producción (HTTPS)
+- [ ] Verificar que no hay conflictos de puertos
+
+### Docker:
+- [ ] Verificar que los puertos no están en uso: `sudo lsof -i :3001,3002,8001,8002,3307,3308`
+- [ ] Levantar contenedores de producción: `docker-compose -f docker-compose.prod.yml up -d`
+- [ ] Levantar contenedores de testing: `docker-compose -f docker-compose.test.yml up -d`
+- [ ] Verificar logs: `docker-compose logs -f`
+
+### Testing:
+- [ ] Acceder a `https://test.distriboo.yoisar.com`
+- [ ] Acceder a `https://test.api.distriboo.yoisar.com/health` (debe responder "healthy")
+- [ ] Probar login desde frontend de testing
+- [ ] Verificar CORS funcionando
+
+### Producción:
+- [ ] Acceder a `https://distriboo.yoisar.com`
+- [ ] Acceder a `https://api.distriboo.yoisar.com/health` (debe responder "healthy")
+- [ ] Probar login desde frontend de producción
+- [ ] Verificar CORS funcionando
+
+---
+
+## 🚀 **COMANDOS DE VERIFICACIÓN**
+
+```bash
+# Verificar puertos en uso
+sudo netstat -tulpn | grep -E '3001|3002|8001|8002|3307|3308'
+
+# Verificar contenedores corriendo
+docker ps --filter "name=distriboo"
+
+# Verificar configuración Nginx
+sudo nginx -t
+
+# Verificar DNS
+nslookup distriboo.yoisar.com
+nslookup api.distriboo.yoisar.com
+nslookup test.distriboo.yoisar.com
+nslookup test.api.distriboo.yoisar.com
+
+# Probar API localmente
+curl -I http://127.0.0.1:8001/health
+curl -I http://127.0.0.1:8002/health
+
+# Probar API vía Nginx
+curl -I https://api.distriboo.yoisar.com/health
+curl -I http://test.api.distriboo.yoisar.com/health
+```
+
+---
+
+## 📝 **RESUMEN EJECUTIVO**
+
+| Entorno | Frontend | API | Puerto Backend |
+|---------|----------|-----|----------------|
+| **Producción** | distriboo.yoisar.com | api.distriboo.yoisar.com | 8001 |
+| **Testing** | test.distriboo.yoisar.com | test.api.distriboo.yoisar.com | 8002 |
+
+### Puertos asignados:
+- Frontend Prod: 3001
+- Backend Prod: 8001
+- MySQL Prod: 3307
+- Frontend Test: 3002
+- Backend Test: 8002
+- MySQL Test: 3308
+
+### Conflictos evitados:
+- ✅ Puertos diferentes para cada entorno
+- ✅ Subdominios separados para frontend y API
+- ✅ Contenedores con nombres distintos
+- ✅ Redes Docker separadas
+- ✅ Volúmenes de BD separados
+
+---
+
+
+# script para actualizar stock a distribuidor - critico:
+
+- script .sh para actualizar stock cantidad definida en parametros a usaurio distribuidor con email - parametro email distrobudior cantidad y entorno, testing, prodccion o local
+- ejemplo distribudor benlive@distriboo.com en testing stock 100 todos los productos.
+- 
+- mensaje de commit: "Script para actualizar stock a distribuidor
+
+
+# CRITICO :
+- NO MODIFCAR LOS DATOS EN TESTIG DESPUES DE CADA DEPLOY -
+- LOS DATOS DE TESTING DEBEN MANTENERSE FIJOS PARA PERMITIR PRUEBAS CONSISTENTES Y EVITAR LA PÉRDIDA DE INFORMACIÓN IMPORTANTE PARA EL PROCESO DE QA, ASÍ COMO PARA FACILITAR LA IDENTIFICACIÓN DE ERRORES Y VALIDAR LAS FUNCIONALIDADES DE MANERA EFICIENTE, ASEGURANDO QUE LOS PRUEBAS SE REALICEN SOBRE UN ENTORNO CONTROLADO Y ESTABLE.
+# actualziar Funcionalidades en landing page:
+- analziar nuevas Funcionalidades del admmi y actualziar lista de caracetristicas en landing page para reflejar las nuevas funcionalidades y mejoras implementadas en el sistema, asegurando que la información sea clara, atractiva y destaque los beneficios clave para los usuarios potenciales.
+- actualizar la sección de Funcionalidades en la landing page para incluir las nuevas funcionalidades implementadas en el sistema, como la gestión avanzada de pedidos, integración con múltiples distribuidores, y mejoras en la experiencia de usuario, utilizando un lenguaje persuasivo y visualmente atractivo para captar la atención de los visitantes y convertirlos en usuarios activos.
+- mensaje de commit: "Actualizar Funcionalidades en landing page para reflejar nuevas funcionalidades"
+
+## correciones generar pedido :
+- Corregir errore de comparaciond enumeros el pedido supera el limte paro al parecer hay un problema con al comparciond e limites
+- limite 190000 - pedido supera los 190000  (218.525)
+- endpoint https://test.api.distriboo.yoisar.com/api/pedidos
+- error: 
+- {"message":"El pedido m\u00ednimo para Misiones es $190000.00"}
+- payload
+- {
+    "cliente_id": 7,
+    "items": [
+        {
+            "producto_id": 34,
+            "cantidad": 4
+        },
+        {
+            "producto_id": 43,
+            "cantidad": 4
+        },
+        {
+            "producto_id": 39,
+            "cantidad": 4
+        },
+        {
+            "producto_id": 45,
+            "cantidad": 1
+        },
+        {
+            "producto_id": 40,
+            "cantidad": 3
+        },
+        {
+            "producto_id": 41,
+            "cantidad": 4
+        },
+        {
+            "producto_id": 31,
+            "cantidad": 4
+        },
+        {
+            "producto_id": 36,
+            "cantidad": 4
+        },
+        {
+            "producto_id": 33,
+            "cantidad": 5
+        },
+        {
+            "producto_id": 42,
+            "cantidad": 5
+        }
+    ],
+    "observaciones": "asd asd asd"
+}

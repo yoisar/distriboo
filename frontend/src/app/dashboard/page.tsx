@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Accesos Rápidos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {user.role !== "super_admin" && (
+          {user.role === "cliente" && (
             <>
               <QuickLink href="/productos" title="Catálogo de Productos" desc="Ver productos disponibles con stock y precios" />
               <QuickLink href="/pedidos/nuevo" title="Nuevo Pedido" desc="Armar un nuevo pedido con cálculo logístico" />

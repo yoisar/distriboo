@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -36,9 +37,16 @@ class User extends Authenticatable
         ];
     }
 
+    /** Relación legada (un solo cliente). Mantenida por compatibilidad. */
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    /** Relación multi-distribuidor: un usuario puede tener varios clientes (uno por distribuidor). */
+    public function clientes(): BelongsToMany
+    {
+        return $this->belongsToMany(Cliente::class, 'cliente_user')->withTimestamps();
     }
 
     public function distribuidor(): BelongsTo

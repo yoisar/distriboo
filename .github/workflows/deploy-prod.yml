@@ -20,8 +20,8 @@ jobs:
 
       - name: Create .env.production on VPS
         run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cat > /www/wwwroot/distriboo.yoisar.com/.env.production << 'ENVEOF'
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cat > /www/wwwroot/distriboo.yoisar.com/app/.env.production" << 'ENVEOF'
           APP_NAME=Distriboo
           APP_ENV=production
           APP_DEBUG=false
@@ -37,30 +37,37 @@ jobs:
           MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
           MAIL_FROM_ADDRESS=no-reply@distriboo.yoisar.com
-          MAIL_FROM_NAME='Distriboo'
+          MAIL_FROM_NAME="Distriboo"
           ENVEOF
-          "
 
       - name: Backup production database
         continue-on-error: true
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
+            cd /www/wwwroot/distriboo.yoisar.com/app &&
             ./scripts/backup-production.sh || echo 'Backup omitido (container MySQL no disponible)'
           "
 
       - name: Git pull on VPS
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
-            git checkout main &&
-            git pull origin main
+            if [ ! -d /www/wwwroot/distriboo.yoisar.com/app/.git ]; then
+              rm -rf /www/wwwroot/distriboo.yoisar.com/app
+              mkdir -p /www/wwwroot/distriboo.yoisar.com
+              git clone -b main https://github.com/yoisar/distriboo.git /www/wwwroot/distriboo.yoisar.com/app
+            else
+              cd /www/wwwroot/distriboo.yoisar.com/app &&
+              git fetch origin &&
+              git checkout main &&
+              git reset --hard origin/main
+            fi
           "
 
       - name: Rebuild and start containers
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
+            cd /www/wwwroot/distriboo.yoisar.com/app &&
+            docker compose --env-file .env.production -f docker-compose.prod.yml build --no-cache frontend &&
             docker compose --env-file .env.production -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true &&
             docker rm -f distriboo_prod_mysql distriboo_prod_backend distriboo_prod_frontend distriboo_prod_nginx 2>/dev/null || true &&
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build

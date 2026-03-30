@@ -29,7 +29,7 @@ class AuthController extends Controller
         $token = $user->createToken('distriboo-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user->load('cliente.provincia', 'distribuidor'),
+            'user' => $user->load('cliente.provincia', 'clientes.provincia', 'distribuidor'),
             'token' => $token,
         ]);
     }
@@ -44,7 +44,7 @@ class AuthController extends Controller
     public function user(Request $request): JsonResponse
     {
         return response()->json(
-            $request->user()->load('cliente.provincia', 'distribuidor')
+            $request->user()->load('cliente.provincia', 'clientes.provincia', 'distribuidor')
         );
     }
 }

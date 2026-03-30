@@ -19,6 +19,8 @@ export default function AdminZonasPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ZonaLogistica | null>(null);
   const [form, setForm] = useState({
@@ -48,6 +50,8 @@ export default function AdminZonasPage() {
       ]);
       setZonas(zonasRes.data);
       setLastPage(zonasRes.last_page);
+      setTotal(zonasRes.total);
+      setPerPage(zonasRes.per_page);
       setProvincias(provinciasRes);
     } finally {
       setLoading(false);
@@ -218,9 +222,9 @@ export default function AdminZonasPage() {
                   {zonas.map((z) => (
                     <tr key={z.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{getProvinciaName(z.provincia_id)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.costo_base.toLocaleString("es-AR")}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.costo_por_bulto.toLocaleString("es-AR")}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${z.pedido_minimo.toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(z.costo_base ?? 0).toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(z.costo_por_bulto ?? 0).toLocaleString("es-AR")}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">${Number(z.pedido_minimo ?? 0).toLocaleString("es-AR")}</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{z.tiempo_entrega_dias}</td>
                       <td className="px-4 py-3">
                         <span className={`text-xs px-2 py-1 rounded ${z.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
@@ -235,7 +239,7 @@ export default function AdminZonasPage() {
                 </tbody>
               </table>
             </div>
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </div>
 
           {/* Mobile: Tarjetas */}
@@ -249,9 +253,9 @@ export default function AdminZonasPage() {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Costo Base</span><span className="text-gray-700 dark:text-gray-300">${z.costo_base.toLocaleString("es-AR")}</span></div>
-                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">$/Bulto</span><span className="text-gray-700 dark:text-gray-300">${z.costo_por_bulto.toLocaleString("es-AR")}</span></div>
-                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Mínimo</span><span className="text-gray-700 dark:text-gray-300">${z.pedido_minimo.toLocaleString("es-AR")}</span></div>
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Costo Base</span><span className="text-gray-700 dark:text-gray-300">${Number(z.costo_base ?? 0).toLocaleString("es-AR")}</span></div>
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">$/Bulto</span><span className="text-gray-700 dark:text-gray-300">${Number(z.costo_por_bulto ?? 0).toLocaleString("es-AR")}</span></div>
+                  <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Mínimo</span><span className="text-gray-700 dark:text-gray-300">${Number(z.pedido_minimo ?? 0).toLocaleString("es-AR")}</span></div>
                   <div><span className="text-gray-500 dark:text-gray-400 block text-xs">Días entrega</span><span className="text-gray-700 dark:text-gray-300">{z.tiempo_entrega_dias}</span></div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
@@ -259,7 +263,7 @@ export default function AdminZonasPage() {
                 </div>
               </div>
             ))}
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </div>
           </>
         )}

@@ -62,9 +62,15 @@ set +a
 log_info "Deteniendo contenedores existentes..."
 docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
 
-# Construir y levantar
-log_info "Construyendo imágenes..."
-docker compose -f "$COMPOSE_FILE" build
+# Construir imágenes
+# El frontend se reconstruye SIEMPRE sin caché porque NEXT_PUBLIC_API_URL
+# se hornea en el bundle durante npm run build (var de build-time, no runtime).
+# Si se reutiliza la capa en caché puede quedar el valor vacío/incorrecto.
+log_info "Construyendo frontend (sin caché para hornear NEXT_PUBLIC_API_URL)..."
+docker compose -f "$COMPOSE_FILE" build --no-cache frontend
+
+log_info "Construyendo backend y servicios..."
+docker compose -f "$COMPOSE_FILE" build backend
 
 log_info "Levantando contenedores..."
 docker compose -f "$COMPOSE_FILE" up -d

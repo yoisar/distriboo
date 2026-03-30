@@ -18,6 +18,11 @@ class ZonaLogisticaController extends Controller
 
         if ($user->role === 'distribuidor') {
             $query->where('distribuidor_id', $user->distribuidor_id);
+        } elseif ($user->role === 'cliente' && $user->cliente_id) {
+            $distribuidorId = \App\Models\Cliente::where('id', $user->cliente_id)->value('distribuidor_id');
+            if ($distribuidorId) {
+                $query->where('distribuidor_id', $distribuidorId);
+            }
         }
 
         $perPage = $request->get('per_page', 10);

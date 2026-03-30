@@ -49,11 +49,16 @@ class PedidoController extends Controller
             $clienteId = $request->input('cliente_id');
 
             // Obtener zona logística del cliente
-            $cliente = \App\Models\Cliente::with('provincia.zonaLogistica')->findOrFail($clienteId);
+            $cliente = \App\Models\Cliente::with('provincia')->findOrFail($clienteId);
             $distribuidorId = $cliente->distribuidor_id;
-            $zona = $cliente->provincia->zonaLogistica;
+            $zona = $cliente->provincia_id
+                ? ZonaLogistica::where('provincia_id', $cliente->provincia_id)
+                    ->where('distribuidor_id', $distribuidorId)
+                    ->where('activo', true)
+                    ->first()
+                : null;
 
-            $subtotal = 0;
+            $subtotal = 0.0;
             $totalBultos = 0;
             $detalles = [];
 
@@ -66,8 +71,8 @@ class PedidoController extends Controller
                     ], 422);
                 }
 
-                $precioUnitario = $producto->precio;
-                $subtotalItem = $precioUnitario * $item['cantidad'];
+                $precioUnitario = (float) $producto->precio;
+                $subtotalItem = $precioUnitario * (int) $item['cantidad'];
                 $subtotal += $subtotalItem;
                 $totalBultos += $item['cantidad'];
 
@@ -80,17 +85,18 @@ class PedidoController extends Controller
             }
 
             // Calcular logística
-            $costoLogistico = 0;
+            $costoLogistico = 0.0;
             $tiempoEntrega = 1;
 
             if ($zona) {
-                $costoLogistico = $zona->costo_base + ($totalBultos * $zona->costo_por_bulto);
+                $costoLogistico = (float) $zona->costo_base + ($totalBultos * (float) $zona->costo_por_bulto);
                 $tiempoEntrega = $zona->tiempo_entrega_dias;
 
                 // Validar pedido mínimo
-                if ($zona->pedido_minimo > 0 && $subtotal < $zona->pedido_minimo) {
+                $pedidoMinimo = (float) $zona->pedido_minimo;
+                if ($pedidoMinimo > 0 && $subtotal < $pedidoMinimo) {
                     return response()->json([
-                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \${$zona->pedido_minimo}",
+                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($subtotal, 2, '.', ''),
                     ], 422);
                 }
             }
@@ -158,10 +164,15 @@ class PedidoController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $pedido) {
-            $cliente = $pedido->cliente->load('provincia.zonaLogistica');
-            $zona = $cliente->provincia->zonaLogistica;
+            $cliente = $pedido->cliente->load('provincia');
+            $zona = $cliente->provincia_id
+                ? ZonaLogistica::where('provincia_id', $cliente->provincia_id)
+                    ->where('distribuidor_id', $pedido->distribuidor_id)
+                    ->where('activo', true)
+                    ->first()
+                : null;
 
-            $subtotal = 0;
+            $subtotal = 0.0;
             $totalBultos = 0;
             $nuevosDetalles = [];
 
@@ -174,8 +185,8 @@ class PedidoController extends Controller
                     ], 422);
                 }
 
-                $precioUnitario = $producto->precio;
-                $subtotalItem = $precioUnitario * $item['cantidad'];
+                $precioUnitario = (float) $producto->precio;
+                $subtotalItem = $precioUnitario * (int) $item['cantidad'];
                 $subtotal += $subtotalItem;
                 $totalBultos += $item['cantidad'];
 
@@ -187,16 +198,17 @@ class PedidoController extends Controller
                 ];
             }
 
-            $costoLogistico = 0;
+            $costoLogistico = 0.0;
             $tiempoEntrega = 1;
 
             if ($zona) {
-                $costoLogistico = $zona->costo_base + ($totalBultos * $zona->costo_por_bulto);
+                $costoLogistico = (float) $zona->costo_base + ($totalBultos * (float) $zona->costo_por_bulto);
                 $tiempoEntrega = $zona->tiempo_entrega_dias;
 
-                if ($zona->pedido_minimo > 0 && $subtotal < $zona->pedido_minimo) {
+                $pedidoMinimo = (float) $zona->pedido_minimo;
+                if ($pedidoMinimo > 0 && $subtotal < $pedidoMinimo) {
                     return response()->json([
-                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \${$zona->pedido_minimo}",
+                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($subtotal, 2, '.', ''),
                     ], 422);
                 }
             }

@@ -16,6 +16,8 @@ export default function PedidosPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
 
   useEffect(() => {
     if (!authLoading && user) loadPedidos();
@@ -27,6 +29,8 @@ export default function PedidosPage() {
       const res = await api.getPedidos({ page: String(page) });
       setPedidos(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } catch {
       // silently fail
     } finally {
@@ -75,9 +79,9 @@ export default function PedidosPage() {
                         <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{p.id}</td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(p.created_at).toLocaleDateString("es-AR")}</td>
                         <td className="px-6 py-4"><EstadoBadge estado={p.estado} /></td>
-                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${p.subtotal.toLocaleString("es-AR")}</td>
-                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${p.costo_logistico.toLocaleString("es-AR")}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">${p.total.toLocaleString("es-AR")}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${Number(p.subtotal ?? 0).toLocaleString("es-AR")}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${Number(p.costo_logistico ?? 0).toLocaleString("es-AR")}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">${Number(p.total ?? 0).toLocaleString("es-AR")}</td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {p.fecha_estimada_entrega ? new Date(p.fecha_estimada_entrega).toLocaleDateString("es-AR") : "-"}
                         </td>
@@ -99,10 +103,10 @@ export default function PedidosPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500 dark:text-gray-400">{new Date(p.created_at).toLocaleDateString("es-AR")}</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">${p.total.toLocaleString("es-AR")}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">${Number(p.total ?? 0).toLocaleString("es-AR")}</span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>Sub: ${p.subtotal.toLocaleString("es-AR")} + Log: ${p.costo_logistico.toLocaleString("es-AR")}</span>
+                      <span>Sub: ${Number(p.subtotal ?? 0).toLocaleString("es-AR")} + Log: ${Number(p.costo_logistico ?? 0).toLocaleString("es-AR")}</span>
                       <span>{p.fecha_estimada_entrega ? new Date(p.fecha_estimada_entrega).toLocaleDateString("es-AR") : ""}</span>
                     </div>
                   </Link>
@@ -110,7 +114,7 @@ export default function PedidosPage() {
               </div>
             </div>
 
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>

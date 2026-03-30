@@ -31,7 +31,7 @@ log_info "Realizando backup de producción..."
 
 # Obtener password desde el .env.production si no está en el entorno
 if [ -z "${PROD_DB_PASSWORD}" ]; then
-    PROD_DB_PASSWORD=$(grep 'PROD_DB_PASSWORD' /www/wwwroot/distriboo.yoisar.com/.env.production 2>/dev/null | cut -d'=' -f2)
+    PROD_DB_PASSWORD=$(grep 'PROD_DB_PASSWORD' /www/wwwroot/distriboo.yoisar.com/app/.env.production 2>/dev/null | cut -d'=' -f2)
 fi
 
 # Backup de la base de datos a través del contenedor MySQL

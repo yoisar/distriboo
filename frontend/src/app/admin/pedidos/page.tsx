@@ -26,6 +26,8 @@ export default function AdminPedidosPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [updating, setUpdating] = useState<number | null>(null);
   const [filtroEstado, setFiltroEstado] = useState("");
 
@@ -41,6 +43,8 @@ export default function AdminPedidosPage() {
       const res = await api.getPedidos(params);
       setPedidos(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } finally {
       setLoading(false);
     }
@@ -109,7 +113,7 @@ export default function AdminPedidosPage() {
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                           {new Date(p.created_at).toLocaleDateString("es-AR")}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">${p.total.toLocaleString("es-AR")}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">${Number(p.total ?? 0).toLocaleString("es-AR")}</td>
                         <td className="px-4 py-3">
                           <EstadoBadge estado={p.estado} />
                         </td>
@@ -164,7 +168,7 @@ export default function AdminPedidosPage() {
                   </div>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Fecha</span><span className="text-gray-700 dark:text-gray-300">{new Date(p.created_at).toLocaleDateString("es-AR")}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Total</span><span className="font-medium text-gray-900 dark:text-gray-100">${p.total.toLocaleString("es-AR")}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Total</span><span className="font-medium text-gray-900 dark:text-gray-100">${Number(p.total ?? 0).toLocaleString("es-AR")}</span></div>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                     {p.estado !== "entregado" && p.estado !== "cancelado" ? (
@@ -201,7 +205,7 @@ export default function AdminPedidosPage() {
               ))}
             </div>
 
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>

@@ -18,10 +18,25 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: Create .env.test on VPS
+      - name: Git pull on VPS
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cat > /www/wwwroot/distriboo.yoisar.com/.env.test << 'ENVEOF'
+            if [ ! -d /www/wwwroot/test.distriboo.yoisar.com/app/.git ]; then
+              rm -rf /www/wwwroot/test.distriboo.yoisar.com/app
+              mkdir -p /www/wwwroot/test.distriboo.yoisar.com
+              git clone -b develop https://github.com/yoisar/distriboo.git /www/wwwroot/test.distriboo.yoisar.com/app
+            else
+              cd /www/wwwroot/test.distriboo.yoisar.com/app &&
+              git fetch origin &&
+              git checkout develop &&
+              git reset --hard origin/develop
+            fi
+          "
+
+      - name: Create .env.test on VPS
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cat > /www/wwwroot/test.distriboo.yoisar.com/app/.env.test" << 'ENVEOF'
           APP_NAME=Distriboo-Test
           APP_ENV=testing
           APP_DEBUG=true
@@ -33,22 +48,14 @@ jobs:
           SESSION_DOMAIN=test.distriboo.yoisar.com
           MAIL_MAILER=log
           MAIL_FROM_ADDRESS=test@distriboo.yoisar.com
-          MAIL_FROM_NAME='Distriboo Test'
+          MAIL_FROM_NAME="Distriboo Test"
           ENVEOF
-          "
-
-      - name: Git pull on VPS
-        run: |
-          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
-            git checkout develop &&
-            git pull origin develop
-          "
 
       - name: Rebuild and start containers
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
+            cd /www/wwwroot/test.distriboo.yoisar.com/app &&
+            docker compose --env-file .env.test -f docker-compose.test.yml build --no-cache frontend &&
             docker compose --env-file .env.test -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true &&
             docker rm -f distriboo_test_mysql distriboo_test_backend distriboo_test_frontend distriboo_test_nginx 2>/dev/null || true &&
             docker compose --env-file .env.test -f docker-compose.test.yml up -d --build
@@ -60,8 +67,7 @@ jobs:
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             docker exec distriboo_test_backend php artisan config:clear &&
             docker exec distriboo_test_backend php artisan migrate --force &&
-            docker exec distriboo_test_backend php artisan db:seed --class=TestDataSeeder --force &&
-            echo '✅ Testing deploy completado'
+            echo '✅ Testing deploy completado (datos de testing preservados)'
           "
 
       - name: Deployment summary

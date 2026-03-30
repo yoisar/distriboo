@@ -11,6 +11,9 @@ FROM base AS builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
+# ARG antes de COPY para que un cambio en su valor invalide el cache del build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build

@@ -8,16 +8,21 @@ import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import Modal from "@/app/components/Modal";
 import Pagination from "@/app/components/Pagination";
-import type { User, Cliente } from "@/types";
+import type { User, Cliente, Distribuidor } from "@/types";
 
 export default function AdminUsuariosPage() {
   const { user: currentUser, loading: authLoading, logout } = useAuth({ requireAdmin: true });
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [distribuidores, setDistribuidores] = useState<Distribuidor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [form, setForm] = useState({
@@ -25,7 +30,8 @@ export default function AdminUsuariosPage() {
     email: "",
     password: "",
     role: "cliente" as string,
-    cliente_id: "" as string,
+    cliente_ids: [] as number[],
+    distribuidor_id: "" as string,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -35,15 +41,21 @@ export default function AdminUsuariosPage() {
     if (!authLoading && currentUser) {
       loadUsers();
       loadClientes();
+      if (currentUser.role === "super_admin") loadDistribuidores();
     }
-  }, [authLoading, currentUser, page]);
+  }, [authLoading, currentUser, page, search, roleFilter]);
 
   async function loadUsers() {
     setLoading(true);
     try {
-      const res = await api.getUsers({ page: String(page) });
+      const params: Record<string, string> = { page: String(page) };
+      if (search) params.search = search;
+      if (roleFilter) params.role = roleFilter;
+      const res = await api.getUsers(params);
       setUsers(res.data);
       setLastPage(res.last_page);
+      setTotal(res.total);
+      setPerPage(res.per_page);
     } finally {
       setLoading(false);
     }
@@ -51,8 +63,17 @@ export default function AdminUsuariosPage() {
 
   async function loadClientes() {
     try {
-      const res = await api.getClientes({ per_page: "100" });
+      const res = await api.getClientes({ per_page: "200" });
       setClientes(res.data);
+    } catch {
+      // silently fail
+    }
+  }
+
+  async function loadDistribuidores() {
+    try {
+      const res = await api.getDistribuidores({ per_page: "100" });
+      setDistribuidores(res.data);
     } catch {
       // silently fail
     }
@@ -60,7 +81,7 @@ export default function AdminUsuariosPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ name: "", email: "", password: "", role: "cliente", cliente_id: "" });
+    setForm({ name: "", email: "", password: "", role: "cliente", cliente_ids: [], distribuidor_id: "" });
     setShowForm(true);
     setError("");
     setFormErrors({});
@@ -73,7 +94,8 @@ export default function AdminUsuariosPage() {
       email: u.email,
       password: "",
       role: u.role,
-      cliente_id: u.cliente_id ? String(u.cliente_id) : "",
+      cliente_ids: u.clientes?.map((c) => c.id) ?? [],
+      distribuidor_id: u.distribuidor_id ? String(u.distribuidor_id) : "",
     });
     setShowForm(true);
     setError("");
@@ -101,7 +123,8 @@ export default function AdminUsuariosPage() {
           name: form.name,
           email: form.email,
           role: form.role,
-          cliente_id: form.cliente_id ? parseInt(form.cliente_id) : null,
+          cliente_ids: form.role === "cliente" ? form.cliente_ids : [],
+          distribuidor_id: form.distribuidor_id ? parseInt(form.distribuidor_id) : null,
         };
         if (form.password) data.password = form.password;
         await api.updateUser(editing.id, data as Parameters<typeof api.updateUser>[1]);
@@ -112,7 +135,8 @@ export default function AdminUsuariosPage() {
           email: form.email,
           password: form.password,
           role: form.role,
-          cliente_id: form.cliente_id ? parseInt(form.cliente_id) : null,
+          cliente_ids: form.role === "cliente" ? form.cliente_ids : [],
+          distribuidor_id: form.distribuidor_id ? parseInt(form.distribuidor_id) : null,
         });
         toast("Usuario creado", "success");
       }
@@ -143,11 +167,30 @@ export default function AdminUsuariosPage() {
   return (
     <AppLayout user={currentUser} title="Usuarios" onLogout={logout}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Usuarios</h2>
-          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-            + Nuevo Usuario
-          </button>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <input
+              type="text"
+              placeholder="Buscar por nombre o email..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="flex-1 sm:w-52 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <select
+              value={roleFilter}
+              onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Todos los roles</option>
+              <option value="cliente">Cliente</option>
+              <option value="distribuidor">Distribuidor</option>
+              {currentUser?.role === "super_admin" && <option value="super_admin">Super Admin</option>}
+            </select>
+            <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 whitespace-nowrap">
+              + Nuevo
+            </button>
+          </div>
         </div>
 
         <Modal open={showForm} onClose={() => setShowForm(false)} title={`${editing ? "Editar" : "Nuevo"} Usuario`}>
@@ -175,10 +218,43 @@ export default function AdminUsuariosPage() {
               )}
             </select>
             {form.role === "cliente" && (
-              <select value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value })} className={inputClass}>
-                <option value="">Sin cliente asociado</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>{c.razon_social}</option>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  Clientes asociados <span className="italic">(puede asociar a varios distribuidores)</span>
+                </p>
+                <div className="border border-gray-300 dark:border-gray-600 rounded-lg max-h-40 overflow-y-auto bg-white dark:bg-gray-700 divide-y divide-gray-100 dark:divide-gray-600">
+                  {clientes.length === 0 ? (
+                    <p className="p-2 text-xs text-gray-400 dark:text-gray-500">No hay clientes registrados</p>
+                  ) : (
+                    clientes.map((c) => (
+                      <label key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600/40 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.cliente_ids.includes(c.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setForm({ ...form, cliente_ids: [...form.cliente_ids, c.id] });
+                            } else {
+                              setForm({ ...form, cliente_ids: form.cliente_ids.filter((id) => id !== c.id) });
+                            }
+                          }}
+                          className="rounded border-gray-300 dark:border-gray-500"
+                        />
+                        <span className="text-sm text-gray-800 dark:text-gray-200">{c.razon_social}</span>
+                        {c.distribuidor && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{c.distribuidor.nombre_comercial}</span>
+                        )}
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+            {form.role === "distribuidor" && currentUser?.role === "super_admin" && (
+              <select value={form.distribuidor_id} onChange={(e) => setForm({ ...form, distribuidor_id: e.target.value })} className={inputClass}>
+                <option value="">Sin distribuidor asociado</option>
+                {distribuidores.map((d) => (
+                  <option key={d.id} value={d.id}>{d.nombre_comercial}</option>
                 ))}
               </select>
             )}
@@ -204,7 +280,7 @@ export default function AdminUsuariosPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rol</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Clientes</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                   </tr>
                 </thead>
@@ -222,7 +298,11 @@ export default function AdminUsuariosPage() {
                           {u.role === "super_admin" ? "Super Admin" : u.role === "distribuidor" ? "Distribuidor" : "Cliente"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.cliente?.razon_social || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        {u.clientes && u.clientes.length > 0
+                          ? u.clientes.map((c) => c.razon_social).join(", ")
+                          : u.cliente?.razon_social || "-"}
+                      </td>
                       <td className="px-4 py-3 text-sm space-x-2">
                         {(currentUser?.role === 'super_admin' || u.role !== 'super_admin') && (
                           <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline">Editar</button>
@@ -257,7 +337,7 @@ export default function AdminUsuariosPage() {
                 </div>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Email</span><span className="text-gray-700 dark:text-gray-300 truncate ml-2">{u.email}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Cliente</span><span className="text-gray-700 dark:text-gray-300">{u.cliente?.razon_social || "-"}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Clientes</span><span className="text-gray-700 dark:text-gray-300 text-right ml-2">{u.clientes && u.clientes.length > 0 ? u.clientes.map((c) => c.razon_social).join(", ") : u.cliente?.razon_social || "-"}</span></div>
                 </div>
                 <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                   {(currentUser?.role === 'super_admin' || u.role !== 'super_admin') && (
@@ -276,7 +356,7 @@ export default function AdminUsuariosPage() {
           </>
         )}
 
-        <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+        <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
       </div>
     </AppLayout>
   );

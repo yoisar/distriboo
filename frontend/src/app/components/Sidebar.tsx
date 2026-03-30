@@ -29,8 +29,11 @@ interface NavLink {
   icon: ReactNode;
 }
 
-const clienteLinks: NavLink[] = [
+const dashboardLinks: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: <ChartBarIcon /> },
+];
+
+const clienteLinks: NavLink[] = [
   { href: "/productos", label: "Catálogo", icon: <CubeIcon /> },
   { href: "/pedidos/nuevo", label: "Nuevo Pedido", icon: <ShoppingCartIcon /> },
   { href: "/pedidos", label: "Mis Pedidos", icon: <ClipboardListIcon /> },
@@ -80,7 +83,23 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
         </div>
 
         <nav className="mt-4 px-3 space-y-1">
-          {clienteLinks.map((link) => (
+          {dashboardLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive(link.href)
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              {link.icon}
+              {link.label}
+            </Link>
+          ))}
+
+          {user.role === "cliente" && clienteLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}

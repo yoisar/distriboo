@@ -7,7 +7,10 @@ export interface User {
   role: "super_admin" | "distribuidor" | "cliente";
   cliente_id: number | null;
   distribuidor_id: number | null;
+  /** Relación legada (compat) */
   cliente?: Cliente;
+  /** Relación multi-distribuidor: lista de clientes asociados */
+  clientes?: Cliente[];
   distribuidor?: Distribuidor;
 }
 
@@ -53,6 +56,7 @@ export interface Cliente {
   cuit: string | null;
   activo: boolean;
   provincia?: Provincia;
+  distribuidor?: Distribuidor;
 }
 
 export interface Producto {

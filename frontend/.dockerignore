@@ -1,0 +1,30 @@
+# Dependencias (se instalan en el container)
+node_modules
+npm-debug.log*
+
+# Build output
+.next
+out
+
+# Archivos de entorno — NO deben entrar al container.
+# Las variables NEXT_PUBLIC_* se pasan como build args desde docker-compose.
+# Si estos archivos entran, Next.js puede pisarlos durante el build
+# dejando la URL incorrecta horneada en el bundle.
+.env
+.env.local
+.env.test
+.env.production
+.env.development
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Control de versiones
+.git
+.gitignore
+
+# Editor / OS
+.DS_Store
+.vscode
+*.swp
+*.swo

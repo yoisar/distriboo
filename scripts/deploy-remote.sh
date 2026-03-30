@@ -24,13 +24,14 @@ fi
 VPS_USER="${VPS_USER:-root}"
 VPS_HOST="${VPS_HOST:-92.112.178.62}"
 VPS_PORT="${VPS_PORT:-2223}"
-REMOTE_DIR="/www/wwwroot/distriboo.yoisar.com"
 
-# Determinar rama según entorno
+# Determinar rama y directorio según entorno
 if [ "$ENVIRONMENT" == "test" ]; then
     BRANCH="develop"
+    REMOTE_DIR="/www/wwwroot/test.distriboo.yoisar.com/app"
 else
     BRANCH="main"
+    REMOTE_DIR="/www/wwwroot/distriboo.yoisar.com/app"
 fi
 
 log_info "Desplegando $ENVIRONMENT (rama: $BRANCH) en $VPS_HOST:$VPS_PORT..."
@@ -39,7 +40,7 @@ ssh -p $VPS_PORT -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" << ENDSSH
     cd $REMOTE_DIR
     git fetch origin
     git checkout $BRANCH
-    git pull origin $BRANCH
+    git reset --hard origin/$BRANCH
     ./scripts/deploy-local.sh $ENVIRONMENT
 ENDSSH
 

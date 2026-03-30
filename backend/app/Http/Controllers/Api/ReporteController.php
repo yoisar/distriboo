@@ -126,7 +126,7 @@ class ReporteController extends Controller
             $query->where('distribuidor_id', $user->distribuidor_id);
         }
 
-        $data = $query->orderBy('stock')->get(['id', 'nombre', 'marca', 'stock']);
+        $data = $query->orderBy('stock')->get(['id', 'nombre', 'marca', 'stock', 'precio']);
 
         return response()->json($data);
     }

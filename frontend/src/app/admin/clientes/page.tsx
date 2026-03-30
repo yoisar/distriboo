@@ -19,6 +19,8 @@ export default function AdminClientesPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [perPage, setPerPage] = useState(20);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [form, setForm] = useState({
@@ -35,10 +37,31 @@ export default function AdminClientesPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
+  const [razonSocialMatch, setRazonSocialMatch] = useState<Cliente | null>(null);
 
   useEffect(() => {
     if (!authLoading && user) loadData();
   }, [authLoading, user, search, page]);
+
+  // Autocomplete razón social: busca clientes existentes al tipear (solo en creación)
+  useEffect(() => {
+    if (editing || form.razon_social.trim().length < 3) {
+      setRazonSocialMatch(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.getClientes({ search: form.razon_social.trim(), per_page: "5" });
+        const match = res.data.find((c) =>
+          c.razon_social.toLowerCase().includes(form.razon_social.trim().toLowerCase())
+        );
+        setRazonSocialMatch(match ?? null);
+      } catch {
+        setRazonSocialMatch(null);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [form.razon_social, editing]);
 
   async function loadData() {
     setLoading(true);
@@ -51,6 +74,8 @@ export default function AdminClientesPage() {
       ]);
       setClientes(clientesRes.data);
       setLastPage(clientesRes.last_page);
+      setTotal(clientesRes.total);
+      setPerPage(clientesRes.per_page);
       setProvincias(provinciasRes);
     } finally {
       setLoading(false);
@@ -63,6 +88,7 @@ export default function AdminClientesPage() {
     setShowForm(true);
     setError("");
     setFormErrors({});
+    setRazonSocialMatch(null);
   }
 
   function openEdit(c: Cliente) {
@@ -132,6 +158,20 @@ export default function AdminClientesPage() {
     }
   }
 
+  function importarDesdeMatch() {
+    if (!razonSocialMatch) return;
+    setForm({
+      razon_social: razonSocialMatch.razon_social,
+      email: razonSocialMatch.email,
+      telefono: razonSocialMatch.telefono || "",
+      provincia_id: String(razonSocialMatch.provincia_id),
+      direccion: razonSocialMatch.direccion || "",
+      cuit: razonSocialMatch.cuit || "",
+      activo: razonSocialMatch.activo,
+    });
+    setRazonSocialMatch(null);
+  }
+
   if (authLoading) return <Loading />;
 
   const inputClass = "w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent";
@@ -174,6 +214,20 @@ export default function AdminClientesPage() {
                 <div>
                   <input placeholder="Razón Social *" value={form.razon_social} onChange={(e) => setForm({ ...form, razon_social: e.target.value })} className={inputClass} />
                   {formErrors.razon_social && <p className="text-red-500 text-xs mt-1">{formErrors.razon_social}</p>}
+                  {!editing && razonSocialMatch && (
+                    <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-xs">
+                      <span className="text-yellow-800 dark:text-yellow-300 flex-1">
+                        Ya existe: <strong>{razonSocialMatch.razon_social}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={importarDesdeMatch}
+                        className="text-blue-600 dark:text-blue-400 hover:underline font-semibold whitespace-nowrap"
+                      >
+                        Importar datos
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <input type="email" placeholder="Email *" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
@@ -267,7 +321,7 @@ export default function AdminClientesPage() {
                 </div>
               ))}
             </div>
-            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} />
+            <Pagination page={page} lastPage={lastPage} onPageChange={setPage} total={total} perPage={perPage} />
           </>
         )}
       </div>
