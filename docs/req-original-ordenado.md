@@ -3823,3 +3823,20 @@ Existen funcionaidades y botones que no ejecutan la accion : ejeplo crear pedido
 # mejorar usabiliad y generacion de pedidos /pedidos/nuevo:
 - debe ser mas agil y practica la seleccond de prducto dspara el pediodactualmente es incomodo e ineficiente la selecion de productos para armar un pedido, mejorar la interfaz y experiencia de usuario en la sección de creación de pedidos para que sea más ágil, práctica e intuitiva, permitiendo al cliente seleccionar productos, editar cantidades y gestionar su pedido de manera eficiente.
 - modificar o mejorar la interfaz de creación de pedidos para que el cliente pueda buscar productos por nombre, filtrar por categoría o marca, y agregar productos al pedido con un solo clic, además de permitir editar cantidades y eliminar productos del pedido de manera sencilla.
+
+# errores:
+- /admin/zonas: Request URL:
+http://localhost:8000/api/zonas-logisticas
+en formulario Nueva Zona Logística
+
+Failed to fetch
+----
+# Revisiones QA:  
+---
+## admin/usuarios:
+- agregar buscador y paginado en admin/usuarios para facilitar la gestión de usuarios, especialmente cuando hay muchos usuarios registrados, permitiendo buscar por nombre, email o rol, y navegar fácilmente entre las páginas de usuarios.
+- permiter email en misma linea de listado sin necesidad de abrir cada usuario para ver su email, para facilitar la identificación de usuarios en la lista, mostrar el email junto al nombre y rol en el listado de usuarios en la sección de administración.
+
+## admin/cliente:
+- un mismo usuario puede ser le mismo para varios distribuidores - ejemplo - cliente que compra a varios proveedores - permitir que un mismo usuario cliente pueda estar asociado a varios distribuidores, para reflejar la realidad de clientes que compran a diferentes proveedores, y permitir gestionar sus pedidos y relaciones comerciales desde una sola cuenta de cliente.
+- corregir logica crud de admin/cliente y  admin/usuarios para permitir que un mismo usuario cliente pueda estar asociado a varios distribuidores, asegurando que la gestión de usuarios y clientes en el panel de administración refleje esta posibilidad sin generar conflictos o errores en la base de datos.
