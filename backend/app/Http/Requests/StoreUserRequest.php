@@ -15,12 +15,14 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role' => ['required', Rule::in(['super_admin', 'distribuidor', 'cliente'])],
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|string|min:8',
+            'role'          => ['required', Rule::in(['super_admin', 'distribuidor', 'cliente'])],
             'distribuidor_id' => 'nullable|exists:distribuidores,id',
-            'cliente_id' => 'nullable|exists:clientes,id',
+            'cliente_id'    => 'nullable|exists:clientes,id',
+            'cliente_ids'   => 'nullable|array',
+            'cliente_ids.*' => 'integer|exists:clientes,id',
         ];
     }
 }

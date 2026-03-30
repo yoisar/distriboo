@@ -258,14 +258,14 @@ class ApiClient {
     );
   }
 
-  createUser(data: { name: string; email: string; password: string; role: string; cliente_id?: number | null; distribuidor_id?: number | null }) {
+  createUser(data: { name: string; email: string; password: string; role: string; cliente_ids?: number[]; distribuidor_id?: number | null }) {
     return this.request<import("@/types").User>("/users", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  updateUser(id: number, data: Partial<{ name: string; email: string; password: string; role: string; cliente_id: number | null; distribuidor_id: number | null }>) {
+  updateUser(id: number, data: Partial<{ name: string; email: string; password: string; role: string; cliente_ids: number[]; distribuidor_id: number | null }>) {
     return this.request<import("@/types").User>(`/users/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),

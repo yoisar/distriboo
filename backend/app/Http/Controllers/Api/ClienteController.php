@@ -15,7 +15,7 @@ class ClienteController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = Cliente::with('provincia');
+        $query = Cliente::with(['provincia', 'distribuidor']);
 
         // Filtrar por distribuidor según rol
         if ($user->role === 'distribuidor') {
@@ -50,7 +50,7 @@ class ClienteController extends Controller
 
         $cliente = Cliente::create($data);
 
-        return response()->json($cliente->load('provincia'), 201);
+        return response()->json($cliente->load(['provincia', 'distribuidor']), 201);
     }
 
     public function show(Cliente $cliente, Request $request): JsonResponse
@@ -61,7 +61,7 @@ class ClienteController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        return response()->json($cliente->load('provincia'));
+        return response()->json($cliente->load(['provincia', 'distribuidor']));
     }
 
     public function update(UpdateClienteRequest $request, Cliente $cliente): JsonResponse
@@ -74,7 +74,7 @@ class ClienteController extends Controller
 
         $cliente->update($request->validated());
 
-        return response()->json($cliente->load('provincia'));
+        return response()->json($cliente->load(['provincia', 'distribuidor']));
     }
 
     public function destroy(Cliente $cliente, Request $request): JsonResponse
