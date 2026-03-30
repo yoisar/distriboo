@@ -21,7 +21,7 @@ jobs:
       - name: Create .env.test on VPS
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cat > /www/wwwroot/distriboo.yoisar.com/.env.test" << 'ENVEOF'
+            "cat > /www/wwwroot/test.distriboo.yoisar.com/.env.test" << 'ENVEOF'
           APP_NAME=Distriboo-Test
           APP_ENV=testing
           APP_DEBUG=true
@@ -39,7 +39,7 @@ jobs:
       - name: Git pull on VPS
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
+            cd /www/wwwroot/test.distriboo.yoisar.com &&
             git fetch origin &&
             git checkout develop &&
             git reset --hard origin/develop
@@ -48,7 +48,7 @@ jobs:
       - name: Rebuild and start containers
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /www/wwwroot/distriboo.yoisar.com &&
+            cd /www/wwwroot/test.distriboo.yoisar.com &&
             docker compose --env-file .env.test -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true &&
             docker rm -f distriboo_test_mysql distriboo_test_backend distriboo_test_frontend distriboo_test_nginx 2>/dev/null || true &&
             docker compose --env-file .env.test -f docker-compose.test.yml up -d --build
