@@ -11,11 +11,11 @@ FROM base AS builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-# NEXT_PUBLIC_* vars se hornean en el bundle durante el build (no son runtime)
+# ARG antes de COPY para que un cambio en su valor invalide el cache del build
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Producción

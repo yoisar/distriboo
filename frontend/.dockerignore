@@ -6,11 +6,15 @@ npm-debug.log*
 .next
 out
 
-# Archivos de entorno locales — NO deben entrar al container.
+# Archivos de entorno — NO deben entrar al container.
 # Las variables NEXT_PUBLIC_* se pasan como build args desde docker-compose.
-# Si estos archivos entran, Next.js puede tomarlos durante el build
-# y pisar los build args, dejando la URL incorrecta horneada en el bundle.
+# Si estos archivos entran, Next.js puede pisarlos durante el build
+# dejando la URL incorrecta horneada en el bundle.
+.env
 .env.local
+.env.test
+.env.production
+.env.development
 .env.development.local
 .env.test.local
 .env.production.local
