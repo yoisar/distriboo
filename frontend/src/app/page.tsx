@@ -15,6 +15,11 @@ import {
   ArrowRightIcon,
   SunIcon,
   MoonIcon,
+  ClipboardListIcon,
+  UsersIcon,
+  DocumentTextIcon,
+  TrendingUpIcon,
+  BuildingOfficeIcon,
 } from "@/components/ui/Icons";
 
 export default function Home() {
@@ -35,12 +40,15 @@ export default function Home() {
   }
 
   const features = [
-    { icon: CubeIcon, title: "Stock en Tiempo Real", desc: "Tus clientes ven disponibilidad actualizada al instante. Sin sorpresas ni demoras.", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/40" },
-    { icon: TruckIcon, title: "Logística por Provincia", desc: "Costos y tiempos de entrega calculados automáticamente según zona geográfica.", color: "text-green-600 dark:text-green-400", bg: "bg-green-100 dark:bg-green-900/40" },
-    { icon: ChartBarIcon, title: "Panel de Control", desc: "Gestioná productos, clientes, pedidos y reportes desde un solo panel intuitivo.", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/40" },
-    { icon: ShoppingCartIcon, title: "Pedidos Online 24/7", desc: "Tus clientes arman pedidos cuando quieran, desde cualquier dispositivo.", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-900/40" },
-    { icon: ShieldCheckIcon, title: "Seguro y Confiable", desc: "Autenticación robusta y datos protegidos. Tu información siempre segura.", color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/40" },
-    { icon: BoltIcon, title: "Rápido y Moderno", desc: "Tecnología de última generación para una experiencia ágil y sin fricciones.", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-900/40" },
+    { icon: CubeIcon, title: "Stock en Tiempo Real", desc: "Control total del inventario: tus clientes ven disponibilidad actualizada al instante, sin sorpresas ni pedidos imposibles.", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/40" },
+    { icon: ClipboardListIcon, title: "Gestión de Pedidos Completa", desc: "Creá, editá y seguí el estado de cada pedido. Flujo completo desde el alta hasta el despacho, con historial y detalles.", color: "text-green-600 dark:text-green-400", bg: "bg-green-100 dark:bg-green-900/40" },
+    { icon: UsersIcon, title: "Roles y Permisos Avanzados", desc: "Accesos diferenciados para Super Admin, Distribuidor y Cliente. Cada rol ve y gestiona solo lo que le corresponde.", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/40" },
+    { icon: ShoppingCartIcon, title: "Pedidos Online 24/7", desc: "Tus clientes arman pedidos cuando quieran, desde cualquier dispositivo, sin llamadas ni WhatsApp.", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-900/40" },
+    { icon: DocumentTextIcon, title: "Importación CSV / Excel", desc: "Cargá productos, clientes y zonas logísticas masivamente desde archivos CSV o Excel. Rápido y sin errores manuales.", color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-100 dark:bg-teal-900/40" },
+    { icon: TruckIcon, title: "Logística por Zonas", desc: "Costos y tiempos de entrega calculados automáticamente según zona geográfica y provincia del cliente.", color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-100 dark:bg-indigo-900/40" },
+    { icon: TrendingUpIcon, title: "Reportes y Analytics", desc: "Visualizá ventas del mes, pedidos pendientes, stock bajo y métricas clave desde el panel de reportes en tiempo real.", color: "text-pink-600 dark:text-pink-400", bg: "bg-pink-100 dark:bg-pink-900/40" },
+    { icon: BuildingOfficeIcon, title: "Multi-Distribuidor", desc: "Un mismo cliente puede comprar a varios distribuidores desde una sola cuenta, reflejando la realidad del comercio mayorista.", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-900/40" },
+    { icon: ShieldCheckIcon, title: "Seguro y Confiable", desc: "Autenticación con tokens Sanctum, sesiones protegidas y control de acceso estricto por rol. Tus datos siempre seguros.", color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/40" },
   ];
 
   const steps = [
@@ -58,9 +66,9 @@ export default function Home() {
   ];
 
   const marqueeItems = [
-    "Stock Actualizado", "Pedidos Online", "Logística Inteligente", "Multi-provincia",
-    "Panel Admin", "Reportes", "Modo Oscuro", "Responsive", "Seguro",
-    "Rápido", "Sin WhatsApp", "Automatizado",
+    "Stock en Tiempo Real", "Pedidos Online 24/7", "Logística por Zonas", "Multi-Distribuidor",
+    "Importación CSV/Excel", "Reportes y Analytics", "Roles y Permisos", "Gestión de Pedidos",
+    "Modo Oscuro", "Responsive", "Seguro", "Sin WhatsApp", "Automatizado", "Multi-provincia",
   ];
 
   return (
