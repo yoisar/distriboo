@@ -39,7 +39,7 @@ ssh -p $VPS_PORT -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" << ENDSSH
     cd $REMOTE_DIR
     git fetch origin
     git checkout $BRANCH
-    git pull origin $BRANCH
+    git reset --hard origin/$BRANCH
     ./scripts/deploy-local.sh $ENVIRONMENT
 ENDSSH
 
