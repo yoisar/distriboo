@@ -23,6 +23,10 @@ export default function NuevoPedidoPage() {
   const [search, setSearch] = useState("");
   const [marcaFiltro, setMarcaFiltro] = useState<string>("todas");
 
+  // Cliente efectivo: primero del pivot (many-to-many), luego el legado singular
+  const clienteEfectivo = user?.clientes?.[0] ?? user?.cliente ?? null;
+  const clienteIdEfectivo = clienteEfectivo?.id ?? user?.cliente_id ?? null;
+
   useEffect(() => {
     if (authLoading || !user) return;
 
@@ -32,10 +36,9 @@ export default function NuevoPedidoPage() {
     ])
       .then(([prodData, zonasRes]) => {
         setProductos(prodData.data.filter((p) => p.activo && Number(p.stock ?? 0) > 0));
-        if (user.cliente?.provincia_id) {
-          const z = zonasRes.data.find(
-            (z) => z.provincia_id === user.cliente?.provincia_id
-          );
+        const provinciaId = clienteEfectivo?.provincia_id;
+        if (provinciaId) {
+          const z = zonasRes.data.find((z) => z.provincia_id === provinciaId);
           if (z) setZona(z);
         }
       })
@@ -106,7 +109,7 @@ export default function NuevoPedidoPage() {
     : 100;
 
   async function handleSubmit() {
-    if (!user?.cliente_id) {
+    if (!clienteIdEfectivo) {
       setError("Tu usuario no tiene un cliente asociado. Contactá al administrador.");
       return;
     }
@@ -123,7 +126,7 @@ export default function NuevoPedidoPage() {
 
     try {
       await api.createPedido({
-        cliente_id: user.cliente_id,
+        cliente_id: clienteIdEfectivo,
         items: cart.map((c) => ({
           producto_id: c.producto.id,
           cantidad: c.cantidad,
