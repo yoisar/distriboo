@@ -4,6 +4,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: https://distriboo.yoisar.com/api
     container_name: distriboo_prod_frontend
     restart: unless-stopped
     ports:
