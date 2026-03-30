@@ -55,6 +55,7 @@ jobs:
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /www/wwwroot/test.distriboo.yoisar.com/app &&
+            docker compose --env-file .env.test -f docker-compose.test.yml build --no-cache frontend &&
             docker compose --env-file .env.test -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true &&
             docker rm -f distriboo_test_mysql distriboo_test_backend distriboo_test_frontend distriboo_test_nginx 2>/dev/null || true &&
             docker compose --env-file .env.test -f docker-compose.test.yml up -d --build
