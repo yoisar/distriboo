@@ -17,10 +17,17 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_filter([
-        env('FRONTEND_URL', 'https://distriboo.yoisar.com'),
-        env('FRONTEND_TEST_URL'),          // solo presente en el entorno de testing
-    ]),
+    'allowed_origins' => array_values(array_unique(array_filter([
+        env('FRONTEND_URL'),
+        env('APP_FRONTEND_URL'),
+        env('FRONTEND_TEST_URL'),
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+        'https://distriboo.yoisar.com',
+        'https://test.distriboo.yoisar.com',
+    ]))),
 
     'allowed_origins_patterns' => [],
 

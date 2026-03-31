@@ -48,6 +48,34 @@ class ClienteController extends Controller
             $data['distribuidor_id'] = $user->distribuidor_id;
         }
 
+        $distribuidorId = $data['distribuidor_id'] ?? null;
+
+        // Verificar si ya existe un cliente con este email para este distribuidor
+        $existingMismoDistribuidor = Cliente::where('email', $data['email'])
+            ->where('distribuidor_id', $distribuidorId)
+            ->first();
+
+        if ($existingMismoDistribuidor) {
+            return response()->json([
+                'message' => 'Ya existe un cliente con ese email en tu distribuidora.',
+                'cliente_existente' => $existingMismoDistribuidor->load(['provincia', 'distribuidor']),
+            ], 409);
+        }
+
+        // Si existe en otro distribuidor, traer sus datos para pre-rellenar
+        $existingOtroDistribuidor = Cliente::where('email', $data['email'])
+            ->where('distribuidor_id', '!=', $distribuidorId)
+            ->first();
+
+        if ($existingOtroDistribuidor) {
+            // Pre-rellenar con datos del cliente existente (omitir distribuidor_id)
+            $data['razon_social'] = $data['razon_social'] ?: $existingOtroDistribuidor->razon_social;
+            $data['telefono'] = $data['telefono'] ?? $existingOtroDistribuidor->telefono;
+            $data['provincia_id'] = $data['provincia_id'] ?? $existingOtroDistribuidor->provincia_id;
+            $data['direccion'] = $data['direccion'] ?? $existingOtroDistribuidor->direccion;
+            $data['cuit'] = $data['cuit'] ?? $existingOtroDistribuidor->cuit;
+        }
+
         $cliente = Cliente::create($data);
 
         return response()->json($cliente->load(['provincia', 'distribuidor']), 201);

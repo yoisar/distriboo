@@ -103,9 +103,9 @@ export default function NuevoPedidoPage() {
     : 0;
   const total = subtotal + costoLogistico;
   const pedidoMinimo = Number(zona?.pedido_minimo ?? 0);
-  const cumpleMinimo = pedidoMinimo === 0 || subtotal >= pedidoMinimo;
+  const cumpleMinimo = pedidoMinimo === 0 || total >= pedidoMinimo;
   const progresoMinimo = pedidoMinimo > 0
-    ? Math.min((subtotal / pedidoMinimo) * 100, 100)
+    ? Math.min((total / pedidoMinimo) * 100, 100)
     : 100;
 
   async function handleSubmit() {
@@ -440,7 +440,7 @@ export default function NuevoPedidoPage() {
                           </span>
                           {!cumpleMinimo && (
                             <span className="text-amber-600 dark:text-amber-400">
-                              Faltan ${(pedidoMinimo - subtotal).toLocaleString("es-AR")}
+                              Faltan ${(pedidoMinimo - total).toLocaleString("es-AR")}
                             </span>
                           )}
                         </div>

@@ -16,7 +16,8 @@ class StoreClienteRequest extends FormRequest
         return [
             'distribuidor_id' => 'nullable|exists:distribuidores,id',
             'razon_social' => 'required|string|max:255',
-            'email' => 'required|email|unique:clientes,email',
+            // La unicidad de email se valida por distribuidor en el controller
+            'email' => 'required|email',
             'telefono' => 'nullable|string|max:50',
             'provincia_id' => 'required|exists:provincias,id',
             'direccion' => 'nullable|string|max:500',

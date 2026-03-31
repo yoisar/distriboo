@@ -19,6 +19,13 @@ out
 .env.test.local
 .env.production.local
 
+# Testing (Playwright)
+playwright.config.ts
+playwright-report
+test-results
+blob-report
+tests
+
 # Control de versiones
 .git
 .gitignore

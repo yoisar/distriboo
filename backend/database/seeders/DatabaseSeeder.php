@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
         // Provincias siempre se cargan
         $this->call(ProvinciaSeeder::class);
 
+        // Planes y configuración de comisiones siempre se cargan
+        $this->call(PlanSeeder::class);
+
         if ($env === 'production') {
             // En producción solo provincias y estructura base
             echo "🏭 Entorno de producción: solo datos base.\n";

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Distribuidor extends Model
 {
@@ -19,6 +20,7 @@ class Distribuidor extends Model
         'telefono',
         'direccion',
         'activo',
+        'revendedor_id',
     ];
 
     protected $casts = [
@@ -48,5 +50,15 @@ class Distribuidor extends Model
     public function pedidos(): HasMany
     {
         return $this->hasMany(Pedido::class);
+    }
+
+    public function revendedor(): BelongsTo
+    {
+        return $this->belongsTo(Revendedor::class);
+    }
+
+    public function suscripciones(): HasMany
+    {
+        return $this->hasMany(Suscripcion::class);
     }
 }

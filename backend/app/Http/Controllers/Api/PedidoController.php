@@ -27,8 +27,18 @@ class PedidoController extends Controller
         $user = $request->user();
 
         // Filtrar por rol
-        if ($user->role === 'cliente' && $user->cliente_id) {
-            $query->where('cliente_id', $user->cliente_id);
+        if ($user->role === 'cliente') {
+            // Soporte multi-distribuidor: obtener todos los cliente_ids del usuario
+            $clienteIds = $user->clientes()->pluck('clientes.id')->toArray();
+            // Fallback: campo legado cliente_id en users
+            if ($user->cliente_id && !in_array($user->cliente_id, $clienteIds)) {
+                $clienteIds[] = $user->cliente_id;
+            }
+            if (!empty($clienteIds)) {
+                $query->whereIn('cliente_id', $clienteIds);
+            } else {
+                $query->whereRaw('1 = 0'); // sin cliente asociado: no mostrar nada
+            }
         } elseif ($user->role === 'distribuidor') {
             $query->where('distribuidor_id', $user->distribuidor_id);
         }
@@ -92,11 +102,12 @@ class PedidoController extends Controller
                 $costoLogistico = (float) $zona->costo_base + ($totalBultos * (float) $zona->costo_por_bulto);
                 $tiempoEntrega = $zona->tiempo_entrega_dias;
 
-                // Validar pedido mínimo
+                // Validar pedido mínimo usando el total (subtotal + logística)
                 $pedidoMinimo = (float) $zona->pedido_minimo;
-                if ($pedidoMinimo > 0 && $subtotal < $pedidoMinimo) {
+                $totalConLogistica = $subtotal + $costoLogistico;
+                if ($pedidoMinimo > 0 && $totalConLogistica < $pedidoMinimo) {
                     return response()->json([
-                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($subtotal, 2, '.', ''),
+                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($totalConLogistica, 2, '.', ''),
                     ], 422);
                 }
             }
@@ -133,9 +144,15 @@ class PedidoController extends Controller
     {
         $user = $request->user();
 
-        // Cliente solo puede ver sus pedidos
-        if ($user->role === 'cliente' && $user->cliente_id !== $pedido->cliente_id) {
-            return response()->json(['message' => 'No autorizado'], 403);
+        // Cliente solo puede ver sus propios pedidos
+        if ($user->role === 'cliente') {
+            $clienteIds = $user->clientes()->pluck('clientes.id')->toArray();
+            if ($user->cliente_id && !in_array($user->cliente_id, $clienteIds)) {
+                $clienteIds[] = $user->cliente_id;
+            }
+            if (!in_array($pedido->cliente_id, $clienteIds)) {
+                return response()->json(['message' => 'No autorizado'], 403);
+            }
         }
 
         // Distribuidor solo puede ver pedidos de su distribuidora
@@ -206,9 +223,10 @@ class PedidoController extends Controller
                 $tiempoEntrega = $zona->tiempo_entrega_dias;
 
                 $pedidoMinimo = (float) $zona->pedido_minimo;
-                if ($pedidoMinimo > 0 && $subtotal < $pedidoMinimo) {
+                $totalConLogistica = $subtotal + $costoLogistico;
+                if ($pedidoMinimo > 0 && $totalConLogistica < $pedidoMinimo) {
                     return response()->json([
-                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($subtotal, 2, '.', ''),
+                        'message' => "El pedido mínimo para {$cliente->provincia->nombre} es \$" . number_format($pedidoMinimo, 2, '.', '') . ". Tu pedido es \$" . number_format($totalConLogistica, 2, '.', ''),
                     ], 422);
                 }
             }
