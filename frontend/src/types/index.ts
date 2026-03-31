@@ -4,7 +4,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: "super_admin" | "distribuidor" | "cliente";
+  role: "super_admin" | "distribuidor" | "cliente" | "revendedor";
   cliente_id: number | null;
   distribuidor_id: number | null;
   /** Relación legada (compat) */
@@ -119,4 +119,109 @@ export interface LoginResponse {
 export interface CartItem {
   producto: Producto;
   cantidad: number;
+}
+
+// ── Planes, Suscripciones, Revendedores, Comisiones ──
+
+export interface Plan {
+  id: number;
+  nombre: string;
+  slug: string;
+  precio_mensual: number;
+  setup_inicial: number;
+  caracteristicas: string[];
+  max_productos: number | null;
+  max_clientes: number | null;
+  multi_vendedor: boolean;
+  integraciones: boolean;
+  reportes: boolean;
+  orden: number;
+  activo: boolean;
+}
+
+export interface Revendedor {
+  id: number;
+  user_id: number;
+  codigo_referido: string;
+  porcentaje_base: number;
+  cbu: string | null;
+  cvu: string | null;
+  alias_bancario: string | null;
+  banco: string | null;
+  titular_cuenta: string | null;
+  cuit: string | null;
+  activo: boolean;
+  user?: User;
+  clientes_activos?: number;
+  porcentaje_vigente?: number;
+}
+
+export interface Suscripcion {
+  id: number;
+  distribuidor_id: number;
+  plan_id: number;
+  revendedor_id: number | null;
+  plazo_meses: number;
+  descuento_porcentaje: number;
+  precio_final_mensual: number;
+  setup_pagado: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: "activa" | "cancelada" | "vencida" | "pendiente";
+  distribuidor?: Distribuidor;
+  plan?: Plan;
+  revendedor?: Revendedor;
+}
+
+export interface Comision {
+  id: number;
+  revendedor_id: number;
+  suscripcion_id: number;
+  tipo: "mensual" | "setup";
+  monto_base: number;
+  porcentaje_aplicado: number;
+  monto_comision: number;
+  mes: number;
+  anio: number;
+  estado: "pendiente" | "pagada";
+  fecha_pago: string | null;
+  observaciones: string | null;
+  revendedor?: Revendedor;
+  suscripcion?: Suscripcion;
+}
+
+export interface PagoRevendedor {
+  id: number;
+  revendedor_id: number;
+  monto_total: number;
+  periodo: string;
+  fecha_pago: string;
+  comprobante: string | null;
+  observaciones: string | null;
+  revendedor?: Revendedor;
+}
+
+export interface ConfiguracionComision {
+  id: number;
+  clave: string;
+  valor: string;
+  descripcion: string | null;
+}
+
+export interface DashboardRevendedor {
+  clientes_activos: number;
+  comisiones_acumuladas: number;
+  comisiones_pendientes: number;
+  porcentaje_vigente: number;
+}
+
+export interface ProyeccionRevendedor {
+  clientes_activos: number;
+  porcentaje_actual: number;
+  ingreso_mensual_actual: number;
+  proyecciones: {
+    clientes_extra: number;
+    total_clientes: number;
+    porcentaje: number;
+  }[];
 }

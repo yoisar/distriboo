@@ -13,6 +13,11 @@ import {
   KeyIcon,
   TrendingUpIcon,
   BuildingOfficeIcon,
+  BanknotesIcon,
+  UserGroupIcon,
+  TagIcon,
+  UserIcon,
+  Cog6ToothIcon,
 } from "@/components/ui/Icons";
 import type { User } from "@/types";
 import type { ReactNode } from "react";
@@ -48,8 +53,19 @@ const adminLinks: NavLink[] = [
   { href: "/admin/reportes", label: "Reportes", icon: <TrendingUpIcon /> },
 ];
 
+const revendedorLinks: NavLink[] = [
+  { href: "/revendedor/mis-clientes", label: "Mis Clientes", icon: <UserGroupIcon /> },
+  { href: "/revendedor/comisiones", label: "Comisiones", icon: <BanknotesIcon /> },
+  { href: "/revendedor/liquidaciones", label: "Liquidaciones", icon: <DocumentTextIcon /> },
+  { href: "/revendedor/perfil", label: "Mi Perfil", icon: <UserIcon /> },
+];
+
 const superAdminLinks: NavLink[] = [
   { href: "/admin/distribuidores", label: "Distribuidores", icon: <BuildingOfficeIcon /> },
+  { href: "/admin/revendedores", label: "Revendedores", icon: <UserGroupIcon /> },
+  { href: "/admin/planes", label: "Planes", icon: <TagIcon /> },
+  { href: "/admin/comisiones", label: "Comisiones", icon: <BanknotesIcon /> },
+  { href: "/admin/configuracion", label: "Configuración", icon: <Cog6ToothIcon /> },
 ];
 
 export default function Sidebar({ user, open, onClose }: SidebarProps) {
@@ -115,6 +131,31 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
             </Link>
           ))}
 
+          {user.role === "revendedor" && (
+            <>
+              <div className="pt-4 pb-2 px-3">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  Revendedor
+                </p>
+              </div>
+              {revendedorLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(link.href)
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {link.icon}
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          )}
+
           {isAdmin && (
             <>
               <div className="pt-4 pb-2 px-3">
@@ -174,7 +215,7 @@ export default function Sidebar({ user, open, onClose }: SidebarProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
               <p className="text-xs text-gray-500">
-                {user.role === "super_admin" ? "Super Admin" : user.role === "distribuidor" ? "Distribuidor" : "Cliente"}
+                {user.role === "super_admin" ? "Super Admin" : user.role === "distribuidor" ? "Distribuidor" : user.role === "revendedor" ? "Revendedor" : "Cliente"}
               </p>
             </div>
           </div>

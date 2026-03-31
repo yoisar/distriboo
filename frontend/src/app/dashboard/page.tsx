@@ -76,6 +76,22 @@ export default function DashboardPage() {
           {user.role === "super_admin" && (
             <QuickLink href="/admin/distribuidores" title="Distribuidores" desc="Gestión de distribuidores de la plataforma" accent="purple" />
           )}
+
+          {user.role === "super_admin" && (
+            <>
+              <QuickLink href="/admin/revendedores" title="Revendedores" desc="Gestión de la red de revendedores" accent="purple" />
+              <QuickLink href="/admin/planes" title="Planes" desc="Configurar planes de suscripción" accent="purple" />
+              <QuickLink href="/admin/comisiones" title="Comisiones" desc="Gestionar comisiones y liquidaciones" accent="green" />
+            </>
+          )}
+
+          {user.role === "revendedor" && (
+            <>
+              <QuickLink href="/revendedor/mis-clientes" title="Mis Clientes" desc="Ver distribuidores referidos" accent="blue" />
+              <QuickLink href="/revendedor/comisiones" title="Comisiones" desc="Historial de comisiones generadas" accent="green" />
+              <QuickLink href="/revendedor/liquidaciones" title="Liquidaciones" desc="Pagos recibidos y pendientes" accent="green" />
+            </>
+          )}
         </div>
       </div>
     </AppLayout>

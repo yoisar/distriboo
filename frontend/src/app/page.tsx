@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import PricingSection from "@/components/landing/PricingSection";
 import {
   CubeIcon,
   TruckIcon,
@@ -270,6 +271,9 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* Pricing Plans */}
+      <PricingSection />
 
       {/* Final CTA */}
       <section className="py-20 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">

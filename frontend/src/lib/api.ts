@@ -384,6 +384,194 @@ class ApiClient {
     a.remove();
     window.URL.revokeObjectURL(url);
   }
+
+  // ── Planes (público) ──
+  getPlanes() {
+    return this.request<import("@/types").Plan[]>("/planes");
+  }
+
+  getPlan(id: number) {
+    return this.request<import("@/types").Plan>(`/planes/${id}`);
+  }
+
+  // ── Validar código de referido (público) ──
+  validarReferido(codigo: string) {
+    return this.request<{ valido: boolean; nombre: string }>(
+      `/validar-referido/${encodeURIComponent(codigo)}`
+    );
+  }
+
+  // ── Admin: Planes ──
+  getAdminPlanes() {
+    return this.request<import("@/types").Plan[]>("/admin/planes");
+  }
+
+  createPlan(data: Partial<import("@/types").Plan>) {
+    return this.request<import("@/types").Plan>("/admin/planes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  updatePlan(id: number, data: Partial<import("@/types").Plan>) {
+    return this.request<import("@/types").Plan>(`/admin/planes/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  deletePlan(id: number) {
+    return this.request(`/admin/planes/${id}`, { method: "DELETE" });
+  }
+
+  // ── Admin: Revendedores ──
+  getRevendedores(page = 1) {
+    return this.request<import("@/types").PaginatedResponse<import("@/types").Revendedor>>(
+      `/revendedores?page=${page}`
+    );
+  }
+
+  getRevendedor(id: number) {
+    return this.request<import("@/types").Revendedor>(`/revendedores/${id}`);
+  }
+
+  createRevendedor(data: Record<string, unknown>) {
+    return this.request<import("@/types").Revendedor>("/revendedores", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  updateRevendedor(id: number, data: Record<string, unknown>) {
+    return this.request<import("@/types").Revendedor>(`/revendedores/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  deleteRevendedor(id: number) {
+    return this.request(`/revendedores/${id}`, { method: "DELETE" });
+  }
+
+  // ── Admin: Suscripciones ──
+  getSuscripciones(page = 1) {
+    return this.request<import("@/types").PaginatedResponse<import("@/types").Suscripcion>>(
+      `/suscripciones?page=${page}`
+    );
+  }
+
+  createSuscripcion(data: Record<string, unknown>) {
+    return this.request<import("@/types").Suscripcion>("/suscripciones", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  updateSuscripcion(id: number, data: Record<string, unknown>) {
+    return this.request<import("@/types").Suscripcion>(`/suscripciones/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ── Admin: Comisiones ──
+  getAdminComisiones(params?: Record<string, string | number>) {
+    const query = params ? "?" + new URLSearchParams(
+      Object.entries(params).map(([k, v]) => [k, String(v)])
+    ).toString() : "";
+    return this.request<import("@/types").PaginatedResponse<import("@/types").Comision>>(
+      `/admin/comisiones${query}`
+    );
+  }
+
+  marcarComisionesPagadas(data: { comision_ids: number[]; fecha_pago: string; observaciones?: string }) {
+    return this.request("/admin/comisiones/marcar-pagadas", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  registrarPagoRevendedor(data: Record<string, unknown>) {
+    return this.request<import("@/types").PagoRevendedor>("/admin/comisiones/registrar-pago", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  getAdminLiquidaciones(page = 1) {
+    return this.request<import("@/types").PaginatedResponse<import("@/types").PagoRevendedor>>(
+      `/admin/liquidaciones?page=${page}`
+    );
+  }
+
+  // ── Admin: Configuración de comisiones ──
+  getConfiguracionComisiones() {
+    return this.request<import("@/types").ConfiguracionComision[]>("/admin/configuracion-comisiones");
+  }
+
+  updateConfiguracionComisiones(configuraciones: { clave: string; valor: string }[]) {
+    return this.request("/admin/configuracion-comisiones", {
+      method: "PUT",
+      body: JSON.stringify({ configuraciones }),
+    });
+  }
+
+  // ── Admin: Reportes de comisiones ──
+  getReporteComisionesPorRevendedor(anio?: number) {
+    const q = anio ? `?anio=${anio}` : "";
+    return this.request(`/admin/reportes/comisiones-por-revendedor${q}`);
+  }
+
+  getReporteClientesPorPlan() {
+    return this.request("/admin/reportes/clientes-por-plan");
+  }
+
+  getReporteMrr() {
+    return this.request<{ mrr: number; total_suscripciones_activas: number }>("/admin/reportes/mrr");
+  }
+
+  getReporteRankingRevendedores() {
+    return this.request("/admin/reportes/ranking-revendedores");
+  }
+
+  // ── Revendedor: Panel ──
+  getRevendedorDashboard() {
+    return this.request<import("@/types").DashboardRevendedor>("/revendedor/dashboard");
+  }
+
+  getRevendedorClientes() {
+    return this.request("/revendedor/mis-clientes");
+  }
+
+  getRevendedorComisiones(params?: Record<string, string | number>) {
+    const query = params ? "?" + new URLSearchParams(
+      Object.entries(params).map(([k, v]) => [k, String(v)])
+    ).toString() : "";
+    return this.request<import("@/types").PaginatedResponse<import("@/types").Comision>>(
+      `/revendedor/comisiones${query}`
+    );
+  }
+
+  getRevendedorLiquidaciones() {
+    return this.request<import("@/types").PaginatedResponse<import("@/types").PagoRevendedor>>(
+      "/revendedor/liquidaciones"
+    );
+  }
+
+  getRevendedorProyeccion() {
+    return this.request<import("@/types").ProyeccionRevendedor>("/revendedor/proyeccion");
+  }
+
+  getRevendedorPerfil() {
+    return this.request<import("@/types").Revendedor>("/revendedor/perfil");
+  }
+
+  updateRevendedorPerfil(data: Record<string, unknown>) {
+    return this.request<import("@/types").Revendedor>("/revendedor/perfil", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const api = new ApiClient();
