@@ -56,7 +56,7 @@ export default function ContratarPage() {
   }
 
   const planSeleccionado = planes.find((p) => p.id === selectedPlan);
-  const descuento = plazo >= 12 ? 15 : plazo >= 6 ? 10 : plazo >= 3 ? 5 : 0;
+  const descuento = plazo >= 12 ? 30 : plazo >= 6 ? 20 : plazo >= 3 ? 10 : 0;
   const precioFinal = planSeleccionado ? planSeleccionado.precio_mensual * (1 - descuento / 100) : 0;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -65,7 +65,7 @@ export default function ContratarPage() {
     setEnviando(true);
     setError("");
     try {
-      await api.createSuscripcion({
+      await api.createSuscripcionPublica({
         ...form,
         plan_id: selectedPlan,
         plazo_meses: plazo,
@@ -142,7 +142,7 @@ export default function ContratarPage() {
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">2. Plazo de contratación</h2>
               <div className="flex gap-3">
-                {[{ m: 1, label: "Mensual" }, { m: 3, label: "3 meses", d: 5 }, { m: 6, label: "6 meses", d: 10 }, { m: 12, label: "12 meses", d: 15 }].map(({ m, label, d }) => (
+                {[{ m: 1, label: "Mensual" }, { m: 3, label: "3 meses", d: 10 }, { m: 6, label: "6 meses", d: 20 }, { m: 12, label: "12 meses", d: 30 }].map(({ m, label, d }) => (
                   <button
                     key={m}
                     type="button"

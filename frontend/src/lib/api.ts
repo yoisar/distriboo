@@ -467,6 +467,13 @@ class ApiClient {
     });
   }
 
+  createSuscripcionPublica(data: Record<string, unknown>) {
+    return this.request<{ message: string; suscripcion: import("@/types").Suscripcion }>("/suscripciones/publica", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   updateSuscripcion(id: number, data: Record<string, unknown>) {
     return this.request<import("@/types").Suscripcion>(`/suscripciones/${id}`, {
       method: "PUT",

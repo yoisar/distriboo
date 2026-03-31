@@ -38,6 +38,9 @@ Route::get('/validar-referido/{codigo}', function (string $codigo) {
     return response()->json(['valido' => true, 'nombre' => $revendedor->user->name ?? '']);
 });
 
+// ── Contratación pública de suscripción ──
+Route::post('/suscripciones/publica', [SuscripcionController::class, 'storePublic']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
