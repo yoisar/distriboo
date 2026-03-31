@@ -80,6 +80,11 @@ export default function Home() {
           <Link href="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             distriboo
           </Link>
+          <nav className="hidden md:flex items-center gap-6">
+            <a href="#features" className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Funcionalidades</a>
+            <a href="#como-funciona" className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Cómo Funciona</a>
+            <a href="#planes" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">Planes y Precios</a>
+          </nav>
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
@@ -88,6 +93,12 @@ export default function Home() {
             >
               {dark ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
             </button>
+            <a
+              href="#planes"
+              className="hidden sm:inline-flex bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors text-sm"
+            >
+              Contratar Ahora
+            </a>
             <Link
               href="/login"
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
@@ -119,13 +130,13 @@ export default function Home() {
               la logística por provincia. La herramienta que tu distribuidora necesita.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/login"
+              <a
+                href="#planes"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-blue-600/25"
               >
-                Empezar Ahora
+                Ver Planes y Precios
                 <ArrowRightIcon className="w-5 h-5" />
-              </Link>
+              </a>
               <a
                 href="#features"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
@@ -193,7 +204,7 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="py-20 sm:py-28 bg-white dark:bg-gray-950">
+      <section id="como-funciona" className="py-20 sm:py-28 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
@@ -231,13 +242,13 @@ export default function Home() {
               <p className="text-blue-100 text-lg mb-8">
                 Menos errores, más velocidad. Tus clientes hacen pedidos organizados y vos te enfocás en despachar.
               </p>
-              <Link
-                href="/login"
+              <a
+                href="#planes"
                 className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-50 transition-colors"
               >
-                Probá Distriboo
+                Ver Planes y Precios
                 <ArrowRightIcon className="w-5 h-5" />
-              </Link>
+              </a>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
@@ -272,6 +283,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Plans CTA Banner */}
+      <section className="py-12 bg-linear-to-r from-green-600 to-emerald-600 dark:from-green-700 dark:to-emerald-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
+            Elegí el plan ideal para tu distribuidora
+          </h2>
+          <p className="text-green-100 text-lg mb-6 max-w-2xl mx-auto">
+            Desde $60.000/mes. Descuentos de hasta 30% por contrato anual. Sin compromiso de permanencia.
+          </p>
+          <a
+            href="#planes"
+            className="inline-flex items-center gap-2 bg-white text-green-700 px-8 py-3.5 rounded-xl font-semibold hover:bg-green-50 transition-colors shadow-lg"
+          >
+            Ver Planes Ahora
+            <ArrowRightIcon className="w-5 h-5" />
+          </a>
+        </div>
+      </section>
+
       {/* Pricing Plans */}
       <PricingSection />
 
@@ -284,13 +314,21 @@ export default function Home() {
           <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
             Sumate a la plataforma que moderniza la distribución. Comenzá hoy mismo.
           </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-blue-600/25"
-          >
-            Empezar Ahora
-            <ArrowRightIcon className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="#planes"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-blue-600/25"
+            >
+              Ver Planes
+              <ArrowRightIcon className="w-5 h-5" />
+            </a>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+            >
+              Iniciar Sesión
+            </Link>
+          </div>
         </div>
       </section>
 
