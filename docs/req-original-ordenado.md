@@ -4612,3 +4612,26 @@ curl -I http://test.api.distriboo.yoisar.com/health
     ],
     "observaciones": "asd asd asd"
 }
+
+# mas correcciones:
+## /pedidos:
+- no mostrar pedidos no generados por el cliente loguead  - actualmente se estan mostrando pedidos que no pertenecne al cliente
+- el cliente no puede ver su pedido al hacer click en ver - esto no es o esperado - lo esperado es que pueda ver sus pedidos.
+- corregir la funcionalidad de visualización de pedidos para que el cliente solo pueda ver los pedidos que ha generado, asegurando que no se muestren pedidos de otros clientes, y que al hacer clic en "ver" pueda acceder a los detalles de sus propios pedidos sin problemas. 
+
+## clientes/usuario multi distribuidres:
+- actualmente al agregar un cliente con mismo email genera un error, deberoa traer los datos del usuario/cleinte exisntente ya sea en la carga del cleinte o en la carga del usuario de diferente distribuidor, para permitir que un mismo cliente pueda estar asociado a varios distribuidores sin generar conflictos en la base de datos, y facilitar la gestión de clientes que compran a diferentes proveedores. corregir la lógica de creación de clientes y usuarios para que al ingresar un email ya existente, se traigan los datos del cliente/usuario asociado a ese email, permitiendo asociar el mismo cliente a múltiples distribuidores sin generar errores.
+
+## error en validacon de limites de pedid:
+- la limitacon de pedido esta funcionando mal ya que no esta tomando el total del pedido para el minomo esta : ejemplo:
+Subtotal
+$11.510
+Logística (4 bultos)
+$29.200
+📦 Entrega en 6 días hábiles
+Total
+$40.710
+Mínimo: $100.000
+Faltan $88.490
+
+- esta tomando subtotal y no el total del pedido para la validacion de limites, corregir la lógica de validación de límites de pedido para que tome en cuenta el total del pedido (incluyendo logística y otros cargos) en lugar del subtotal, asegurando que la validación sea precisa y refleje correctamente si el pedido cumple con el mínimo requerido.
