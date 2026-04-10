@@ -198,6 +198,12 @@ class ApiClient {
     });
   }
 
+  reordenarPedido(id: number) {
+    return this.request<import("@/types").Pedido>(`/pedidos/${id}/reordenar`, {
+      method: "POST",
+    });
+  }
+
   updatePedido(id: number, data: {
     items: { producto_id: number; cantidad: number }[];
     observaciones?: string;
@@ -578,6 +584,63 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify(data),
     });
+  }
+
+  // ── Listas de Precios ──
+  getListasPrecios(params?: Record<string, string>) {
+    const query = params ? "?" + new URLSearchParams(params).toString() : "";
+    return this.request<import("@/types").PaginatedResponse<import("@/types").ListaPrecio>>(
+      `/listas-precios${query}`
+    );
+  }
+
+  getListaPrecio(id: number) {
+    return this.request<import("@/types").ListaPrecio>(`/listas-precios/${id}`);
+  }
+
+  createListaPrecio(data: {
+    nombre: string;
+    descripcion?: string;
+    activo?: boolean;
+    precios?: { producto_id: number; precio: number }[];
+  }) {
+    return this.request<import("@/types").ListaPrecio>("/listas-precios", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  updateListaPrecio(id: number, data: {
+    nombre?: string;
+    descripcion?: string;
+    activo?: boolean;
+    precios?: { producto_id: number; precio: number }[];
+  }) {
+    return this.request<import("@/types").ListaPrecio>(`/listas-precios/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  deleteListaPrecio(id: number) {
+    return this.request(`/listas-precios/${id}`, { method: "DELETE" });
+  }
+
+  // ── Precios específicos por cliente ──
+  getPreciosCliente(clienteId: number) {
+    return this.request<import("@/types").PrecioCliente[]>(
+      `/clientes/${clienteId}/precios`
+    );
+  }
+
+  updatePreciosCliente(clienteId: number, precios: { producto_id: number; precio: number }[]) {
+    return this.request<import("@/types").PrecioCliente[]>(
+      `/clientes/${clienteId}/precios`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ precios }),
+      }
+    );
   }
 }
 

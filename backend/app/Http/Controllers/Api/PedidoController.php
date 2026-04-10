@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PedidoConfirmadoMail;
 use App\Mail\PedidoEstadoMail;
+use App\Services\MotorPreciosService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PedidoController extends Controller
@@ -68,6 +69,7 @@ class PedidoController extends Controller
                     ->first()
                 : null;
 
+            $motorPrecios = new MotorPreciosService();
             $subtotal = 0.0;
             $totalBultos = 0;
             $detalles = [];
@@ -81,7 +83,9 @@ class PedidoController extends Controller
                     ], 422);
                 }
 
-                $precioUnitario = (float) $producto->precio;
+                // Usar motor de precios para resolver precio personalizado
+                $precioInfo = $motorPrecios->resolverPrecio($producto, $cliente);
+                $precioUnitario = $precioInfo['precio_final'];
                 $subtotalItem = $precioUnitario * (int) $item['cantidad'];
                 $subtotal += $subtotalItem;
                 $totalBultos += $item['cantidad'];
@@ -335,5 +339,48 @@ class PedidoController extends Controller
         $pedido->update(['estado' => 'cancelado']);
 
         return response()->json($pedido->load(['cliente.provincia', 'detalles.producto']));
+    }
+
+    /**
+     * Reordenar: crea un nuevo pedido basándose en uno anterior.
+     * Respeta precios actuales y stock actual.
+     */
+    public function reordenar(Pedido $pedido, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Verificar acceso
+        if ($user->role === 'cliente') {
+            $clienteIds = $user->clientes()->pluck('clientes.id')->toArray();
+            if ($user->cliente_id && !in_array($user->cliente_id, $clienteIds)) {
+                $clienteIds[] = $user->cliente_id;
+            }
+            if (!in_array($pedido->cliente_id, $clienteIds)) {
+                return response()->json(['message' => 'No autorizado'], 403);
+            }
+        }
+
+        $pedido->load('detalles');
+
+        // Construir items del nuevo pedido con cantidades del pedido anterior
+        $items = $pedido->detalles->map(function ($detalle) {
+            return [
+                'producto_id' => $detalle->producto_id,
+                'cantidad' => $detalle->cantidad,
+            ];
+        })->toArray();
+
+        // Reutilizar la lógica de store creando un request interno
+        $storeRequest = new StorePedidoRequest();
+        $storeRequest->merge([
+            'cliente_id' => $pedido->cliente_id,
+            'items' => $items,
+            'observaciones' => 'Recompra del pedido #' . $pedido->id,
+        ]);
+        $storeRequest->setUserResolver(function () use ($request) {
+            return $request->user();
+        });
+
+        return $this->store($storeRequest);
     }
 }

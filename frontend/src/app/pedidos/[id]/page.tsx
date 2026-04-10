@@ -9,16 +9,19 @@ import AppLayout from "@/app/components/AppLayout";
 import Loading from "@/app/components/Loading";
 import EstadoBadge from "@/app/components/EstadoBadge";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Pedido } from "@/types";
 
 export default function PedidoDetallePage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
   const toast = useToast();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user && id) loadPedido();
@@ -167,6 +170,24 @@ export default function PedidoDetallePage() {
                 className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600"
               >
                 Descargar PDF
+              </button>
+              <button
+                disabled={reordering}
+                onClick={async () => {
+                  setReordering(true);
+                  try {
+                    const nuevo = await api.reordenarPedido(pedido.id);
+                    toast("Nuevo pedido creado a partir de este pedido", "success");
+                    router.push(`/pedidos/${nuevo.id}`);
+                  } catch {
+                    toast("No se pudo reordenar", "error");
+                  } finally {
+                    setReordering(false);
+                  }
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+              >
+                {reordering ? "Reordenando..." : "🔄 Reordenar"}
               </button>
             </div>
           </>

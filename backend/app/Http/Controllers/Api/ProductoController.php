@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
 use App\Models\Producto;
+use App\Services\MotorPreciosService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class ProductoController extends Controller
             // Obtener distribuidor_id: del campo directo o del cliente asociado
             $distribuidorId = $user->distribuidor_id
                 ?? ($user->cliente ? $user->cliente->distribuidor_id : null);
-            // Cliente ve catálogo de su distribuidor, sin stock ni precio
+            // Cliente ve catálogo de su distribuidor, solo activos
             $query->where('distribuidor_id', $distribuidorId)
                   ->where('activo', true);
         }
@@ -43,6 +44,34 @@ class ProductoController extends Controller
         }
 
         $productos = $query->orderBy('nombre')->paginate(20);
+
+        // Si es cliente, resolver precios personalizados
+        if ($user->role === 'cliente') {
+            $cliente = $user->clientes()->first() ?? $user->cliente;
+            if ($cliente) {
+                $motorPrecios = new MotorPreciosService();
+                $productoIds = collect($productos->items())->pluck('id')->toArray();
+                $preciosResueltos = $motorPrecios->resolverPrecios($productoIds, $cliente);
+
+                $items = $productos->getCollection()->map(function ($producto) use ($preciosResueltos, $cliente, $motorPrecios) {
+                    $productoArray = $producto->toArray();
+
+                    if (isset($preciosResueltos[$producto->id])) {
+                        $productoArray['precio_personalizado'] = $preciosResueltos[$producto->id];
+                        $productoArray['precio'] = $preciosResueltos[$producto->id]['precio_final'];
+                    } else {
+                        // Aplicar solo descuentos generales del cliente al precio base
+                        $info = $motorPrecios->resolverPrecio($producto, $cliente);
+                        $productoArray['precio_personalizado'] = $info;
+                        $productoArray['precio'] = $info['precio_final'];
+                    }
+
+                    return $productoArray;
+                });
+
+                $productos->setCollection($items);
+            }
+        }
 
         return response()->json($productos);
     }
