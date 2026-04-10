@@ -47,6 +47,7 @@ const clienteLinks: NavLink[] = [
 const adminLinks: NavLink[] = [
   { href: "/admin/productos", label: "Productos", icon: <CubeIcon /> },
   { href: "/admin/clientes", label: "Clientes", icon: <UsersIcon /> },
+  { href: "/admin/listas-precios", label: "Listas de Precios", icon: <TagIcon /> },
   { href: "/admin/zonas", label: "Zonas Logísticas", icon: <TruckIcon /> },
   { href: "/admin/pedidos", label: "Gestión Pedidos", icon: <DocumentTextIcon /> },
   { href: "/admin/usuarios", label: "Usuarios", icon: <KeyIcon /> },

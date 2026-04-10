@@ -9,13 +9,14 @@ import Loading from "@/app/components/Loading";
 import Modal from "@/app/components/Modal";
 import Pagination from "@/app/components/Pagination";
 import ImportModal from "@/components/ImportModal";
-import type { Cliente, Provincia } from "@/types";
+import type { Cliente, Provincia, ListaPrecio } from "@/types";
 
 export default function AdminClientesPage() {
   const { user, loading: authLoading, logout } = useAuth({ requireAdmin: true });
   const toast = useToast();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [provincias, setProvincias] = useState<Provincia[]>([]);
+  const [listasPrecios, setListasPrecios] = useState<ListaPrecio[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -31,6 +32,13 @@ export default function AdminClientesPage() {
     direccion: "",
     cuit: "",
     activo: true,
+    segmento: "mayorista",
+    lista_precio_id: "",
+    condicion_pago: "",
+    limite_credito: "",
+    observaciones: "",
+    descuento_porcentaje: "0",
+    descuento_fijo: "0",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -68,15 +76,17 @@ export default function AdminClientesPage() {
     try {
       const params: Record<string, string> = { page: String(page) };
       if (search) params.search = search;
-      const [clientesRes, provinciasRes] = await Promise.all([
+      const [clientesRes, provinciasRes, listasRes] = await Promise.all([
         api.getClientes(params),
         api.getProvincias(),
+        api.getListasPrecios({ per_page: "100" }),
       ]);
       setClientes(clientesRes.data);
       setLastPage(clientesRes.last_page);
       setTotal(clientesRes.total);
       setPerPage(clientesRes.per_page);
       setProvincias(provinciasRes);
+      setListasPrecios(listasRes.data);
     } finally {
       setLoading(false);
     }
@@ -84,7 +94,7 @@ export default function AdminClientesPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ razon_social: "", email: "", telefono: "", provincia_id: "", direccion: "", cuit: "", activo: true });
+    setForm({ razon_social: "", email: "", telefono: "", provincia_id: "", direccion: "", cuit: "", activo: true, segmento: "mayorista", lista_precio_id: "", condicion_pago: "", limite_credito: "", observaciones: "", descuento_porcentaje: "0", descuento_fijo: "0" });
     setShowForm(true);
     setError("");
     setFormErrors({});
@@ -101,6 +111,13 @@ export default function AdminClientesPage() {
       direccion: c.direccion || "",
       cuit: c.cuit || "",
       activo: c.activo,
+      segmento: c.segmento || "mayorista",
+      lista_precio_id: c.lista_precio_id ? String(c.lista_precio_id) : "",
+      condicion_pago: c.condicion_pago || "",
+      limite_credito: c.limite_credito != null ? String(c.limite_credito) : "",
+      observaciones: c.observaciones || "",
+      descuento_porcentaje: String(c.descuento_porcentaje ?? 0),
+      descuento_fijo: String(c.descuento_fijo ?? 0),
     });
     setShowForm(true);
     setError("");
@@ -130,6 +147,13 @@ export default function AdminClientesPage() {
         direccion: form.direccion || null,
         cuit: form.cuit || null,
         activo: form.activo,
+        segmento: form.segmento,
+        lista_precio_id: form.lista_precio_id ? parseInt(form.lista_precio_id) : null,
+        condicion_pago: form.condicion_pago || null,
+        limite_credito: form.limite_credito ? parseFloat(form.limite_credito) : null,
+        observaciones: form.observaciones || null,
+        descuento_porcentaje: parseFloat(form.descuento_porcentaje) || 0,
+        descuento_fijo: parseFloat(form.descuento_fijo) || 0,
       };
       if (editing) {
         await api.updateCliente(editing.id, data);
@@ -249,6 +273,37 @@ export default function AdminClientesPage() {
                   <input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} />
                   Activo
                 </label>
+
+                {/* Campos comerciales */}
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Condiciones comerciales</p>
+                </div>
+                <select value={form.segmento} onChange={(e) => setForm({ ...form, segmento: e.target.value })} className={inputClass}>
+                  <option value="minorista">Minorista</option>
+                  <option value="mayorista">Mayorista</option>
+                  <option value="autoservicio">Autoservicio</option>
+                  <option value="supermercado">Supermercado</option>
+                  <option value="estrategico">Cliente Estratégico</option>
+                </select>
+                <select value={form.lista_precio_id} onChange={(e) => setForm({ ...form, lista_precio_id: e.target.value })} className={inputClass}>
+                  <option value="">Sin lista de precios (precio general)</option>
+                  {listasPrecios.map((lp) => (
+                    <option key={lp.id} value={lp.id}>{lp.nombre}</option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Condición de pago (ej: 30 días)" value={form.condicion_pago} onChange={(e) => setForm({ ...form, condicion_pago: e.target.value })} className={inputClass} />
+                <input type="number" step="0.01" min="0" placeholder="Límite de crédito" value={form.limite_credito} onChange={(e) => setForm({ ...form, limite_credito: e.target.value })} className={inputClass} />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Descuento %</label>
+                    <input type="number" step="0.01" min="0" max="100" value={form.descuento_porcentaje} onChange={(e) => setForm({ ...form, descuento_porcentaje: e.target.value })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Descuento fijo $</label>
+                    <input type="number" step="0.01" min="0" value={form.descuento_fijo} onChange={(e) => setForm({ ...form, descuento_fijo: e.target.value })} className={inputClass} />
+                  </div>
+                </div>
+                <textarea placeholder="Observaciones" value={form.observaciones} onChange={(e) => setForm({ ...form, observaciones: e.target.value })} rows={2} className={inputClass} />
               </div>
               <div className="flex gap-3 mt-4">
                 <button onClick={() => setShowForm(false)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
@@ -271,7 +326,7 @@ export default function AdminClientesPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Razón Social</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Provincia</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CUIT</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Segmento</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
                     </tr>
@@ -282,7 +337,11 @@ export default function AdminClientesPage() {
                         <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200">{c.razon_social}</td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.email}</td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.provincia?.nombre || "-"}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.cuit || "-"}</td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 capitalize">
+                            {c.segmento || "mayorista"}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">
                           <span className={`text-xs px-2 py-1 rounded ${c.activo ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
                             {c.activo ? "Activo" : "Inactivo"}

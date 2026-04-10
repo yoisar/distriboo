@@ -55,8 +55,16 @@ export interface Cliente {
   direccion: string | null;
   cuit: string | null;
   activo: boolean;
+  segmento?: "minorista" | "mayorista" | "autoservicio" | "supermercado" | "estrategico";
+  lista_precio_id?: number | null;
+  condicion_pago?: string | null;
+  limite_credito?: number | null;
+  observaciones?: string | null;
+  descuento_porcentaje?: number;
+  descuento_fijo?: number;
   provincia?: Provincia;
   distribuidor?: Distribuidor;
+  lista_precio?: ListaPrecio;
 }
 
 export interface Producto {
@@ -69,6 +77,14 @@ export interface Producto {
   precio: number;
   stock: number;
   activo: boolean;
+  precio_personalizado?: PrecioPersonalizado;
+}
+
+export interface PrecioPersonalizado {
+  precio_base: number;
+  precio_final: number;
+  descuento: number;
+  fuente: "general" | "lista" | "cliente";
 }
 
 export interface PedidoDetalle {
@@ -224,4 +240,33 @@ export interface ProyeccionRevendedor {
     total_clientes: number;
     porcentaje: number;
   }[];
+}
+
+// ── Listas de Precios y Personalización Comercial ──
+
+export interface ListaPrecio {
+  id: number;
+  distribuidor_id: number;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  clientes_count?: number;
+  precios_productos?: ListaPrecioProducto[];
+  clientes?: Pick<Cliente, "id" | "razon_social">[];
+}
+
+export interface ListaPrecioProducto {
+  id: number;
+  lista_precio_id: number;
+  producto_id: number;
+  precio: number;
+  producto?: Producto;
+}
+
+export interface PrecioCliente {
+  id: number;
+  cliente_id: number;
+  producto_id: number;
+  precio: number;
+  producto?: Producto;
 }
