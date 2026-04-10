@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ComisionController;
 use App\Http\Controllers\Api\ConfiguracionComisionController;
 use App\Http\Controllers\Api\DistribuidorController;
 use App\Http\Controllers\Api\ImportController;
+use App\Http\Controllers\Api\ListaPrecioController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProductoController;
@@ -66,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/pedidos/{pedido}', [PedidoController::class, 'update']);
     Route::get('/pedidos/{pedido}/pdf', [PedidoController::class, 'pdf']);
     Route::put('/pedidos/{pedido}/cancelar', [PedidoController::class, 'cancelar']);
+    Route::post('/pedidos/{pedido}/reordenar', [PedidoController::class, 'reordenar']);
 
     // ── Super Admin only: gestión de distribuidores ──
     Route::middleware('role:super_admin')->group(function () {
@@ -138,6 +140,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/productos/{producto}', [ProductoController::class, 'destroy']);
 
         // Clientes CRUD
+
+        // Listas de precios CRUD
+        Route::apiResource('listas-precios', ListaPrecioController::class)
+            ->parameters(['listas-precios' => 'listasPrecio']);
+
+        // Precios específicos por cliente
+        Route::get('/clientes/{cliente}/precios', [\App\Http\Controllers\Api\PrecioClienteController::class, 'index']);
+        Route::put('/clientes/{cliente}/precios', [\App\Http\Controllers\Api\PrecioClienteController::class, 'update']);
         Route::apiResource('clientes', ClienteController::class);
 
         // Zonas logísticas CRUD (solo escritura; lectura disponible para todos los autenticados)
