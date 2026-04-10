@@ -23,6 +23,9 @@ import {
   BuildingOfficeIcon,
   Bars3Icon,
   XMarkIcon,
+  BanknotesIcon,
+  UserGroupIcon,
+  TagIcon,
 } from "@/components/ui/Icons";
 
 export default function Home() {
@@ -46,11 +49,14 @@ export default function Home() {
   const features = [
     { icon: CubeIcon, title: "Stock en Tiempo Real", desc: "Control total del inventario: tus clientes ven disponibilidad actualizada al instante, sin sorpresas ni pedidos imposibles.", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/40" },
     { icon: ClipboardListIcon, title: "Gestión de Pedidos Completa", desc: "Creá, editá y seguí el estado de cada pedido. Flujo completo desde el alta hasta el despacho, con historial y detalles.", color: "text-green-600 dark:text-green-400", bg: "bg-green-100 dark:bg-green-900/40" },
-    { icon: UsersIcon, title: "Roles y Permisos Avanzados", desc: "Accesos diferenciados para Super Admin, Distribuidor y Cliente. Cada rol ve y gestiona solo lo que le corresponde.", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/40" },
+    { icon: BanknotesIcon, title: "Precios Personalizados por Cliente", desc: "Motor de precios B2B con 4 niveles de prioridad: precio específico por cliente, lista comercial, zona y precio general. Cada cliente ve solo sus condiciones.", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/40" },
+    { icon: TagIcon, title: "Listas de Precios Comerciales", desc: "Creá listas de precios diferenciadas para segmentos, canales o campañas. Asignar una lista a un cliente actualiza todos sus precios automáticamente.", color: "text-cyan-600 dark:text-cyan-400", bg: "bg-cyan-100 dark:bg-cyan-900/40" },
+    { icon: UserGroupIcon, title: "Segmentación Comercial", desc: "Clasificá tus clientes por segmento (minorista, mayorista, autoservicio, supermercado, estratégico) con condiciones de pago, límite de crédito y descuentos propios.", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/40" },
     { icon: ShoppingCartIcon, title: "Pedidos Online 24/7", desc: "Tus clientes arman pedidos cuando quieran, desde cualquier dispositivo, sin llamadas ni WhatsApp.", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-900/40" },
     { icon: DocumentTextIcon, title: "Importación CSV / Excel", desc: "Cargá productos, clientes y zonas logísticas masivamente desde archivos CSV o Excel. Rápido y sin errores manuales.", color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-100 dark:bg-teal-900/40" },
-    { icon: TruckIcon, title: "Logística por Zonas", desc: "Costos y tiempos de entrega calculados automáticamente según zona geográfica y provincia del cliente.", color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-100 dark:bg-indigo-900/40" },
+    { icon: TruckIcon, title: "Logística por Zonas", desc: "Costos y tiempos de entrega calculados automáticamente según zona geográfica y provincia del cliente. Visible antes de confirmar el pedido.", color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-100 dark:bg-indigo-900/40" },
     { icon: TrendingUpIcon, title: "Reportes y Analytics", desc: "Visualizá ventas del mes, pedidos pendientes, stock bajo y métricas clave desde el panel de reportes en tiempo real.", color: "text-pink-600 dark:text-pink-400", bg: "bg-pink-100 dark:bg-pink-900/40" },
+    { icon: UsersIcon, title: "Roles y Permisos Avanzados", desc: "Accesos diferenciados para Super Admin, Distribuidor y Cliente. Cada rol ve y gestiona solo lo que le corresponde.", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-100 dark:bg-violet-900/40" },
     { icon: BuildingOfficeIcon, title: "Multi-Distribuidor", desc: "Un mismo cliente puede comprar a varios distribuidores desde una sola cuenta, reflejando la realidad del comercio mayorista.", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-900/40" },
     { icon: ShieldCheckIcon, title: "Seguro y Confiable", desc: "Autenticación con tokens Sanctum, sesiones protegidas y control de acceso estricto por rol. Tus datos siempre seguros.", color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/40" },
   ];
@@ -72,6 +78,7 @@ export default function Home() {
   const marqueeItems = [
     "Stock en Tiempo Real", "Pedidos Online 24/7", "Logística por Zonas", "Multi-Distribuidor",
     "Importación CSV/Excel", "Reportes y Analytics", "Roles y Permisos", "Gestión de Pedidos",
+    "Precios por Cliente", "Listas Comerciales", "Motor de Precios B2B", "Segmentación Comercial",
     "Modo Oscuro", "Responsive", "Seguro", "Sin WhatsApp", "Automatizado", "Multi-provincia",
   ];
 
@@ -182,8 +189,8 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-              Centralizá tus pedidos, controlá el stock en tiempo real y gestioná
-              la logística por provincia. La herramienta que tu distribuidora necesita.
+              Centralizá pedidos, personalizá precios por cliente, controlá stock
+              en tiempo real y gestioná la logística por zona. Todo lo que tu distribuidora necesita.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a

@@ -25,8 +25,10 @@ class PlanSeeder extends Seeder
                 'caracteristicas' => [
                     'Hasta 50 productos',
                     'Hasta 30 clientes',
-                    'Pedidos online',
-                    'Panel básico',
+                    'Pedidos online 24/7',
+                    'Panel de gestión básico',
+                    'Logística por zonas',
+                    '1 lista de precios',
                 ],
             ],
             [
@@ -43,8 +45,11 @@ class PlanSeeder extends Seeder
                 'caracteristicas' => [
                     'Hasta 200 productos',
                     'Hasta 100 clientes',
-                    'Zonas/provincias',
-                    'Reportes',
+                    'Logística multi-zona',
+                    'Reportes y analytics',
+                    'Listas de precios personalizadas',
+                    'Precios específicos por cliente',
+                    'Segmentación comercial de clientes',
                 ],
             ],
             [
@@ -59,10 +64,13 @@ class PlanSeeder extends Seeder
                 'reportes' => true,
                 'orden' => 3,
                 'caracteristicas' => [
-                    'Productos ilimitados',
-                    'Clientes ilimitados',
-                    'Multi vendedor',
-                    'Integraciones/exportaciones',
+                    'Productos y clientes ilimitados',
+                    'Motor de precios B2B (4 niveles)',
+                    'Condiciones comerciales completas',
+                    'Descuentos por segmento/cliente/lista',
+                    'Multi-distribuidor y multi-vendedor',
+                    'Importación masiva CSV/Excel',
+                    'Integraciones y exportaciones',
                 ],
             ],
         ];
