@@ -63,14 +63,20 @@ jobs:
           MAIL_FROM_NAME="Distriboo"
           ENVEOF
 
-      - name: Rebuild and start containers
+      - name: Build containers
         run: |
           ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /www/wwwroot/distriboo.yoisar.com/app &&
-            docker compose --env-file .env.production -f docker-compose.prod.yml build --no-cache frontend &&
+            docker compose --env-file .env.production -f docker-compose.prod.yml build --no-cache
+          "
+
+      - name: Restart containers
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /www/wwwroot/distriboo.yoisar.com/app &&
             docker compose --env-file .env.production -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true &&
             docker rm -f distriboo_prod_mysql distriboo_prod_backend distriboo_prod_frontend distriboo_prod_nginx 2>/dev/null || true &&
-            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d
           "
 
       - name: Wait for MySQL and run migrations
