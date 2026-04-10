@@ -73,7 +73,7 @@ export default function AdminListasPreciosPage() {
       });
       setShowForm(true);
     } catch {
-      toast.error("Error al cargar lista");
+      toast("Error al cargar lista", "error");
     }
   }
 
@@ -83,15 +83,15 @@ export default function AdminListasPreciosPage() {
     try {
       if (editing) {
         await api.updateListaPrecio(editing.id, form);
-        toast.success("Lista actualizada");
+        toast("Lista actualizada", "success");
       } else {
         await api.createListaPrecio(form);
-        toast.success("Lista creada");
+        toast("Lista creada", "success");
       }
       setShowForm(false);
       loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al guardar");
+      toast(err instanceof Error ? err.message : "Error al guardar", "error");
     } finally {
       setSaving(false);
     }
@@ -101,10 +101,10 @@ export default function AdminListasPreciosPage() {
     if (!confirm("¿Eliminar esta lista de precios?")) return;
     try {
       await api.deleteListaPrecio(id);
-      toast.success("Lista eliminada");
+      toast("Lista eliminada", "success");
       loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al eliminar");
+      toast(err instanceof Error ? err.message : "Error al eliminar", "error");
     }
   }
 
