@@ -38,3 +38,9 @@ db_data/
 *.log
 npm-debug.log*
 .playwright-mcp/
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/**/test-results/
