@@ -222,7 +222,7 @@ export default function AdminListasPreciosPage() {
             </div>
 
             <Pagination
-              currentPage={page}
+              page={page}
               lastPage={lastPage}
               onPageChange={setPage}
             />
@@ -230,11 +230,8 @@ export default function AdminListasPreciosPage() {
         )}
 
         {/* Modal: Crear/Editar Lista de Precios */}
-        <Modal open={showForm} onClose={() => setShowForm(false)}>
+        <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Editar Lista" : "Nueva Lista de Precios"}>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              {editing ? "Editar Lista" : "Nueva Lista de Precios"}
-            </h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
