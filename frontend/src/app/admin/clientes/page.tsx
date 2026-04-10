@@ -147,7 +147,7 @@ export default function AdminClientesPage() {
         direccion: form.direccion || null,
         cuit: form.cuit || null,
         activo: form.activo,
-        segmento: form.segmento,
+        segmento: form.segmento as Cliente["segmento"],
         lista_precio_id: form.lista_precio_id ? parseInt(form.lista_precio_id) : null,
         condicion_pago: form.condicion_pago || null,
         limite_credito: form.limite_credito ? parseFloat(form.limite_credito) : null,
@@ -192,6 +192,13 @@ export default function AdminClientesPage() {
       direccion: razonSocialMatch.direccion || "",
       cuit: razonSocialMatch.cuit || "",
       activo: razonSocialMatch.activo,
+      segmento: razonSocialMatch.segmento || "mayorista",
+      lista_precio_id: razonSocialMatch.lista_precio_id ? String(razonSocialMatch.lista_precio_id) : "",
+      condicion_pago: razonSocialMatch.condicion_pago || "",
+      limite_credito: razonSocialMatch.limite_credito != null ? String(razonSocialMatch.limite_credito) : "",
+      observaciones: razonSocialMatch.observaciones || "",
+      descuento_porcentaje: String(razonSocialMatch.descuento_porcentaje ?? 0),
+      descuento_fijo: String(razonSocialMatch.descuento_fijo ?? 0),
     });
     setRazonSocialMatch(null);
   }
