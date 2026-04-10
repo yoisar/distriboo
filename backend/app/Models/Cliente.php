@@ -22,10 +22,20 @@ class Cliente extends Model
         'direccion',
         'cuit',
         'activo',
+        'segmento',
+        'lista_precio_id',
+        'condicion_pago',
+        'limite_credito',
+        'observaciones',
+        'descuento_porcentaje',
+        'descuento_fijo',
     ];
 
     protected $casts = [
         'activo' => 'boolean',
+        'limite_credito' => 'decimal:2',
+        'descuento_porcentaje' => 'decimal:2',
+        'descuento_fijo' => 'decimal:2',
     ];
 
     public function distribuidor(): BelongsTo
@@ -36,6 +46,16 @@ class Cliente extends Model
     public function provincia(): BelongsTo
     {
         return $this->belongsTo(Provincia::class);
+    }
+
+    public function listaPrecio(): BelongsTo
+    {
+        return $this->belongsTo(ListaPrecio::class);
+    }
+
+    public function preciosEspecificos(): HasMany
+    {
+        return $this->hasMany(PrecioCliente::class);
     }
 
     public function pedidos(): HasMany
